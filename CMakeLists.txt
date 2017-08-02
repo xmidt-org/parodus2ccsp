@@ -155,10 +155,12 @@ add_dependencies(liblibparodus libparodus)
 
 # dbus external dependency
 #-------------------------------------------------------------------------------
+set(PATCHES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/patches)
 ExternalProject_Add(dbus
     PREFIX ${PREFIX_DIR}/dbus
     GIT_REPOSITORY https://github.com/Distrotech/dbus.git
     GIT_TAG "f4606cf30763b5ae432c192cb589effc74336378"
+    PATCH_COMMAND patch -p1 < ${PATCHES_DIR}/dbus.patch
     CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --enable-verbose-mode=no
                                                       --quiet
                                                       --disable-tests
