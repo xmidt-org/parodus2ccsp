@@ -40,8 +40,6 @@ include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/cimplog
                     ${LIBRARY_DIR}/dbus-1.0/include
                     ${INCLUDE_DIR}/dbus-1.0
-                    ${INCLUDE_DIR}/ccsp
-                    ${INCLUDE_DIR}/ccsp/linux
 		   )
 
 include_directories (SYSTEM /usr/include)
@@ -155,6 +153,49 @@ ExternalProject_Add(libparodus
 add_library(liblibparodus STATIC SHARED IMPORTED)
 add_dependencies(liblibparodus libparodus)
 
+# dbus external dependency
+#-------------------------------------------------------------------------------
+ExternalProject_Add(dbus
+    PREFIX ${PREFIX_DIR}/dbus
+    GIT_REPOSITORY https://github.com/Distrotech/dbus.git
+    GIT_TAG "f4606cf30763b5ae432c192cb589effc74336378"
+    CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --enable-verbose-mode=no
+                                                      --quiet
+                                                      --disable-tests
+                                                      --enable-asserts=no
+                                                      --disable-xml-docs
+                                                      --disable-doxygen-docs
+                                                      --prefix=${PREFIX}
+                                                      --includedir=${INCLUDE_DIR}
+                                                      --libdir=${LIBRARY_DIR}
+                                                      --bindir=${BIN_DIR}
+                                                      --docdir=${DOC_DIR}
+                                                      ${CUSTOM_HOST}
+    BUILD_IN_SOURCE 1
+)
+
+add_library(libdbus STATIC SHARED IMPORTED)
+add_dependencies(libdbus dbus)
+
+# CcspCommonLibrary external dependency
+#-------------------------------------------------------------------------------
+ExternalProject_Add(CcspCommonLibrary
+    DEPENDS dbus
+    PREFIX ${PREFIX_DIR}/CcspCommonLibrary
+    GIT_REPOSITORY https://github.com/rdkcmf/rdkb-CcspCommonLibrary.git
+    GIT_TAG "3cd2768b9c1551adc46db1ebf5d15ce4e45afcec"
+    CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --quiet CPPFLAGS=${CCSP_HEADERS}
+                                                      --prefix=${INSTALL_DIR}
+                                                      --includedir=${INCLUDE_DIR}
+                                                      --libdir=${LIBRARY_DIR}
+                                                      --bindir=${BIN_DIR}
+                                                      --docdir=${DOC_DIR}
+                                                      ${CUSTOM_HOST}
+    BUILD_IN_SOURCE 1
+)
+
+add_library(libccsp_common SHARED IMPORTED)
+add_dependencies(libccsp_common CcspCommonLibrary)
 
 if (BUILD_TESTING)
 # cmocka external dependency
