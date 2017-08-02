@@ -193,6 +193,8 @@ ExternalProject_Add(CcspCommonLibrary
                                                       --bindir=${BIN_DIR}
                                                       --docdir=${DOC_DIR}
                                                       ${CUSTOM_HOST}
+    LOG_BUILD 1
+    LOG_INSTALL 1
     BUILD_IN_SOURCE 1
 )
 
