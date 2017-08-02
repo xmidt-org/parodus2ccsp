@@ -44,6 +44,10 @@ include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/ccsp/linux
 		   )
 
+include_directories(
+                     source/include
+                     source/broadband/include
+		   )
 include_directories (SYSTEM /usr/include)
 
 # pthread external dependency
@@ -247,5 +251,5 @@ link_directories ( ${LIBRARY_DIR} ${COMMON_LIBRARY_DIR} ${LIBRARY_DIR64} )
 
 enable_testing()
 
-add_subdirectory(src)
-add_subdirectory(tests)
+add_subdirectory(source/broadband)
+add_subdirectory(source/app)

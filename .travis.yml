@@ -33,8 +33,8 @@ script:
     - cd build
     - cmake ..
     - sudo make
-    - make test
-    - make coverage
+#    - make test
+#    - make coverage
 
 after_success:
     - codecov
