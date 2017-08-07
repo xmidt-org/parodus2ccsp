@@ -8,6 +8,7 @@
 
 #include "webpa_notification.h"
 #include "webpa_internal.h"
+#include <cimplog/cimplog.h>
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -33,7 +34,15 @@ static WDMP_STATUS validate_parameter(param_t *param, int paramCount);
 static void setRebootReason(param_t param, WEBPA_SET_TYPE setType);
 
 extern ANSC_HANDLE bus_handle;
+void webpa_logger(unsigned int level, const char *module,
+        const char *format, char *msg);
 
+#ifndef FEATURE_SUPPORT_RDKLOG
+#define RDK_LOG webpa_logger
+#define LOGGER_MODULE "WEBPA"
+#else
+#define LOGGER_MODULE "LOG.RDK.WEBPA"
+#endif
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -485,7 +494,7 @@ void _WEBPA_LOG(unsigned int level, const char *msg, ...)
 				perror(pTempChar);
 			}
 			va_end(arg);
-			RDK_LOG(rdkLogLevel, "LOG.RDK.WEBPA", "%s", pTempChar);
+			RDK_LOG(rdkLogLevel, LOGGER_MODULE, "%s", pTempChar);
 			WAL_FREE(pTempChar);
 		}
 	}
@@ -633,4 +642,23 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 		WAL_FREE(rebootParam);
 	}
 	
+}
+
+void webpa_logger(unsigned int level, const char *module,
+        const char *format, char *msg)
+{
+        switch(level)
+	{
+		case LOG_ERROR:
+			cimplog_error(module, msg);
+			break;
+
+		case LOG_INFO:
+			cimplog_info(module, msg);
+			break;
+
+		case LOG_DEBUG:
+			cimplog_debug(module, msg);
+			break;
+	}
 }
