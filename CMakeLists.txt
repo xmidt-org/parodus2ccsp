@@ -18,8 +18,9 @@ project(parodus2ccsp)
 include(ExternalProject)
 
 add_definitions(-std=c99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE -Werror -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -Werror -Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE ")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE -Werror -Wall")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -Werror -Wall")
 
 set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/_install)
 set(PREFIX_DIR ${CMAKE_CURRENT_BINARY_DIR}/_prefix)
@@ -53,6 +54,17 @@ include_directories (SYSTEM /usr/include)
 # pthread external dependency
 #-------------------------------------------------------------------------------
 find_package (Threads)
+
+# Get git commit hash
+#-------------------------------------------------------------------------------
+execute_process(
+  COMMAND git describe --tags --always
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_TAG
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+add_definitions("-DWEBPA_GIT_VERSION=\"${GIT_COMMIT_TAG}\"")
 
 # cJSON external dependency
 #-------------------------------------------------------------------------------

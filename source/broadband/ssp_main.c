@@ -183,7 +183,7 @@ static void daemonize(void) {
 
 #ifndef  _DEBUG
 
-	fd = open("/dev/null", O_RDONLY);
+	int fd = open("/dev/null", O_RDONLY);
 	if (fd != 0) {
 		dup2(fd, 0);
 		close(fd);
