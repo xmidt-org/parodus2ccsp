@@ -30,6 +30,7 @@ set(LIBRARY_DIR64 ${INSTALL_DIR}/lib64)
 set(BIN_DIR ${INSTALL_DIR}/bin)
 set(SHARE_DIR ${INSTALL_DIR}/share)
 set(DOC_DIR ${INSTALL_DIR}/doc)
+set(COMMON_LIBRARY_DIR ${INSTALL_DIR}/lib/${CMAKE_LIBRARY_ARCHITECTURE})
 
 include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/cjson
