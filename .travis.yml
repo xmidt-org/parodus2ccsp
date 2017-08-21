@@ -31,10 +31,9 @@ install:
 script:
     - mkdir build
     - cd build
-    - cmake ..
+    - cmake .. -DBUILD_TESTING:BOOL=true
     - sudo make
-#    - make test
-#    - make coverage
+    - make test
 
 after_success:
     - codecov
