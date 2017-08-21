@@ -205,7 +205,7 @@ ExternalProject_Add(CcspCommonLibrary
     DEPENDS dbus
     PREFIX ${PREFIX_DIR}/CcspCommonLibrary
     GIT_REPOSITORY https://github.com/rdkcmf/rdkb-CcspCommonLibrary.git
-    GIT_TAG "3cd2768b9c1551adc46db1ebf5d15ce4e45afcec"
+    GIT_TAG "master"
     CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --quiet CPPFLAGS=${CCSP_HEADERS}
                                                       --prefix=${INSTALL_DIR}
                                                       --includedir=${INCLUDE_DIR}
