@@ -13,10 +13,10 @@
 #   limitations under the License.
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -g -fprofile-arcs -ftest-coverage -O0")
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTEST ")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTEST -D_ANSC_LINUX")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W  -g -fprofile-arcs -ftest-coverage -O0")
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs -ftest-coverage -O0")
-set (WEBPA_COMMON_LIBS gcov -lcunit -lcimplog -lwrp-c -lpthread -lmsgpackc -lnanomsg -Wl,--no-as-needed -lcjson -ltrower-base64 -lssl -lcrypto -lrt -lm -lcmocka -llibparodus)
+set (WEBPA_COMMON_LIBS gcov -lcunit -lcimplog -lwrp-c -lpthread -lmsgpackc -lnanomsg -Wl,--no-as-needed -lcjson -ltrower-base64 -lssl -lcrypto -lrt -lm -lcmocka)
 
 link_directories ( ${LIBRARY_DIR} )
 
@@ -25,5 +25,12 @@ link_directories ( ${LIBRARY_DIR} )
 #-------------------------------------------------------------------------------
 add_test(NAME test_libpd COMMAND ${MEMORY_CHECK} ./test_libpd)
 add_executable(test_libpd test_libpd.c ../source/app/libpd.c ../source/broadband/webpa_log.c)
-target_link_libraries (test_libpd -lwrp-c ${WEBPA_COMMON_LIBS})
+target_link_libraries (test_libpd -lwrp-c ${WEBPA_COMMON_LIBS} -llibparodus)
+
+#-------------------------------------------------------------------------------
+#   test_webpa_adapter
+#-------------------------------------------------------------------------------
+add_test(NAME test_webpa_adapter COMMAND ${MEMORY_CHECK} ./test_webpa_adapter)
+add_executable(test_webpa_adapter test_webpa_adapter.c ../source/broadband/webpa_adapter.c ../source/broadband/webpa_log.c)
+target_link_libraries (test_webpa_adapter -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS})
 
