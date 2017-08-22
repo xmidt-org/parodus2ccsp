@@ -24,6 +24,6 @@ link_directories ( ${LIBRARY_DIR} )
 #   test_libpd
 #-------------------------------------------------------------------------------
 add_test(NAME test_libpd COMMAND ${MEMORY_CHECK} ./test_libpd)
-add_executable(test_libpd test_libpd.c ../source/app/libpd.c)
+add_executable(test_libpd test_libpd.c ../source/app/libpd.c ../source/broadband/webpa_log.c)
 target_link_libraries (test_libpd -lwrp-c ${WEBPA_COMMON_LIBS})
 

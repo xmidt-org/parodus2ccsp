@@ -40,40 +40,6 @@ extern char client_url[URL_SIZE];
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
-
-void _WEBPA_LOG(unsigned int level, const char *msg, ...)
-{
-    int ret = 0;
-    va_list arg;
-    char *pTempChar = (char *)malloc(4096);
-    if(pTempChar)
-    {
-        va_start(arg, msg);
-        ret = vsnprintf(pTempChar, 4096, msg,arg);
-        if(ret < 0)
-        {
-            perror(pTempChar);
-        }
-        va_end(arg);
-    }
-
-    switch(level)
-    {
-        case 0:
-            cimplog_error("WEBPA", pTempChar);
-        break;
-
-        case 1:
-            cimplog_info("WEBPA", pTempChar);
-        break;
-
-        case 2:
-            cimplog_debug("WEBPA", pTempChar);
-        break;
-    }
-    free(pTempChar);
-}
-
 void getCurrentTime(struct timespec *timer)
 {
     clock_gettime(CLOCK_REALTIME, timer); 
