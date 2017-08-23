@@ -17,6 +17,7 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTEST -D_ANSC_LINUX")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W  -g -fprofile-arcs -ftest-coverage -O0")
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs -ftest-coverage -O0")
 set (WEBPA_COMMON_LIBS gcov -lcunit -lcimplog -lwrp-c -lpthread -lmsgpackc -lnanomsg -Wl,--no-as-needed -lcjson -ltrower-base64 -lssl -lcrypto -lrt -lm -lcmocka)
+set (WEBPA_COMMON_SOURCES ../source/broadband/webpa_adapter.c ../source/broadband/webpa_internal.c ../source/broadband/webpa_table.c ../source/broadband/webpa_parameter.c ../source/broadband/webpa_attribute.c ../source/broadband/webpa_notification.c ../source/broadband/webpa_log.c)
 
 link_directories ( ${LIBRARY_DIR} )
 
@@ -33,4 +34,11 @@ target_link_libraries (test_libpd -lwrp-c ${WEBPA_COMMON_LIBS} -llibparodus)
 add_test(NAME test_webpa_adapter COMMAND ${MEMORY_CHECK} ./test_webpa_adapter)
 add_executable(test_webpa_adapter test_webpa_adapter.c ../source/broadband/webpa_adapter.c ../source/broadband/webpa_log.c)
 target_link_libraries (test_webpa_adapter -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS})
+
+#-------------------------------------------------------------------------------
+#   test_webpa_get
+#-------------------------------------------------------------------------------
+add_test(NAME test_webpa_get COMMAND ${MEMORY_CHECK} ./test_webpa_get)
+add_executable(test_webpa_get test_webpa_get.c mock_stack.c ../source/app/libpd.c ${WEBPA_COMMON_SOURCES})
+target_link_libraries (test_webpa_get -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS} -llibparodus)
 
