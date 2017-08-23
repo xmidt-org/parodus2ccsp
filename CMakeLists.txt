@@ -30,6 +30,7 @@ set(LIBRARY_DIR64 ${INSTALL_DIR}/lib64)
 set(BIN_DIR ${INSTALL_DIR}/bin)
 set(SHARE_DIR ${INSTALL_DIR}/share)
 set(DOC_DIR ${INSTALL_DIR}/doc)
+set(COMMON_LIBRARY_DIR ${INSTALL_DIR}/lib/${CMAKE_LIBRARY_ARCHITECTURE})
 
 include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/cjson
@@ -204,7 +205,7 @@ ExternalProject_Add(CcspCommonLibrary
     DEPENDS dbus
     PREFIX ${PREFIX_DIR}/CcspCommonLibrary
     GIT_REPOSITORY https://github.com/rdkcmf/rdkb-CcspCommonLibrary.git
-    GIT_TAG "3cd2768b9c1551adc46db1ebf5d15ce4e45afcec"
+    GIT_TAG "master"
     CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --quiet CPPFLAGS=${CCSP_HEADERS}
                                                       --prefix=${INSTALL_DIR}
                                                       --includedir=${INCLUDE_DIR}
@@ -265,3 +266,7 @@ enable_testing()
 
 add_subdirectory(source/broadband)
 add_subdirectory(source/app)
+
+if (BUILD_TESTING)
+add_subdirectory(tests)
+endif (BUILD_TESTING)

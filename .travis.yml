@@ -25,16 +25,15 @@ install:
     - sudo apt-get install -y -qq libcunit1 libcunit1-dev lcov libcurl4-openssl-dev
     - sudo add-apt-repository -y ppa:0k53d-karl-f830m/openssl
     - sudo apt-get update
-    - sudo apt-get -y install openssl
+    - sudo apt-get -y install openssl libexpat1-dev
     - openssl version -a
 
 script:
     - mkdir build
     - cd build
-    - cmake ..
+    - cmake .. -DBUILD_TESTING:BOOL=true
     - sudo make
-#    - make test
-#    - make coverage
+    - make test
 
 after_success:
     - codecov
