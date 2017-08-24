@@ -600,7 +600,7 @@ int IndexMpa_WEBPAtoCPE(char *pParameterName)
 					j = 2;
 					len =WIFI_INDEX_MAP_SIZE;
 				}
-				for (j; j < len; j++)
+				for (; j < len; j++)
 				{
 					if (IndexMap[j].WebPaInstanceNumber == instNum)
 					{

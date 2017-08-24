@@ -131,7 +131,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
 void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType,char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
 {
         int cnt = 0, ret = 0, cnt1 =0, i = 0, count = 0, error = 0, compCount = 0, cnt2= 0, j = 0;
-        int index = 0,retCount = 0,checkSetstatus = 0,totalParams = 0,rev=0,indexWifi= -1,getFlag=0;
+        int index = 0,retCount = 0,checkSetstatus = 0,rev=0,indexWifi= -1,getFlag=0;
         char parameterName[MAX_PARAMETERNAME_LEN] = {'\0'};
         ParamCompList *ParamGroup = NULL;
         char **compName = NULL;
@@ -622,9 +622,8 @@ static int prepare_parameterValueStruct(parameterValStruct_t* val, param_t *para
 static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int paramCount,const WEBPA_SET_TYPE setType, char *transactionId)
 {
         char* faultParam = NULL;
-        int ret=0, size = 0, cnt = 0, cnt1=0, retIndex=0, index = -1;
+        int ret=0, cnt = 0, retIndex=0;
         char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
-        char objectName[MAX_PARAMETERNAME_LEN] = { 0 };
         unsigned int writeID = CCSP_COMPONENT_ID_WebPA;
 
         WalPrint("------------------ start of setParamValues ----------------\n");
@@ -714,7 +713,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
  */
 static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2) 
 {
-	int x =0 ,index =0, SSID =0,apply_rf =0;
+	int x =0 ,index =0, apply_rf =0;
 	for (x = 0; x < paramCount; x++)
 	{
 		WalPrint("val[%d].parameterName : %s\n",x,val[x].parameterName);
@@ -732,7 +731,6 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 			{
 				sscanf(val[x].parameterName, "Device.WiFi.SSID.%d", &index);
 				WalPrint("SSID index = %d\n", index);
-				SSID = (1 << ((index) - 1));
 				apply_rf = (2 - ((index) % 2));
 				WalPrint("apply_rf = %d\n", apply_rf);
 
@@ -749,7 +747,6 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 			{
 				sscanf(val[x].parameterName, "Device.WiFi.AccessPoint.%d", &index);
 				WalPrint("AccessPoint index = %d\n", index);
-				SSID = (1 << ((index) - 1));
 				apply_rf = (2 - ((index) % 2));
 				WalPrint("apply_rf = %d\n", apply_rf);
 
@@ -771,8 +768,6 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
  */
 static void *applyWiFiSettingsTask()
 {
-	char CompName[MAX_PARAMETERNAME_LEN/2] = { 0 };
-	char dbusPath[MAX_PARAMETERNAME_LEN/2] = { 0 };
 	parameterValStruct_t *RadApplyParam = NULL;
 	char* faultParam = NULL;
 	unsigned int writeID = CCSP_COMPONENT_ID_WebPA;
@@ -850,6 +845,7 @@ static void *applyWiFiSettingsTask()
 		WalInfo("Elapsed time for apply setting : %ld ms\n", timeValDiff(startPtr, endPtr));
 	}
 	WalPrint("============ End =============\n");
+        return NULL;
 }
 
 

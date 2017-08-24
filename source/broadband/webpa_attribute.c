@@ -34,7 +34,8 @@ extern BOOL applySettingsFlag;
 
 void getAttributes(const char *paramName[], const unsigned int paramCount, money_trace_spans *timeSpan, param_t **attr, int *retAttrCount, WDMP_STATUS *retStatus)
 {
-	int cnt1=0,cnt2=0, ret = -1, index = 0,error = 0, compCount=0, count =0, i= 0;
+	unsigned int cnt1=0, compCount=0;
+        int cnt2=0, ret = -1, index = 0,error = 0, count =0, i= 0;
 	char parameterName[MAX_PARAMETERNAME_LEN] = {'\0'};
 	ParamCompList *ParamGroup = NULL;
 	char **compName = NULL;
@@ -97,7 +98,7 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
 
 void setAttributes(param_t *attArr, const unsigned int paramCount, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
 {
-	int cnt = 0, ret = 0;
+	int ret = 0;
 	ret = setParamAttributes(attArr,paramCount, timeSpan);
 	*retStatus = mapStatus(ret);
 }
@@ -204,7 +205,7 @@ static int getParamAttributes(char *parameterNames[], int paramCount, char *Comp
  */
 static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans *timeSpan)
 {
-	int ret = 0, cnt = 0, size = 0, notificationType = 0, error = 0,retIndex = 0, count = 0, i = 0, count1;
+	int ret = 0, cnt = 0, notificationType = 0, error = 0,retIndex = 0, count = 0, i = 0, count1;
 	char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
 	char **compName = NULL;
 	char **tempCompName = NULL;

@@ -26,7 +26,6 @@
 static void getTableRows(char *objectName,parameterValStruct_t **parameterval, int paramCount, int *numRows,char ***rowObjects);
 static void contructRollbackTableData(parameterValStruct_t **parameterval,int paramCount,char ***rowList,int rowCount, int *numParam,TableData ** getList);
 static void getWritableParams(char *paramName, char ***writableParams, int *paramCount);
-static int getComponentInfoFromCache(char *parameterName, char *objectName, char *compName, char *dbusPath);
 static int addRow(char *object,char *compName,char *dbusPath,int *retIndex);
 static int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath);
 static int deleteRow(char *object);
@@ -115,7 +114,7 @@ void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS
 
 void deleteRowTable(char *object,WDMP_STATUS *retStatus)
 {
-        int ret = 0,status = 0, error =0;
+        int ret = 0,status = 0;
 	char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
 	
 	WalPrint("object : %s\n",object);
@@ -124,7 +123,6 @@ void deleteRowTable(char *object,WDMP_STATUS *retStatus)
 	status=IndexMpa_WEBPAtoCPE(paramName);
 	if(status == -1)
 	{
-	 	error = 1;
 		if(strstr(paramName, PARAM_RADIO_OBJECT) != NULL)
 	 	{
 	 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
@@ -194,7 +192,7 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
 					WalPrint("deleteList[%d] : %s\n",cnt,deleteList[cnt]);
 					if(paramcount != 0)
 					{
-					WalPrint("addList[%d].paramCnt : %d\n",cnt,addList[cnt].paramCnt);
+					WalPrint("addList[%d].paramCnt : %zu\n",cnt,addList[cnt].paramCnt);
 						for (cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
 						{
 							WalPrint("addList[%d].names[%d] : %s,addList[%d].values[%d] : %s\n ",cnt,cnt1,addList[cnt].names[cnt1],cnt,cnt1,addList[cnt].values[cnt1]);
@@ -254,7 +252,7 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
  */
 static int addRow(char *object,char *compName,char *dbusPath,int *retIndex)
 {
-        int ret = 0, size = 0, index = 0,i=0;
+        int ret = 0, size = 0, index = 0;
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };	
 	componentStruct_t ** ppComponents = NULL;
@@ -498,7 +496,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
 				*list = getList;
 				for(cnt =0; cnt < rowCount; cnt++)
 				{	
-					WalPrint("(*list)[%d].paramCnt : %d\n",cnt,(*list)[cnt].paramCnt);
+					WalPrint("(*list)[%d].paramCnt : %zu\n",cnt,(*list)[cnt].paramCnt);
 					for (cnt1 = 0; cnt1 < (*list)[cnt].paramCnt; cnt1++)
 					{
 						WalPrint("(*list)[%d].names[%d] : %s,(*list)[%d].values[%d] : %s\n ",cnt,cnt1,(*list)[cnt].names[cnt1],cnt,cnt1,(*list)[cnt].values[cnt1]);
@@ -700,7 +698,6 @@ static void contructRollbackTableData(parameterValStruct_t **parameterval,int pa
 {
 	int writableParamCount = 0, cnt = 0, cnt1 = 0, i = 0, params = 0;
 	char **writableList = NULL;
-	char subStr[MAX_PARAMETERNAME_LEN] = {'\0'};
 	WalPrint("---------- Start of contructRollbackTableData -----------\n");
 	getWritableParams((*rowList[0]), &writableList, &writableParamCount);
 	WalInfo("writableParamCount : %d\n",writableParamCount);

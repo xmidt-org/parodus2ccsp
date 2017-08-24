@@ -47,7 +47,6 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         int paramCount = 0, i = 0, wildcardParamCount = 0,nonWildcardParamCount = 0, retCount=0, index = 0, error = 0;
         const char *getParamList[MAX_PARAMETERNAME_LEN];
         const char *wildcardGetParamList[MAX_PARAMETERNAME_LEN];
-        WDMP_STATUS setCidStatus = WDMP_SUCCESS, setCmcStatus = WDMP_SUCCESS;
         const char *wildcardList[1];
         char *param = NULL;
 	char *dbCID = NULL;
