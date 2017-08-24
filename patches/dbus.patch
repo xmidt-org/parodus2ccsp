@@ -1,22 +1,15 @@
- Makefile.am           |   2 +-
- dbus/Makefile.am      |  15 +++++---
- dbus/dbus-ccsp-apis.c | 105 ++++++++++++++++++++++++++++++++++++++++++++++++++
- dbus/dbus-ccsp-apis.h | 105 ++++++++++++++++++++++++++++++++++++++++++++++++++
- dbus/dbus.h           |   2 +
- 5 files changed, 222 insertions(+), 7 deletions(-)
-
 diff --git a/Makefile.am b/Makefile.am
-index 10b96703..71046476 100644
+index 10b9670..96f9bbc 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -1,4 +1,4 @@
 -SUBDIRS=dbus bus tools test doc
-+SUBDIRS=dbus bus 
++SUBDIRS=dbus  
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = dbus-1.pc
 diff --git a/dbus/Makefile.am b/dbus/Makefile.am
-index bb5cccaf..dcf171e3 100644
+index bb5ccca..dcf171e 100644
 --- a/dbus/Makefile.am
 +++ b/dbus/Makefile.am
 @@ -114,16 +114,18 @@ DBUS_UTIL_arch_sources = 			\
@@ -86,9 +79,8 @@ index bb5cccaf..dcf171e3 100644
  	dbus-string-util.c			\
  	dbus-sysdeps-util.c			\
 diff --git a/dbus/dbus-ccsp-apis.c b/dbus/dbus-ccsp-apis.c
-new file mode 100644
-index 00000000..529080dd
---- /dev/null
+index e69de29..529080d 100644
+--- a/dbus/dbus-ccsp-apis.c
 +++ b/dbus/dbus-ccsp-apis.c
 @@ -0,0 +1,105 @@
 +/* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
@@ -197,9 +189,8 @@ index 00000000..529080dd
 +}
 +
 diff --git a/dbus/dbus-ccsp-apis.h b/dbus/dbus-ccsp-apis.h
-new file mode 100644
-index 00000000..7bec5c2b
---- /dev/null
+index e69de29..7bec5c2 100644
+--- a/dbus/dbus-ccsp-apis.h
 +++ b/dbus/dbus-ccsp-apis.h
 @@ -0,0 +1,105 @@
 +/* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
@@ -308,7 +299,7 @@ index 00000000..7bec5c2b
 +#endif /* DBUS_CCSP_APIS_H */
 +
 diff --git a/dbus/dbus.h b/dbus/dbus.h
-index 932ceab3..949a5d4d 100644
+index 932ceab..949a5d4 100644
 --- a/dbus/dbus.h
 +++ b/dbus/dbus.h
 @@ -29,9 +29,11 @@
