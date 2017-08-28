@@ -24,20 +24,18 @@
 #include <string.h>
 
 #include "../source/include/webpa_adapter.h"
+#include "../source/broadband/include/webpa_internal.h"
 #include <cimplog/cimplog.h>
 #include <wdmp-c.h>
 #include <cJSON.h>
 #include <ccsp_base_api.h>
+#include "mock_stack.h"
 
 #define MAX_PARAMETER_LEN			512
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
-extern int cachingStatus;
-extern componentStruct_t **compList;
-extern int compSize;
-extern parameterValStruct_t **valueList;
-extern int totalCount;
+
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -53,28 +51,31 @@ void test_singleGet()
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     int count = 1;
-    cachingStatus = 1;
 
-    compSize = 1;
-    compList = (componentStruct_t **) malloc(sizeof(componentStruct_t *));
+    componentStruct_t **compList = (componentStruct_t **) malloc(sizeof(componentStruct_t *));
     compList[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     compList[0]->componentName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
     strncpy(compList[0]->componentName, "com.ccsp.webpa",MAX_PARAMETER_LEN);
     compList[0]->dbusPath = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
     strncpy(compList[0]->dbusPath, "/com/ccsp/webpa",MAX_PARAMETER_LEN);
 
-    totalCount = 1;
-    valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    int totalCount = 1;
+    parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*totalCount);
     valueList[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
     strncpy(valueList[0]->parameterName, "Device.DeviceInfo.Webpa.Enable",MAX_PARAMETER_LEN);
     valueList[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
     strncpy(valueList[0]->parameterValue, "true",MAX_PARAMETER_LEN);
     valueList[0]->type = ccsp_boolean;
-
+    
+    will_return(get_global_components, compList);
+    will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
     expect_function_call(free_componentStruct_t);
+    
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, totalCount);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
@@ -106,18 +107,16 @@ void test_singleWildcardGet()
     char *values[MAX_PARAMETER_LEN] = {"32","abcd", "1"};
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL, *value = NULL, *valueObj = NULL;
     int count = 1, i=0;
-    cachingStatus = 1;
 
-    compSize = 1;
-    compList = (componentStruct_t **) malloc(sizeof(componentStruct_t *));
+    componentStruct_t **compList = (componentStruct_t **) malloc(sizeof(componentStruct_t *));
     compList[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     compList[0]->componentName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
     strncpy(compList[0]->componentName, "com.ccsp.webpa",MAX_PARAMETER_LEN);
     compList[0]->dbusPath = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
     strncpy(compList[0]->dbusPath, "/com/ccsp/webpa",MAX_PARAMETER_LEN);
 
-    totalCount = 3;
-    valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*totalCount);
+    int totalCount = 3;
+    parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*totalCount);
     for(i = 0; i<totalCount; i++)
     {
         valueList[i] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
@@ -127,10 +126,14 @@ void test_singleWildcardGet()
         strncpy(valueList[i][0].parameterValue, values[i],MAX_PARAMETER_LEN);
         valueList[i][0].type = ccsp_string;
     }
-
+    
+    will_return(get_global_components, compList);
+    will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
     expect_function_call(free_componentStruct_t);
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, totalCount);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
