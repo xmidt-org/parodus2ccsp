@@ -6,6 +6,7 @@
  * Copyright (c) 2015  Comcast
  */
 
+#include <math.h>
 #include "webpa_notification.h"
 #include "webpa_internal.h"
 
@@ -272,7 +273,6 @@ static void loadCfgFile()
 
 		if(webpa_cfg)
 		{
-			cJSON * json_obj;
 			WalPrint("**********Loading Webpa Config***********\n");
 
 			if(cJSON_GetObjectItem(webpa_cfg, WEBPA_CFG_FIRMWARE_VER) != NULL)
@@ -338,7 +338,6 @@ static void setInitialNotify()
 
 		WDMP_STATUS ret = WDMP_FAILURE;
 		param_t *attArr = NULL;
-		char ** tempArr = NULL;
 
 		for (i = 0; i < notifyListSize; i++)
 		{
@@ -609,7 +608,6 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 {
 	int fileSize = 0;
 	char *cfg_file_content;
-	char ch;
 	FILE *fp;
 	char * token;
 	char *cfg_oldFirmwareVer;
@@ -696,8 +694,6 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 static void sendNotificationForFirmwareUpgrade()
 {
 	WDMP_STATUS configUpdateStatus = WDMP_FAILURE;
-	char *dbCMC = NULL, *dbCID = NULL;
-	char newCMC[32]={'\0'};
 	char *cur_firmware_ver = NULL;
 
 	cur_firmware_ver = getParameterValue(PARAM_FIRMWARE_VERSION);
@@ -1089,7 +1085,6 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
 	char *nodeData=NULL;
 	int len = 0;
 	char nodeMAC[32]={'\0'};
-	char *st, *status = NULL, *node_mac = NULL;
 	struct timespec sysTime;
 	char sbuf[32] = {'\0'};
 
