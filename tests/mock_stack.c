@@ -23,6 +23,7 @@
 #include <cmocka.h>
 
 #include <ccsp_base_api.h>
+#include "mock_stack.h"
 #include "../source/include/webpa_adapter.h"
 
 #define UNUSED(x) (void )(x)
@@ -37,6 +38,61 @@ parameterAttributeStruct_t **attrList;
 int totalCount;
 int rowId;
 char *faultParam;
+
+/*----------------------------------------------------------------------------*/
+/*                             External Functions                             */
+/*----------------------------------------------------------------------------*/
+
+void set_global_components(componentStruct_t **components)
+{
+    compList = components;
+}
+
+componentStruct_t ** get_global_components(void)
+{
+    return (componentStruct_t **) mock();
+}
+
+void set_global_component_size(int size)
+{
+    compSize = size;
+}
+
+int get_global_component_size(void)
+{
+    return (int) mock();
+}
+
+void set_global_parameters_count(int count)
+{
+    totalCount = count;
+}
+
+int get_global_parameters_count(void)
+{
+    return (int) mock();
+}
+
+void set_global_values(parameterValStruct_t **values)
+{
+    valueList = values;
+}
+
+parameterValStruct_t ** get_global_values(void)
+{
+    return (parameterValStruct_t **) mock();
+}
+
+void set_global_attributes(parameterAttributeStruct_t **attributes)
+{
+    attrList = attributes;
+}
+
+parameterAttributeStruct_t ** get_global_attributes()
+{
+    return (parameterAttributeStruct_t **) mock();
+}
+
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -44,8 +100,8 @@ char *faultParam;
 int CcspBaseIf_discComponentSupportingNamespace (void* bus_handle, const char* dst_component_id, const char *name_space, const char *subsystem_prefix, componentStruct_t ***components, int *size)
 {
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(name_space); UNUSED(subsystem_prefix);
-    *components = compList;
-    *size = compSize;
+    *components = get_global_components();
+    *size = get_global_component_size();
     function_called();
     return (int) mock();
 }
@@ -68,8 +124,8 @@ int CcspBaseIf_getParameterValues(void* bus_handle, const char* dst_component_id
 {
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(parameterNames);
     check_expected(size);
-    *val = valueList;
-    *val_size = totalCount;
+    *val = get_global_values();
+    *val_size = get_global_parameters_count();
     function_called();
     return (int) mock();
 }
@@ -102,7 +158,7 @@ int CcspBaseIf_getParameterAttributes(void* bus_handle, const char* dst_componen
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(parameterNames);
     check_expected(size);
     *val_size = totalCount;
-    *val = attrList;
+    *val = get_global_attributes();
     function_called();
     return (int) mock();
 }
