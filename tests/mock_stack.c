@@ -73,6 +73,11 @@ int get_global_parameters_count(void)
     return (int) mock();
 }
 
+char *get_global_faultParam(void)
+{
+    return (char *) mock();
+}
+
 void set_global_values(parameterValStruct_t **values)
 {
     valueList = values;
@@ -140,7 +145,7 @@ int CcspBaseIf_setParameterValues(void* bus_handle, const char* dst_component_id
 {
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(sessionId); UNUSED(writeID); UNUSED(size); UNUSED(val); UNUSED(commit);
     check_expected(size);
-    *invalidParameterName = faultParam;
+    *invalidParameterName = get_global_faultParam();
     function_called();
     return (int) mock();
 }
