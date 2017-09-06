@@ -550,6 +550,17 @@ static WDMP_STATUS validate_parameter(param_t *param, int paramCount)
                         return WDMP_ERR_VALUE_IS_NULL;
                 }
                 
+                if(strlen(param[i].name) >= MAX_PARAMETERNAME_LEN)
+                {
+                        WalError("Invalid parameter name\n");
+                        return WDMP_ERR_INVALID_PARAM;
+                }
+
+                if(strlen(param[i].value) >= MAX_PARAMETERVALUE_LEN)
+                {
+                        WalError("Invalid parameter value\n");
+                        return WDMP_ERR_INVALID_PARAM;
+                }
         }
         return WDMP_SUCCESS;
 }
