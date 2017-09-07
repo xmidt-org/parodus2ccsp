@@ -21,7 +21,6 @@
 #define WRP_TRANSACTION_ID			"transaction_uuid"
 #define PARAM_HOSTS_VERSION	        "Device.Hosts.X_RDKCENTRAL-COM_HostVersionId"
 #define PARAM_SYSTEM_TIME		        "Device.DeviceInfo.X_RDKCENTRAL-COM_SystemTime"
-#define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
 #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
 #define WEBPA_CFG_FIRMWARE_VER		"oldFirmwareVersion"
 /*----------------------------------------------------------------------------*/
@@ -44,7 +43,7 @@ typedef struct
 static NotifyMsg *notifyMsgQ = NULL;
 void (*notifyCbFn)(NotifyData*) = NULL;
 static WebPaCfg webPaCfg;
-static char deviceMAC[32]={'\0'};
+char deviceMAC[32]={'\0'};
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t con=PTHREAD_COND_INITIALIZER;
@@ -103,15 +102,15 @@ static void addNotifyMsgToQueue(NotifyData *notifyData);
 static void handleNotificationEvents();
 static void freeNotifyMessage(NotifyData *notifyData);
 static void getNotifyParamList(const char ***paramList,int *size);
-static void processNotification(NotifyData *notifyData);
-static void sendNotificationForFactoryReset();
-static void sendNotificationForFirmwareUpgrade();
+void processNotification(NotifyData *notifyData);
+void sendNotificationForFactoryReset();
+void sendNotificationForFirmwareUpgrade();
 static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value);
 static WDMP_STATUS processParamNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
 static void processConnectedClientNotification(NodeData *connectedNotify, char *deviceId, char **version, char ** nodeMacId, char **timeStamp, char **destination);
 static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
 static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
-static void processDeviceStatusNotification();
+void processDeviceStatusNotification();
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -590,7 +589,7 @@ static void handleNotificationEvents()
 /*
  * @brief To handle notification during Factory reset
  */
-static void sendNotificationForFactoryReset()
+void sendNotificationForFactoryReset()
 {
 	WalPrint("sendNotificationForFactoryReset\n");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
@@ -691,7 +690,7 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
  * with the current device firmware version. If they dont match then update "oldFirmwareVersion"
  * with the latest version, update CMC and send notification to XPC indicating Firmware Upgrade
  */
-static void sendNotificationForFirmwareUpgrade()
+void sendNotificationForFirmwareUpgrade()
 {
 	WDMP_STATUS configUpdateStatus = WDMP_FAILURE;
 	char *cur_firmware_ver = NULL;
@@ -738,7 +737,7 @@ static void sendNotificationForFirmwareUpgrade()
 /*
  * @brief To handle notification for all notification types
  */
-static void processNotification(NotifyData *notifyData)
+void processNotification(NotifyData *notifyData)
 {
 	WDMP_STATUS ret = WDMP_FAILURE;
 	char device_id[32] = { '\0' };
@@ -959,7 +958,7 @@ static WDMP_STATUS processParamNotification(ParamNotify *paramNotify,
 /*
  * @brief To process notification during device status
  */
-static void processDeviceStatusNotification()
+void processDeviceStatusNotification()
 {
 	WalPrint("processDeviceStatusNotification\n");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
