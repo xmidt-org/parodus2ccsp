@@ -48,6 +48,7 @@
 #define PARAM_CMC                      "Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC"
 #define DEVICE_MAC                   "Device.X_CISCO_COM_CableModem.MACAddress"
 #define PARAM_REBOOT_REASON		     "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason"
+#define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
 #define ALIAS_PARAM				"Alias"
 #define PARAM_RADIO_OBJECT            "Device.WiFi.Radio."
 #define WEBPA_PROTOCOL                "WEBPA-2.0"

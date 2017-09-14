@@ -202,14 +202,10 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
 
                                 for(cnt1=index-1;cnt1>=0;cnt1--)
                                 {
-                                        for(j=0;j<ParamGroup[cnt1].parameterCount;j++)
-                                        {
-                                                WAL_FREE(storeGetValue[cnt1]->name);
-                                                WAL_FREE(storeGetValue[cnt1]->value);
-                                                WAL_FREE(storeGetValue[cnt1]);
-                                        }
+                                        WAL_FREE(storeGetValue[cnt1]->name);
+                                        WAL_FREE(storeGetValue[cnt1]->value);
+                                        WAL_FREE(storeGetValue[cnt1]);
                                 }
-
                                 break;
                         }
                         else
@@ -313,7 +309,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                 if(ret != CCSP_SUCCESS)
                                 {
                                         WalError("Failed atomic set for WIFI hence rollbacking the changes. ret :%d and i is %d\n",ret,i);
-
+                                        WalPrint("------ Start of rollback ------\n");
                                         // Rollback data in failure case
                                         for(rev =i-1;rev>=0;rev--)
                                         {
