@@ -690,6 +690,53 @@ void err_multipleGet()
     cJSON_Delete(response);
 }
 
+void err_multipleGetWildCardErr()
+{
+    char *reqPayload = "{ \"names\":[\"Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.\",\"Device.WiFi.SSID.10007.SSID\",\"Device.WiFi.SSID.10107.SSID\"],\"command\": \"GET\"}";
+    char *transactionId = "erejujaasfsdfgeh";
+    char *wifiNames[MAX_PARAMETER_LEN] = {"Device.WiFi.SSID.10007.SSID", "Device.WiFi.SSID.10107.SSID"};
+    char *wifiValues[MAX_PARAMETER_LEN] = {"testssid7","testssid17"};
+    int wifiType[MAX_PARAMETER_LEN] = {ccsp_string, ccsp_string};
+    char *resPayload = NULL;
+    cJSON *response = NULL;
+    int i;
+
+    applySettingsFlag = FALSE;
+    getCompDetails();
+
+    parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*2);
+    for(i = 0; i<2; i++)
+    {
+        valueList[i] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+        valueList[i][0].parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+        strncpy(valueList[i][0].parameterName, wifiNames[i],MAX_PARAMETER_LEN);
+        valueList[i][0].parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+        strncpy(valueList[i][0].parameterValue, wifiValues[i],MAX_PARAMETER_LEN);
+        valueList[i][0].type = wifiType[i];
+    }
+
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, 2);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 2);
+
+    will_return(get_global_components, NULL);
+    will_return(get_global_component_size, 0);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
+    expect_function_call(free_componentStruct_t);
+
+    processRequest(reqPayload, transactionId, &resPayload);
+    WalInfo("resPayload : %s\n",resPayload);
+
+    assert_non_null(resPayload);
+    response = cJSON_Parse(resPayload);
+    assert_non_null(response);
+    assert_int_equal(520, cJSON_GetObjectItem(response, "statusCode")->valueint);
+    cJSON_Delete(response);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -710,7 +757,8 @@ int main(void)
         cmocka_unit_test(err_getWithWiFiBusy),
         cmocka_unit_test(err_getWithInvalidWiFiIndex),
         cmocka_unit_test(err_getWithInvalidRadioIndex),
-        cmocka_unit_test(err_multipleGet)
+        cmocka_unit_test(err_multipleGet),
+        cmocka_unit_test(err_multipleGetWildCardErr)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
