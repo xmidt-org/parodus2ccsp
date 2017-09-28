@@ -36,47 +36,9 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern BOOL applySettingsFlag;
-extern int cachingStatus;
-extern ComponentVal ComponentValArray[RDKB_TR181_OBJECT_LEVEL1_COUNT];
-extern ComponentVal SubComponentValArray[RDKB_TR181_OBJECT_LEVEL2_COUNT];
-extern int compCacheSuccessCnt;
-extern int subCompCacheSuccessCnt;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
-void getCompDetails()
-{
-    int i=0;
-    int compSizeList[] = {1,1,2,1};
-    char *compNameList[] = {RDKB_WIFI_FULL_COMPONENT_NAME,"com.ccsp.webpa","com.ccsp.pam","com.ccsp.nat"};
-    char *dbusPathList[] = {RDKB_WIFI_DBUS_PATH,"/com/ccsp/webpa","/com/ccsp/pam","/com/ccsp/nat"};
-    char *objList[]={"Device.WiFi.","Device.Webpa.","Device.DeviceInfo.","Device.NAT."};
-    int subCompSizeList[] = {1,1};
-    char *subCompNameList[] = {"com.ccsp.webpa","com.ccsp.nat"};
-    char *subDbusPathList[] = {"/com/ccsp/webpa","/com/ccsp/nat"};
-    char *subObjList[]={"Device.DeviceInfo.Webpa.","Device.NAT.PortMapping."};
-
-    cachingStatus = 1;
-    compCacheSuccessCnt = 4;
-    subCompCacheSuccessCnt = 2;
-    for(i=0; i<compCacheSuccessCnt; i++)
-    {
-        ComponentValArray[i].comp_id=i;
-        ComponentValArray[i].comp_size=compSizeList[i];
-        ComponentValArray[i].obj_name=objList[i];
-        ComponentValArray[i].comp_name=compNameList[i];
-        ComponentValArray[i].dbus_path=dbusPathList[i];
-    }
-
-    for(i=0; i<subCompCacheSuccessCnt; i++)
-    {
-        SubComponentValArray[i].comp_id=i;
-        SubComponentValArray[i].comp_size=subCompSizeList[i];
-        SubComponentValArray[i].obj_name=subObjList[i];
-        SubComponentValArray[i].comp_name=subCompNameList[i];
-        SubComponentValArray[i].dbus_path=subDbusPathList[i];
-    }
-}
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/
@@ -192,17 +154,6 @@ void test_largeWildcardGet()
     int totalCount = 5;
 
     getCompDetails();
-    componentStruct_t **compList = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*2);
-    compList[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
-    compList[0]->componentName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
-    strncpy(compList[0]->componentName, "com.ccsp.pam",MAX_PARAMETER_LEN);
-    compList[0]->dbusPath = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
-    strncpy(compList[0]->dbusPath, "/com/ccsp/pam",MAX_PARAMETER_LEN);
-    compList[1] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
-    compList[1]->componentName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
-    strncpy(compList[1]->componentName, "com.ccsp.webpa",MAX_PARAMETER_LEN);
-    compList[1]->dbusPath = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
-    strncpy(compList[1]->dbusPath, "/com/ccsp/webpa",MAX_PARAMETER_LEN);
 
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*2);
     for(i = 0; i<2; i++)
@@ -228,7 +179,7 @@ void test_largeWildcardGet()
         j++;
     }
 
-    will_return(get_global_components, compList);
+    will_return(get_global_components, getDeviceInfoCompDetails());
     will_return(get_global_component_size, 2);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
