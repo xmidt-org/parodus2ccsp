@@ -63,5 +63,5 @@ add_test(NAME test_ssp COMMAND ${MEMORY_CHECK} ./test_ssp)
 add_executable(test_ssp test_ssp.c mock_stack.c ../source/broadband/ssp_main.c 
                                                 ../source/broadband/ssp_action.c
                                                 ../source/broadband/ssp_messagebus_interface.c)
-target_link_libraries (test_ssp -lwrp-c -lwdmp-c ${WEBPA_COMMON_LIBS} -llibparodus)
+target_link_libraries (test_ssp -ldbus-1 -lwdmp-c ${WEBPA_COMMON_LIBS} -llibparodus -lwrp-c)
 
