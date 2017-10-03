@@ -26,7 +26,16 @@
 #include "mock_stack.h"
 #include "../source/include/webpa_adapter.h"
 
+/*----------------------------------------------------------------------------*/
+/*                                   Macros                                   */
+/*----------------------------------------------------------------------------*/
 #define UNUSED(x) (void )(x)
+
+/*----------------------------------------------------------------------------*/
+/*                               Data Structures                              */
+/*----------------------------------------------------------------------------*/
+typedef int DmErr_t;
+
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -228,3 +237,160 @@ void CcspBaseIf_SetCallback(void* bus_handle, CCSP_Base_Func_CB*  func)
     function_called();
 }
 
+DBusHandlerResult CcspBaseIf_base_path_message_func (DBusConnection *conn, DBusMessage *message, DBusMessage *reply, const char *interface, const char *method,
+                                                     CCSP_MESSAGE_BUS_INFO *bus_info)
+{
+    UNUSED(conn); UNUSED(message); UNUSED(reply); UNUSED(interface); UNUSED(method); UNUSED(bus_info);
+    function_called();
+    return (DBusHandlerResult) mock();
+}
+
+void CCSP_Msg_SleepInMilliSeconds(int milliSecond)
+{
+    sleep(milliSecond/1000);
+}
+
+int CcspCcMbi_GetParameterValues(unsigned int writeID, char *parameterNames[], int size, int *val_size, parameterValStruct_t ***val, void * user_data)
+{
+    UNUSED(writeID); UNUSED(parameterNames); UNUSED(size); UNUSED(val_size); UNUSED(val); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+int CcspCcMbi_SetParameterValues(int sessionId, unsigned int writeID, parameterValStruct_t *val, int size, dbus_bool commit, char ** invalidParameterName, void * user_data)
+{
+    UNUSED(sessionId); UNUSED(writeID); UNUSED(val); UNUSED(size); UNUSED(commit); UNUSED(invalidParameterName); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+int CcspCcMbi_SetCommit(int sessionId, unsigned int writeID, dbus_bool commit, void * user_data)
+{
+    UNUSED(sessionId); UNUSED(writeID); UNUSED(commit); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+int CcspCcMbi_SetParameterAttributes(int sessionId, parameterAttributeStruct_t *val, int size, void *user_data)
+{
+    UNUSED(sessionId); UNUSED(val); UNUSED(size); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+int CcspCcMbi_GetParameterAttributes(char* parameterNames[], int size, int* val_size, parameterAttributeStruct_t ***val, void * user_data)
+{
+    UNUSED(parameterNames); UNUSED(size); UNUSED(val_size); UNUSED(val); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+int CcspCcMbi_AddTblRow(int sessionId, char *objectName, int *instanceNumber, void *user_data)
+{
+    UNUSED(sessionId); UNUSED(objectName); UNUSED(instanceNumber); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+int CcspCcMbi_DeleteTblRow(int sessionId, char *objectName, void *user_data)
+{
+    UNUSED(sessionId); UNUSED(objectName); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+int CcspCcMbi_GetParameterNames(char *parameterName, dbus_bool nextLevel, int *size, parameterInfoStruct_t ***val, void *user_data)
+{
+    UNUSED(parameterName); UNUSED(nextLevel); UNUSED(size); UNUSED(val); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+void CcspCcMbi_CurrentSessionIdSignal( int priority, int sessionID, void *user_data)
+{
+    UNUSED(priority); UNUSED(sessionID); UNUSED(user_data);
+    function_called();
+}
+
+int CCSP_Message_Bus_Register_Path2(void* bus_handle, const char *path, DBusObjectPathMessageFunction funcptr, void *user_data)
+{
+    UNUSED(bus_handle); UNUSED(path); UNUSED(funcptr); UNUSED(user_data);
+    function_called();
+    return (int) mock();
+}
+
+DmErr_t Cdm_Init(const void *busHdl, const char *subSys, const char *cnfFil, const char *crId, const char *compId)
+{
+    UNUSED(busHdl); UNUSED(subSys); UNUSED(cnfFil); UNUSED(crId); UNUSED(compId);
+    function_called();
+    return (DmErr_t) mock();
+}
+
+DmErr_t Cdm_Term(void)
+{
+    function_called();
+    return (DmErr_t) mock();
+}
+
+const char *Cdm_StrError(DmErr_t err)
+{
+    UNUSED(err);
+    function_called();
+    return (char *) mock();
+}
+
+void AnscPrintComponentMemoryTable(char *pComponentName)
+{
+    UNUSED(pComponentName);
+    function_called();
+}
+
+void AnscTraceMemoryTable(void)
+{
+    function_called();
+}
+
+void AnscZeroMemory(void *pMemory, unsigned long ulMemorySize)
+{
+    UNUSED(pMemory); UNUSED(ulMemorySize);
+    function_called();
+}
+
+long AnscGetComponentMemorySize(char *pComponentName)
+{
+    UNUSED(pComponentName);
+    function_called();
+    return (long) mock();
+}
+
+void *Ansc_AllocateMemory_Callback(unsigned long ulMemorySize)
+{
+    UNUSED(ulMemorySize);
+    function_called();
+    return (void *) mock();
+}
+
+void Ansc_FreeMemory_Callback(void *pMemory)
+{
+    UNUSED(pMemory);
+    function_called();
+}
+
+char *AnscCloneString(char *s)
+{ 
+    return strdup(s); 
+}
+
+ANSC_HANDLE DslhCreateCpeController(ANSC_HANDLE hContainerContext, ANSC_HANDLE hOwnerContext, ANSC_HANDLE hAnscReserved)
+{
+    UNUSED(hContainerContext); UNUSED(hOwnerContext); UNUSED(hAnscReserved);
+    function_called();
+    return (ANSC_HANDLE) mock();
+}
+
+void* MsgHelper_CreateCcdMbiIf(void *dbusHandle, char *pPrefix)
+{
+    UNUSED(dbusHandle); UNUSED(pPrefix);
+    function_called();
+    return (void*) mock();
+}

@@ -4,8 +4,12 @@
 *@description This file is for Message Bus initalization of the component and component path registration.
 *
 */
+#include <stdio.h>
 #include "ssp_global.h"
 
+#if defined(TESTING_BUILD)
+#include "../../tests/mock_stack.h"
+#endif //TESTING_BUILD
 
 ANSC_HANDLE                 bus_handle               = NULL;
 extern char                 g_Subsystem[32];
@@ -46,8 +50,12 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
     if ( ! component_id || ! path )
     {
         CcspTraceError((" !!! ssp_Mbi_MessageBusEngage: component_id or path is NULL !!!\n"));
+        printf(" !!! ssp_Mbi_MessageBusEngage: component_id or path is NULL !!!\n");
+        fflush(stdout);
     }
 
+    printf(" !!! Before CCSP_Message_Bus_Init !!!\n");
+    fflush(stdout);
     /* Connect to message bus */
     returnStatus = 
         CCSP_Message_Bus_Init
@@ -62,10 +70,13 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
     if ( returnStatus != ANSC_STATUS_SUCCESS )
     {
         CcspTraceError((" !!! SSD Message Bus Init ERROR !!!\n"));
-
+        printf(" !!! SSD Message Bus Init ERROR !!!\n");
+        fflush(stdout);
         return returnStatus;
     }
 
+    printf(" !!! SSD Message Bus Init SUCCESS !!!\n");
+    fflush(stdout);
     CcspTraceInfo(("INFO: bus_handle: 0x%8x \n", bus_handle));
     g_MessageBusHandle_Irep = bus_handle;
     AnscCopyString(g_SubSysPrefix_Irep, g_Subsystem);
@@ -104,10 +115,13 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
     if ( returnStatus != CCSP_Message_Bus_OK )
     {
         CcspTraceError((" !!! CCSP_Message_Bus_Register_Path ERROR returnStatus: %d\n!!!\n", returnStatus));
-
+        printf(" !!! CCSP_Message_Bus_Register_Path ERROR returnStatus: %d\n!!!\n", returnStatus);
+        fflush(stdout);
         return returnStatus;
     }
 
+    printf(" !!! CcspBaseIf_Register_Path SUCCESS !!!\n");
+    fflush(stdout);
 
     /* Register event/signal */
     returnStatus = 
@@ -120,11 +134,14 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
 
     if ( returnStatus != CCSP_Message_Bus_OK )
     {
-         CcspTraceError((" !!! CCSP_Message_Bus_Register_Event: CurrentSessionIDSignal ERROR returnStatus: %d!!!\n", returnStatus));
-
+        CcspTraceError((" !!! CCSP_Message_Bus_Register_Event: CurrentSessionIDSignal ERROR returnStatus: %d!!!\n", returnStatus));
+        printf(" !!! CCSP_Message_Bus_Register_Event: CurrentSessionIDSignal ERROR returnStatus: %d!!!\n", returnStatus);
+        fflush(stdout);
         return returnStatus;
     }
 
+    printf(" !!! CcspBaseIf_Register_Event SUCCESS !!!\n");
+    fflush(stdout);
     return ANSC_STATUS_SUCCESS;
 
 }

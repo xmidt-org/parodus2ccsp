@@ -268,5 +268,6 @@ add_subdirectory(source/broadband)
 add_subdirectory(source/app)
 
 if (BUILD_TESTING)
+add_definitions(-DTESTING_BUILD)
 add_subdirectory(tests)
 endif (BUILD_TESTING)

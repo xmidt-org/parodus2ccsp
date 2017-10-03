@@ -15,13 +15,16 @@
 #include "ccsp_dm_api.h"
 #include "webpa_adapter.h"
 
+#if defined(TESTING_BUILD)
+#include "../../tests/mock_stack.h"
+#endif //TESTING_BUILD
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
 /*None*/
 
 /*----------------------------------------------------------------------------*/
-/*                               File scoped variables                              */
+/*                            File scoped variables                           */
 /*----------------------------------------------------------------------------*/
 char  g_Subsystem[32] = {0};
 
@@ -46,7 +49,6 @@ int  cmd_dispatch(int  command)
 
 #ifdef _ANSC_LINUX
             CcspTraceInfo(("Connect to bus daemon...\n"));
-
             {
                 char                            CName[256];
 
@@ -69,6 +71,7 @@ int  cmd_dispatch(int  command)
 #endif
 
             ssp_create();
+
             ssp_engage();
 
             break;
@@ -112,8 +115,9 @@ WDMP_STATUS msgBusInit(const char *pComponentName)
     DmErr_t    err;
     AnscCopyString(g_Subsystem, "eRT.");
 
-    if ( bRunAsDaemon ) 
+    if ( bRunAsDaemon ) {
         daemonize();
+    }
 
     cmd_dispatch('e');
 
@@ -161,7 +165,7 @@ if ( bRunAsDaemon )
  * @brief daemonize is a continous loop running in the background waiting to cater component requests.
  */
 static void daemonize(void) {
-	
+
 	switch (fork()) {
 	case 0:
 		break;
@@ -190,7 +194,7 @@ static void daemonize(void) {
 	}
 	fd = open("/dev/null", O_WRONLY);
 	if (fd != 1) {
-		dup2(fd, 1);
+		int ret = dup2(fd, 1);
 		close(fd);
 	}
 	fd = open("/dev/null", O_WRONLY);

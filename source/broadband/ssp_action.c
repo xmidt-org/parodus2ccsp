@@ -9,6 +9,9 @@
 #include "dslh_dmagnt_interface.h"
 #include "ccsp_trace.h"
 
+#if defined(TESTING_BUILD)
+#include "../../tests/mock_stack.h"
+#endif //TESTING_BUILD
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/

@@ -14,15 +14,49 @@
  *  limitations under the License.
  */
 
-#ifndef _MOCK_SATCK_H_
-#define _MOCK_SATCK_H_
+#ifndef _MOCK_STACK_H_
+#define _MOCK_STACK_H_
 
 #include <ccsp_base_api.h>
 
 /*----------------------------------------------------------------------------*/
+/*                                   Macros                                   */
+/*----------------------------------------------------------------------------*/
+#if defined(CcspTraceInfo)
+#undef CcspTraceInfo  
+#define CcspTraceInfo(...)     \
+{                              \
+    (printf __VA_ARGS__);      \
+    fflush(stdout);            \
+}
+#endif //CcspTraceInfo
+
+#if defined(CcspTraceWarning)
+#undef CcspTraceWarning
+#define CcspTraceWarning(...)  \
+{                              \
+    (printf __VA_ARGS__);      \
+    fflush(stdout);            \
+}
+#endif //CcspTraceWarning
+
+#if defined(CcspTraceError)
+#undef CcspTraceError
+#define CcspTraceError(...)    \
+{                              \
+    (printf __VA_ARGS__);      \
+    fflush(stdout);            \
+}
+#endif //CcspTraceError
+
+/*----------------------------------------------------------------------------*/
+/*                               Data Structures                              */
+/*----------------------------------------------------------------------------*/
+typedef void* ANSC_HANDLE;
+
+/*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
-
 void set_global_components(componentStruct_t **components);
 componentStruct_t ** get_global_components();
 void set_global_values(parameterValStruct_t **values);

@@ -56,3 +56,12 @@ add_test(NAME test_webpa_notification COMMAND ${MEMORY_CHECK} ./test_webpa_notif
 add_executable(test_webpa_notification test_webpa_notification.c mock_stack.c ../source/app/libpd.c ${WEBPA_COMMON_SOURCES})
 target_link_libraries (test_webpa_notification -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS} -llibparodus)
 
+#-------------------------------------------------------------------------------
+#   test_ssp
+#-------------------------------------------------------------------------------
+add_test(NAME test_ssp COMMAND ${MEMORY_CHECK} ./test_ssp)
+add_executable(test_ssp test_ssp.c mock_stack.c ../source/broadband/ssp_main.c 
+                                                ../source/broadband/ssp_action.c
+                                                ../source/broadband/ssp_messagebus_interface.c)
+target_link_libraries (test_ssp -ldbus-1 -lwdmp-c ${WEBPA_COMMON_LIBS} -llibparodus)
+
