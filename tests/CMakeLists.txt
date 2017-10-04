@@ -63,3 +63,10 @@ add_test(NAME test_webpa_get_attr COMMAND ${MEMORY_CHECK} ./test_webpa_get_attr)
 add_executable(test_webpa_get_attr test_webpa_get_attr.c mock_stack.c mock_cache.c ../source/app/libpd.c ${WEBPA_COMMON_SOURCES})
 target_link_libraries (test_webpa_get_attr -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS} -llibparodus)
 
+#-------------------------------------------------------------------------------
+#   test_webpa_set_attributes
+#-------------------------------------------------------------------------------
+add_test(NAME test_webpa_set_attr COMMAND ${MEMORY_CHECK} ./test_webpa_set_attr)
+add_executable(test_webpa_set_attr test_webpa_set_attr.c mock_stack.c mock_cache.c ../source/app/libpd.c ${WEBPA_COMMON_SOURCES})
+target_link_libraries (test_webpa_set_attr -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS} -llibparodus)
+
