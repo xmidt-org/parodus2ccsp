@@ -162,7 +162,7 @@ int CcspBaseIf_getParameterAttributes(void* bus_handle, const char* dst_componen
 {
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(parameterNames);
     check_expected(size);
-    *val_size = totalCount;
+    *val_size = get_global_parameters_count();
     *val = get_global_attributes();
     function_called();
     return (int) mock();
@@ -170,7 +170,14 @@ int CcspBaseIf_getParameterAttributes(void* bus_handle, const char* dst_componen
 
 void free_parameterAttributeStruct_t(void* bus_handle, int size, parameterAttributeStruct_t **val)
 {
-    UNUSED(bus_handle); UNUSED(size); UNUSED(val);
+    UNUSED(bus_handle);
+    int i;
+    for(i = 0; i<size; i++)
+    {
+        WAL_FREE(val[i]->parameterName);
+        WAL_FREE(val[i]);
+    }
+    WAL_FREE(val);
     function_called();
 }
 

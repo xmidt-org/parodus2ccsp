@@ -39,49 +39,10 @@
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
-extern int cachingStatus;
-extern ComponentVal ComponentValArray[RDKB_TR181_OBJECT_LEVEL1_COUNT];
-extern ComponentVal SubComponentValArray[RDKB_TR181_OBJECT_LEVEL2_COUNT];
-extern int compCacheSuccessCnt;
-extern int subCompCacheSuccessCnt;
 extern char deviceMAC[32];
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
-void getCompDetails()
-{
-    int i=0;
-    int compSizeList[] = {1,1,2,1};
-    char *compNameList[] = {RDKB_WIFI_FULL_COMPONENT_NAME,"com.ccsp.webpa","com.ccsp.pam","com.ccsp.nat"};
-    char *dbusPathList[] = {RDKB_WIFI_DBUS_PATH,"/com/ccsp/webpa","/com/ccsp/pam","/com/ccsp/nat"};
-    char *objList[]={"Device.WiFi.","Device.Webpa.","Device.DeviceInfo.","Device.NAT."};
-    int subCompSizeList[] = {1,1};
-    char *subCompNameList[] = {"com.ccsp.webpa","com.ccsp.nat"};
-    char *subDbusPathList[] = {"/com/ccsp/webpa","/com/ccsp/nat"};
-    char *subObjList[]={"Device.DeviceInfo.Webpa.","Device.NAT.PortMapping."};
-
-    cachingStatus = 1;
-    compCacheSuccessCnt = 4;
-    subCompCacheSuccessCnt = 2;
-    for(i=0; i<compCacheSuccessCnt; i++)
-    {
-        ComponentValArray[i].comp_id=i;
-        ComponentValArray[i].comp_size=compSizeList[i];
-        ComponentValArray[i].obj_name=objList[i];
-        ComponentValArray[i].comp_name=compNameList[i];
-        ComponentValArray[i].dbus_path=dbusPathList[i];
-    }
-
-    for(i=0; i<subCompCacheSuccessCnt; i++)
-    {
-        SubComponentValArray[i].comp_id=i;
-        SubComponentValArray[i].comp_size=subCompSizeList[i];
-        SubComponentValArray[i].obj_name=subObjList[i];
-        SubComponentValArray[i].comp_name=subCompNameList[i];
-        SubComponentValArray[i].dbus_path=subDbusPathList[i];
-    }
-}
-
 int libparodus_send (libpd_instance_t instance, wrp_msg_t *msg)
 {
     UNUSED(instance);
@@ -104,10 +65,6 @@ void test_factory_reset_notification()
 {
     getCompDetails();
     strcpy(deviceMAC, "14cfe2142112");
-    componentStruct_t **compList = (componentStruct_t **) malloc(sizeof(componentStruct_t *));
-    compList[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
-    compList[0]->componentName = strndup("com.ccsp.pam",MAX_PARAMETER_LEN);
-    compList[0]->dbusPath = strndup("/com/ccsp/pam",MAX_PARAMETER_LEN);
 
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
@@ -133,7 +90,7 @@ void test_factory_reset_notification()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    will_return(get_global_components, compList);
+    will_return(get_global_components, getDeviceInfoCompDetails());
     will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
@@ -165,10 +122,6 @@ void test_firmware_upgrade_notification()
 {
     getCompDetails();
     strcpy(deviceMAC, "14cfe2142112");
-    componentStruct_t **compList = (componentStruct_t **) malloc(sizeof(componentStruct_t *));
-    compList[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
-    compList[0]->componentName = strndup("com.ccsp.pam",MAX_PARAMETER_LEN);
-    compList[0]->dbusPath = strndup("/com/ccsp/pam",MAX_PARAMETER_LEN);
 
     parameterValStruct_t **firmwareList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     firmwareList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
@@ -194,7 +147,7 @@ void test_firmware_upgrade_notification()
     cidList[0]->parameterValue = strndup("abcd",MAX_PARAMETER_LEN);;
     cidList[0]->type = ccsp_string;
 
-    will_return(get_global_components, compList);
+    will_return(get_global_components, getDeviceInfoCompDetails());
     will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
