@@ -26,6 +26,7 @@
 static void getTableRows(char *objectName,parameterValStruct_t **parameterval, int paramCount, int *numRows,char ***rowObjects);
 static void contructRollbackTableData(parameterValStruct_t **parameterval,int paramCount,char ***rowList,int rowCount, int *numParam,TableData ** getList);
 static void getWritableParams(char *paramName, char ***writableParams, int *paramCount);
+static int getComponentInfoFromCache(char *parameterName, char *objectName, char *compName, char *dbusPath);
 static int addRow(char *object,char *compName,char *dbusPath,int *retIndex);
 static int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath);
 static int deleteRow(char *object);
@@ -192,7 +193,7 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
 					WalPrint("deleteList[%d] : %s\n",cnt,deleteList[cnt]);
 					if(paramcount != 0)
 					{
-					WalPrint("addList[%d].paramCnt : %zu\n",cnt,addList[cnt].paramCnt);
+					WalPrint("addList[%d].paramCnt : %d\n",cnt,addList[cnt].paramCnt);
 						for (cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
 						{
 							WalPrint("addList[%d].names[%d] : %s,addList[%d].values[%d] : %s\n ",cnt,cnt1,addList[cnt].names[cnt1],cnt,cnt1,addList[cnt].values[cnt1]);
@@ -200,8 +201,8 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
 					}
 				}
 				WalPrint("-------- Printed %d rows----------\n",rowCount);
-				deleteAllTableData(deleteList,rowCount);
 			}
+			deleteAllTableData(deleteList,rowCount);
 			if(paramcount != 0)
 			{
 				addRet = addNewData(objectName,list,paramcount);
@@ -496,7 +497,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
 				*list = getList;
 				for(cnt =0; cnt < rowCount; cnt++)
 				{	
-					WalPrint("(*list)[%d].paramCnt : %zu\n",cnt,(*list)[cnt].paramCnt);
+					WalPrint("(*list)[%d].paramCnt : %d\n",cnt,(*list)[cnt].paramCnt);
 					for (cnt1 = 0; cnt1 < (*list)[cnt].paramCnt; cnt1++)
 					{
 						WalPrint("(*list)[%d].names[%d] : %s,(*list)[%d].values[%d] : %s\n ",cnt,cnt1,(*list)[cnt].names[cnt1],cnt,cnt1,(*list)[cnt].values[cnt1]);
@@ -571,10 +572,10 @@ char **retObject = NULL;
 		strncpy(paramName,objectName,sizeof(paramName));
 		retObject[cnt] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
 		addRowTable(paramName,&list[cnt],&retObject[cnt],&addRet);
-		WalInfo("retObject[%d] : %s addRet : %d\n",cnt,retObject[cnt],addRet);
+		WalPrint("addRet : %d\n",addRet);
 		if(addRet != WDMP_SUCCESS)
 		{
-			WalError("Failed to add/update row retObject[%d] : %s, addRet : %d, hence deleting the already added rows\n", cnt, retObject[cnt], addRet);
+			WalError("Failed to add/update row to %s table, addRet : %d, hence deleting the already added rows\n", objectName, addRet);
 			for(i= cnt-1; i >= 0; i--)
 			{
 				strncpy(paramName,retObject[i],sizeof(paramName));
@@ -617,7 +618,7 @@ static void addCachedData(char *objectName,TableData * addList,int rowCount)
 		retRows[cnt] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
 		strncpy(paramName,objectName,sizeof(paramName));
 		addRowTable(paramName,&addList[cnt],&retRows[cnt],&addRet);
-		WalPrint("retRows[%d] : %s addRet : %d\n",cnt,retRows[cnt],addRet);
+		WalPrint("addRet : %d\n",addRet);
 		if(addRet == WDMP_SUCCESS)
 		{
 			WalInfo("%s row is successfully added\n",retRows[cnt]);

@@ -7,6 +7,9 @@
 #include "webpa_internal.h"
 #include "webpa_notification.h"
 
+#define WEBPA_PARAM_VERSION                 "Device.X_RDKCENTRAL-COM_Webpa.Version"
+#define WEBPA_PARAM_PROTOCOL_VERSION        "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
+
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
 void (*notifyCbFnPtr)(NotifyData*) = NULL;
@@ -59,11 +62,12 @@ Webpa_SetParamStringValue
                         write_id = atoi(p_write_id);
 
                         WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
-                        WalPrint(" \n Notification : New Value = %s \n", p_new_val);
-                        WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
                         WalPrint(" \n Notification : Value Type = %d \n", value_type);
                         WalPrint(" \n Notification : Component ID = %d \n", write_id);
-
+#if 0 /*Removing Logging of Password due to security requirement*/
+                        WalPrint(" \n Notification : New Value = %s \n", p_new_val);
+                        WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
+#endif
                         param.parameterName = p_notify_param_name;
                         param.oldValue = p_old_val;
                         param.newValue = p_new_val;
@@ -157,13 +161,16 @@ Webpa_GetParamStringValue
         if( AnscEqualString(ParamName, "X_COMCAST-COM_CID", TRUE))
         {
                 WalPrint("X_COMCAST-COM_CID\n");
-	        AnscCopyString(pValue, pWebpaCfg->X_COMCAST_COM_CID);
+		CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_CID", pWebpaCfg->X_COMCAST_COM_CID );
+		AnscCopyString(pValue, pWebpaCfg->X_COMCAST_COM_CID);
 		return 0;
         }
     	
         if( AnscEqualString(ParamName, "X_COMCAST-COM_SyncProtocolVersion", TRUE))
         {
                 WalPrint("X_COMCAST-COM_SyncProtocolVersion\n");
+		/* X_COMCAST-COM_SyncProtocolVersion */
+		CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_SyncProtocolVersion", pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion);
 	        AnscCopyString(pValue, pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion);
 		return 0;
         }
@@ -192,12 +199,19 @@ Webpa_GetParamUlongValue
         PCOSA_DATAMODEL_WEBPA       hWebpa    = (PCOSA_DATAMODEL_WEBPA)g_pCosaBEManager->hWebpa;
         PCOSA_DML_WEBPA             pWebpa    = (PCOSA_DML_WEBPA) hWebpa->pWebpa;
 	PCOSA_DML_WEBPA_CONFIG      pWebpaCfg = (PCOSA_DML_WEBPA_CONFIG)pWebpa->pWebpaCfg;
+	char tmpchar[128] = { 0 };
 	
         if( AnscEqualString(ParamName, "X_COMCAST-COM_CMC", TRUE))
         {
                 WalPrint("X_COMCAST-COM_CMC\n");
-                *puLong = pWebpaCfg->X_COMCAST_COM_CMC;
-		return TRUE;
+				/* X_COMCAST-COM_CMC */
+				CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_CMC", tmpchar );
+				if(strlen(tmpchar)>0)
+				{
+					pWebpaCfg->X_COMCAST_COM_CMC = atoi(tmpchar);
+		            *puLong = pWebpaCfg->X_COMCAST_COM_CMC;
+					return TRUE;
+				}
         }
         
         return FALSE;
@@ -229,3 +243,238 @@ Webpa_SetParamUlongValue
     return FALSE;
 }
 
+int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
+{
+    char *webpaObjects[] ={"Device.DeviceInfo.Webpa.", "Device.X_RDKCENTRAL-COM_Webpa.","Device.Webpa.","Device.DeviceInfo."};
+    int objSize = sizeof(webpaObjects)/sizeof(webpaObjects[0]);
+    parameterValStruct_t **paramVal = NULL;
+    paramVal = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t *)*paramCount);
+    int i=0, j=0, k=0, isWildcard = 0, matchFound = 0;
+    int localCount = paramCount;
+    WalPrint("*********** %s ***************\n",__FUNCTION__);
+
+    PCOSA_DATAMODEL_WEBPA       hWebpa    = (PCOSA_DATAMODEL_WEBPA)g_pCosaBEManager->hWebpa;
+    PCOSA_DML_WEBPA             pWebpa    = (PCOSA_DML_WEBPA) hWebpa->pWebpa;
+    PCOSA_DML_WEBPA_CONFIG      pWebpaCfg = (PCOSA_DML_WEBPA_CONFIG)pWebpa->pWebpaCfg;
+
+    WalPrint("paramCount = %d\n",paramCount);
+    for(i=0; i<paramCount; i++)
+    {
+        if(parameterNames[i][strlen(parameterNames[i])-1] == '.')
+        {
+            isWildcard = 1;
+        }
+        else
+        {
+            isWildcard = 0;
+        }
+        for(j=0; j<objSize; j++)
+        {
+            if(strstr(parameterNames[i],webpaObjects[j]) != NULL)
+            {
+                matchFound = 1;
+                switch(j)
+                {
+                    case 0:
+                    case 3:
+                    {
+                        if(isWildcard == 0)
+                        {
+                            paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                            if((strcmp(parameterNames[i], PARAM_CMC) == 0))
+                            {
+                                paramVal[k]->parameterName = strndup(PARAM_CMC, MAX_PARAMETERNAME_LEN);
+                                paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
+                                WalPrint("pWebpaCfg->X_COMCAST_COM_CMC is %d\n",pWebpaCfg->X_COMCAST_COM_CMC);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebpaCfg->X_COMCAST_COM_CMC);
+                                paramVal[k]->type = ccsp_unsignedInt;
+                                k++;
+                            }
+                            else if(strcmp(parameterNames[i], PARAM_CID) == 0)
+                            {
+                                paramVal[k]->parameterName = strndup(PARAM_CID, MAX_PARAMETERNAME_LEN);
+                                WalPrint("pWebpaCfg->X_COMCAST_COM_CID is %s\n",pWebpaCfg->X_COMCAST_COM_CID);
+                                paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_CID,MAX_PARAMETERVALUE_LEN);
+                                paramVal[k]->type = ccsp_string;
+                                k++;
+                            }
+                            else if(strcmp(parameterNames[i], WEBPA_PARAM_PROTOCOL_VERSION) == 0)
+                            {
+                                paramVal[k]->parameterName = strndup(WEBPA_PARAM_PROTOCOL_VERSION, MAX_PARAMETERNAME_LEN);
+                                WalPrint("pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion is %s\n",pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion);
+                                paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion,MAX_PARAMETERVALUE_LEN);
+                                paramVal[k]->type = ccsp_string;
+                                k++;
+                            }
+                            else
+                            {
+                                WAL_FREE(paramVal[k]);
+                                matchFound = 0;
+                            }
+                        }
+                        else
+                        {
+                            if(strcmp(parameterNames[i],webpaObjects[j]) == 0)
+                            {
+                                localCount= localCount+2;
+                                paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
+                                paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(PARAM_CMC, MAX_PARAMETERNAME_LEN);
+                                paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
+                                WalPrint("pWebpaCfg->X_COMCAST_COM_CMC is %d\n",pWebpaCfg->X_COMCAST_COM_CMC);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebpaCfg->X_COMCAST_COM_CMC);
+                                paramVal[k]->type = ccsp_unsignedInt;
+                                k++;
+                                paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(PARAM_CID, MAX_PARAMETERNAME_LEN);
+                                WalPrint("pWebpaCfg->X_COMCAST_COM_CID is %s\n",pWebpaCfg->X_COMCAST_COM_CID);
+                                paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_CID,MAX_PARAMETERVALUE_LEN);
+                                paramVal[k]->type = ccsp_string;
+                                k++;
+                                paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBPA_PARAM_PROTOCOL_VERSION, MAX_PARAMETERNAME_LEN);
+                                WalPrint("pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion is %s\n",pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion);
+                                paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion,MAX_PARAMETERVALUE_LEN);
+                                paramVal[k]->type = ccsp_string;
+                                k++;
+                            }
+                            else
+                            {
+                                matchFound = 0;
+                            }
+                        }
+                        break;
+                    }
+                    case 1:
+                    {
+                        paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                        if((strcmp(parameterNames[i], WEBPA_PARAM_VERSION) == 0) || ((isWildcard == 1) && (strcmp(parameterNames[i],webpaObjects[j]) == 0)))
+                        {
+                            paramVal[k]->parameterName = strndup(WEBPA_PARAM_VERSION, MAX_PARAMETERNAME_LEN);
+                            paramVal[k]->parameterValue = (char*) malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
+                            snprintf(paramVal[k]->parameterValue,sizeof(char)*MAX_PARAMETERVALUE_LEN,"%s-%s",WEBPA_PROTOCOL, WEBPA_GIT_VERSION);
+                            paramVal[k]->type = ccsp_string;
+                            k++;
+                        }
+                        else
+                        {
+                            WAL_FREE(paramVal[k]);
+                            matchFound = 0;
+                        }
+                        break;
+                    }
+                    case 2:
+                    {
+                        WalError("%s parameter GET is not supported through webpa\n",parameterNames[i]);
+                        *val = NULL;
+                        *val_size = 0;
+                        for(k=k-1;k>=0;k--)
+                        {
+                            WAL_FREE(paramVal[k]->parameterName);
+                            WAL_FREE(paramVal[k]->parameterValue);
+                            WAL_FREE(paramVal[k]);
+                        }
+                        WAL_FREE(paramVal);
+                        return CCSP_ERR_METHOD_NOT_SUPPORTED;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        if(matchFound == 0)
+        {
+            WalError("%s is invalid parameter\n",parameterNames[i]);
+            *val = NULL;
+            *val_size = 0;
+            for(k=k-1;k>=0;k--)
+            {
+                WAL_FREE(paramVal[k]->parameterName);
+                WAL_FREE(paramVal[k]->parameterValue);
+                WAL_FREE(paramVal[k]);
+            }
+            WAL_FREE(paramVal);
+            return CCSP_CR_ERR_UNSUPPORTED_NAMESPACE;
+        }
+    }
+    *val = paramVal;
+    for(i=0; i<k; i++)
+    {
+        WalPrint("Final-> %s %s %d\n",(*val)[i]->parameterName, (*val)[i]->parameterValue, (*val)[i]->type);
+    }
+    *val_size = k;
+    WalPrint("Final count is %d\n",*val_size);
+    WalPrint("*********** %s ***************\n",__FUNCTION__);
+    return CCSP_SUCCESS;
+}
+
+int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
+{
+    int i=0;
+    char *object = "Device.DeviceInfo.Webpa.";
+    char *subStr = NULL;
+    WalPrint("*********** %s ***************\n",__FUNCTION__);
+
+    PCOSA_DATAMODEL_WEBPA       hWebpa    = (PCOSA_DATAMODEL_WEBPA)g_pCosaBEManager->hWebpa;
+    PCOSA_DML_WEBPA             pWebpa    = (PCOSA_DML_WEBPA) hWebpa->pWebpa;
+    PCOSA_DML_WEBPA_CONFIG      pWebpaCfg = (PCOSA_DML_WEBPA_CONFIG)pWebpa->pWebpaCfg;
+
+    WalPrint("paramCount = %d\n",paramCount);
+    for(i=0; i<paramCount; i++)
+    {
+        if(strstr(val[i].parameterName, object) != NULL)
+        {
+            subStr = val[i].parameterName+strlen(object);
+            WalPrint("subStr = %s\n",subStr);
+            if(strcmp(subStr,"X_COMCAST-COM_CID") == 0)
+            {
+                if(TRUE == CosaDmlWEBPA_StoreValueIntoDB( subStr, val[i].parameterValue ))
+                {
+                    memset( pWebpaCfg->X_COMCAST_COM_CID, 0, sizeof(pWebpaCfg->X_COMCAST_COM_CID));
+                    AnscCopyString(pWebpaCfg->X_COMCAST_COM_CID, val[i].parameterValue);
+		        }
+		        else
+		        {
+		            return CCSP_FAILURE;
+		        }
+            }
+            else if(strcmp(subStr, "X_COMCAST-COM_CMC") == 0)
+            {
+                if(TRUE == CosaDmlWEBPA_StoreValueIntoDB( subStr, val[i].parameterValue ))
+                {
+                    pWebpaCfg->X_COMCAST_COM_CMC = atoi(val[i].parameterValue);
+                }
+                else
+                {
+                    return CCSP_FAILURE;
+                }
+            }
+            else if(strcmp(subStr, "X_COMCAST-COM_SyncProtocolVersion")== 0)
+            {
+                if(TRUE == CosaDmlWEBPA_StoreValueIntoDB( subStr, val[i].parameterValue ))
+                {
+                    memset( pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion, 0, sizeof(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion));
+                    AnscCopyString(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion, val[i].parameterValue);
+	            }
+	            else
+	            {
+	                return CCSP_FAILURE;
+	            }
+            }
+            else
+            {
+                WalError("%s parameter SET is not supported through webpa\n",val[i].parameterName);
+                *faultParam = strdup(val[i].parameterName);
+                return CCSP_ERR_METHOD_NOT_SUPPORTED;
+            }
+        }
+        else
+        {
+            WalError("%s is not writable\n",val[i].parameterName);
+            *faultParam = strdup(val[i].parameterName);
+            return CCSP_ERR_NOT_WRITABLE;
+        }
+    }
+    WalPrint("*********** %s ***************\n",__FUNCTION__);
+    return CCSP_SUCCESS;
+}

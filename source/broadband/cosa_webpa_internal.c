@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2016  Comcast
  */
+#include "webpa_adapter.h"
 #include "cosa_webpa_internal.h"
 
 /* Global Pointer for WEBPA backend manager */
@@ -156,14 +157,41 @@ CosaWebpaInitialize
             return  (ANSC_HANDLE)NULL;
 	}
 
-	/* Get all webpa parameters values */
-	CosaDmlWEBPA_GetConfiguration( pWebpaCfg );
-
+	memset(pWebpaCfg, 0, sizeof(COSA_DML_WEBPA_CONFIG));
 	pWebpa->pWebpaCfg	  = pWebpaCfg;
 	pMyObject->pWebpa     = pWebpa;
 
 EXIT:
     return returnStatus;
+}
+
+/**********************************************************************
+    caller:     owner of the object
+    prototype:
+        VOID
+        CosaWebpaSyncDB
+            (
+		VOID
+            );
+    description:
+        This function syncs WEBPA BACKEND manager with DB values.
+    argument:
+    return:     nothing.
+**********************************************************************/
+VOID
+CosaWebpaSyncDB
+    (
+        VOID
+    )
+{
+	PCOSA_DATAMODEL_WEBPA       hWebpa    = (PCOSA_DATAMODEL_WEBPA)g_pCosaBEManager->hWebpa;
+	PCOSA_DML_WEBPA             pWebpa    = (PCOSA_DML_WEBPA) hWebpa->pWebpa;
+	PCOSA_DML_WEBPA_CONFIG      pWebpaCfg = (PCOSA_DML_WEBPA_CONFIG)pWebpa->pWebpaCfg;
+
+	/* Get all webpa parameters values */
+	CosaDmlWEBPA_GetConfiguration( pWebpaCfg );
+	WalInfo("CID = %s CMC = %d Version = %s\n",pWebpaCfg->X_COMCAST_COM_CID,pWebpaCfg->X_COMCAST_COM_CMC,pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion);
+	pWebpa->pWebpaCfg	  = pWebpaCfg;
 }
 
 /**********************************************************************

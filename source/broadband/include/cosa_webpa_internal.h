@@ -64,6 +64,12 @@ CosaWebpaInitialize
         ANSC_HANDLE                 hThisObject
     );
 
+VOID
+CosaWebpaSyncDB
+    (
+        VOID
+    );
+
 ANSC_STATUS
 CosaWebpaRemove
     (

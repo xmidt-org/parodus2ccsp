@@ -58,17 +58,17 @@ char *objectList[] ={
 "Device.Hosts.",
 "Device.ManagementServer.",
 "Device.XHosts.",
-"Device.X_RDKCENTRAL_COM_ServiceAgent.",
 "Device.X_CISCO_COM_MTA.",
 "Device.X_RDKCENTRAL-COM_XDNS.",
-"Device.X_RDKCENTRAL_COM_ServiceAgent.",
 "Device.X_RDKCENTRAL-COM_Report.",
 "Device.SelfHeal.",
 "Device.LogBackup.",
 "Device.IoT.",
 "Device.NotifyComponent.",
 "Device.LogAgent.",
-"Device.TR069Notify."
+"Device.TR069Notify.",
+"Device.X_RDKCENTRAL-COM_Webpa.",
+"Device.Webpa."
 };
  
 char *subObjectList[] = 
@@ -90,8 +90,7 @@ char *subObjectList[] =
 "Device.X_RDKCENTRAL-COM_Report.RadioInterfaceStatistics.",
 "Device.X_RDKCENTRAL-COM_Report.NeighboringAP.",
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesStatus.",
-"Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic.",
-"Device.X_RDKCENTRAL-COM_Report.InterfaceDevicesWifiExtender."
+"Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic."
 }; 
 
 char *CcspDmlName[WIFI_PARAM_MAP_SIZE] = {"Device.WiFi.Radio", "Device.WiFi.SSID", "Device.WiFi.AccessPoint"};
@@ -123,7 +122,7 @@ static int getComponentInfoFromCache(char *parameterName, char *objectName, char
 static int getMatchingComponentValArrayIndex(char *objectName);
 static int getMatchingSubComponentValArrayIndex(char *objectName);
 static void getObjectName(char *str, char *objectName, int objectLevel);
-static void waitForComponentReady(char *compName, char *dbusPath);
+static int waitForComponentReady(char *compName, char *dbusPath);
 static void checkComponentReady(char *compName, char *dbusPath);
 static void checkComponentHealthStatus(char * compName, char * dbusPath, char *status, int *retStatus);
 static void waitUntilSystemReady();
@@ -152,14 +151,33 @@ void initComponentCaching()
 	}
 }
 
-void waitForOperationalReadyCondition()
+int waitForOperationalReadyCondition()
 {
 	// Wait till PAM, CM, PSM, WiFi components are ready on the stack.
-	waitForComponentReady(RDKB_PAM_COMPONENT_NAME,RDKB_PAM_DBUS_PATH);
-	waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH);
-	waitForComponentReady(CCSP_DBUS_PSM,CCSP_DBUS_PATH_PSM);
-	waitForComponentReady(RDKB_WIFI_COMPONENT_NAME,RDKB_WIFI_DBUS_PATH);
-	
+	if(waitForComponentReady(RDKB_PAM_COMPONENT_NAME,RDKB_PAM_DBUS_PATH) != CCSP_SUCCESS)
+	{
+		return PAM_FAILED;
+	}
+#if defined(_ENABLE_EPON_SUPPORT_)
+	if(waitForComponentReady(RDKB_EPON_COMPONENT_NAME,RDKB_EPON_DBUS_PATH) != CCSP_SUCCESS)
+	{
+		return EPON_FAILED;
+	}
+#else
+	if(waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH) != CCSP_SUCCESS)
+	{
+		return CM_FAILED;
+	}
+#endif
+	if(waitForComponentReady(CCSP_DBUS_PSM,CCSP_DBUS_PATH_PSM) != CCSP_SUCCESS)
+	{
+		return PSM_FAILED;
+	}
+	if(waitForComponentReady(RDKB_WIFI_COMPONENT_NAME,RDKB_WIFI_DBUS_PATH) != CCSP_SUCCESS)
+	{
+		return WIFI_FAILED;
+	}
+	return 0;
 }
 
 void getCurrentTime(struct timespec *timer)
@@ -550,6 +568,8 @@ WDMP_STATUS mapStatus(int ret)
 			return WDMP_ERR_INVALID_WIFI_INDEX;
 		case CCSP_ERR_INVALID_RADIO_INDEX:
 			return WDMP_ERR_INVALID_RADIO_INDEX;
+		case CCSP_ERR_METHOD_NOT_SUPPORTED:
+		    return WDMP_ERR_METHOD_NOT_SUPPORTED;
 		default:
 			return WDMP_FAILURE;
 	}
@@ -600,7 +620,7 @@ int IndexMpa_WEBPAtoCPE(char *pParameterName)
 					j = 2;
 					len =WIFI_INDEX_MAP_SIZE;
 				}
-				for (; j < len; j++)
+				for (j; j < len; j++)
 				{
 					if (IndexMap[j].WebPaInstanceNumber == instNum)
 					{
@@ -985,7 +1005,7 @@ static int checkIfSystemReady()
  * @param[in] compName RDKB Component Name
  * @param[in] dbusPath RDKB Dbus Path name
  */
-static void waitForComponentReady(char *compName, char *dbusPath)
+static int waitForComponentReady(char *compName, char *dbusPath)
 {
 	char status[32] = {'\0'};
 	int ret = -1;
@@ -995,21 +1015,25 @@ static void waitForComponentReady(char *compName, char *dbusPath)
 		checkComponentHealthStatus(compName, dbusPath, status,&ret);
 		if(ret == CCSP_SUCCESS && (strcmp(status, "Green") == 0))
 		{
+                        WalInfo("%s component health is %s, continue\n", compName, status);
 			break;
 		}
 		else
 		{
-			if(count > 5)
+                        count++;
+                        if(count > 60)
+                        {
+                                WalError("%s component Health check failed (ret:%d), continue\n",compName, ret);
+                                break;
+                        }
+			if(count%5 == 0)
 			{
-				count = 0;
 				WalError("%s component Health, ret:%d, waiting\n", compName, ret);
 			}
 			sleep(5);
-			count++;
 		}
-		
-	} 
-	WalInfo("%s component health is %s, continue\n", compName, status);
+	}
+	return ret;
 }
 
 /**

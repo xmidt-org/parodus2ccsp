@@ -17,15 +17,15 @@
 
 #define WIFI_INDEX_MAP_SIZE                     18
 #define WIFI_PARAM_MAP_SIZE			3
-#define WIFI_MAX_STRING_LEN			512
-#define MAX_PARAMETERNAME_LEN			512
-#define MAX_PARAMETERVALUE_LEN			512
+#define WIFI_MAX_STRING_LEN			4096
+#define MAX_PARAMETERNAME_LEN			4096
+#define MAX_PARAMETERVALUE_LEN			4096
 #define MAX_DBUS_INTERFACE_LEN			32
 #define MAX_PATHNAME_CR_LEN			64
 #define CCSP_COMPONENT_ID_WebPA			0x0000000A
 #define CCSP_COMPONENT_ID_XPC			0x0000000B
 #define RDKB_TR181_OBJECT_LEVEL1_COUNT	        46
-#define RDKB_TR181_OBJECT_LEVEL2_COUNT	        19
+#define RDKB_TR181_OBJECT_LEVEL2_COUNT	        18
 #define WAL_COMPONENT_INIT_RETRY_COUNT          4
 #define WAL_COMPONENT_INIT_RETRY_INTERVAL       10
 #define CCSP_ERR_WIFI_BUSY			503
@@ -46,12 +46,19 @@
 #define RDKB_LM_DBUS_PATH                   "/com/cisco/spvtg/ccsp/lmlite"
 #define PARAM_CID                      "Device.DeviceInfo.Webpa.X_COMCAST-COM_CID"
 #define PARAM_CMC                      "Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC"
+#if defined(_COSA_BCM_MIPS_)
+#define DEVICE_MAC                   "Device.DPoE.Mac_address"
+#else
 #define DEVICE_MAC                   "Device.X_CISCO_COM_CableModem.MACAddress"
+#endif
 #define PARAM_REBOOT_REASON		     "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason"
-#define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
 #define ALIAS_PARAM				"Alias"
 #define PARAM_RADIO_OBJECT            "Device.WiFi.Radio."
 #define WEBPA_PROTOCOL                "WEBPA-2.0"
+#if defined(_ENABLE_EPON_SUPPORT_)
+#define RDKB_EPON_COMPONENT_NAME                  "com.cisco.spvtg.ccsp.epon"
+#define RDKB_EPON_DBUS_PATH                       "/com/cisco/spvtg/ccsp/epon"
+#endif
 
 /* RDKB Logger defines */
 #define LOG_FATAL       0
@@ -89,6 +96,15 @@ typedef struct
 
 extern ANSC_HANDLE bus_handle;
 
+typedef enum
+{
+    SUCCESS = 0,
+    PAM_FAILED,
+    EPON_FAILED,
+    CM_FAILED,
+    PSM_FAILED,
+    WIFI_FAILED
+} COMPONENT_STATUS;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
@@ -196,3 +212,6 @@ void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size,void* user_data
  * assuming max MAC size as 32
  */
 void macToLower(char macValue[],char macConverted[]);
+
+int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
+int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );

@@ -8,7 +8,6 @@
 
 #include "webpa_notification.h"
 #include "webpa_internal.h"
-#include <cimplog/cimplog.h>
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -30,7 +29,8 @@
 /*----------------------------------------------------------------------------*/
 static WDMP_STATUS validate_cmc_and_cid(test_set_req_t *testSetReq, char *dbCMC, char *dbCID);
 static WDMP_STATUS set_cmc_and_cid(char *dbCMC, char *cid, int isNew);
-static WDMP_STATUS validate_parameter(param_t *param, int paramCount);
+static WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
+static WDMP_STATUS validate_table_object(table_req_t *tableObj);
 static void setRebootReason(param_t param, WEBPA_SET_TYPE setType);
 
 extern ANSC_HANDLE bus_handle;
@@ -47,6 +47,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         int paramCount = 0, i = 0, wildcardParamCount = 0,nonWildcardParamCount = 0, retCount=0, index = 0, error = 0;
         const char *getParamList[MAX_PARAMETERNAME_LEN];
         const char *wildcardGetParamList[MAX_PARAMETERNAME_LEN];
+        WDMP_STATUS setCidStatus = WDMP_SUCCESS, setCmcStatus = WDMP_SUCCESS;
         const char *wildcardList[1];
         char *param = NULL;
 	char *dbCID = NULL;
@@ -56,6 +57,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         WalPrint("************** processRequest *****************\n");
         
         wdmp_parse_request(reqPayload,&reqObj);
+        WalInfo("transactionId in request: %s\n",transactionId);
         
         if(reqObj != NULL)
         {
@@ -126,6 +128,11 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                 resObj->retStatus[i] = ret;
                                                 WalPrint("Response:> retStatus[%d] = %d\n",i,resObj->retStatus[i]);
                                         }
+					if(ret != WDMP_SUCCESS)
+                                        {
+                                            WalPrint("Non-wildcard get failed. Hence returning...\n");
+                                            break;
+                                        }
                                      } else {
                                         WalPrint("Non-Wildcard count is zero!\n");
                                        }   
@@ -163,6 +170,13 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 for (i = 0; i < paramCount; i++) 
                                 {
                                         WalPrint("Request:> paramNames[%d] = %s\n",i,reqObj->u.getReq->paramNames[i]);
+                                        if(strlen(reqObj->u.getReq->paramNames[i]) >= MAX_PARAMETERNAME_LEN)
+                                        {
+                                                *resObj->retStatus = WDMP_ERR_INVALID_PARAM;
+                                                error = 1;
+                                                break;
+                                        }
+
                                         if(reqObj->u.getReq->paramNames[i][(strlen(reqObj->u.getReq->paramNames[i])-1)] == '.')
                                         {
                                                 *resObj->retStatus = WDMP_ERR_WILDCARD_NOT_SUPPORTED;
@@ -215,7 +229,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                         setRebootReason(reqObj->u.setReq->param[i], WEBPA_SET);
                                 }
                                 
-                                ret = validate_parameter(reqObj->u.setReq->param, paramCount);
+                                ret = validate_parameter(reqObj->u.setReq->param, paramCount, reqObj->reqType);
                                 WalPrint("ret : %d\n",ret);
                                 if(ret == WDMP_SUCCESS)
                                 {
@@ -269,10 +283,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 memset(resObj->u.paramRes, 0, sizeof(param_res_t));
                                 resObj->u.paramRes->params = NULL;
                                 
-                                WalPrint("Request:> New Cid = %s\n",reqObj->u.testSetReq->newCid);
-                                WalPrint("Request:> Old Cid = %s\n",reqObj->u.testSetReq->oldCid);
-                                WalPrint("Request:> Sync Cmc = %s\n",reqObj->u.testSetReq->syncCmc);
-                                
+                                WalInfo("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
                                 // Get CMC from device database
 	                        dbCMC = getParameterValue(PARAM_CMC);
 	                        WalInfo("dbCMC : %s\n",dbCMC);
@@ -300,7 +311,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
 	                                        WalPrint("ret : %d\n",ret);
 	                                        if(ret == WDMP_SUCCESS && paramCount > 0)
 	                                        {
-                                                        ret = validate_parameter(reqObj->u.testSetReq->param, paramCount);
+                                                        ret = validate_parameter(reqObj->u.testSetReq->param, paramCount, reqObj->reqType);
                                                         WalPrint("ret : %d\n",ret);
                                                         if(ret == WDMP_SUCCESS)
 	                                                {
@@ -367,7 +378,16 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
                                 resObj->timeSpan = NULL;
                                 WalPrint("Request:> Object Name = %s\n",reqObj->u.tableReq->objectName);
-                                replaceTable(reqObj->u.tableReq->objectName,reqObj->u.tableReq->rows,reqObj->u.tableReq->rowCnt,&ret);
+
+                                ret = validate_table_object(reqObj->u.tableReq);
+                                if(ret == WDMP_SUCCESS)
+                                {
+                                        replaceTable(reqObj->u.tableReq->objectName,reqObj->u.tableReq->rows,reqObj->u.tableReq->rowCnt,&ret);
+                                }
+                                else
+                                {
+                                        WalError("Table object validations failed\n");
+                                }
                                 WalPrint("Response:> ret = %d\n",ret);
                                 *resObj->retStatus = ret;
                                 WalPrint("Response:> retStatus = %d\n", *resObj->retStatus);
@@ -382,7 +402,16 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
                                 resObj->timeSpan = NULL;
                                 WalPrint("Request:> Object Name = %s\n",reqObj->u.tableReq->objectName);
-                                deleteRowTable(reqObj->u.tableReq->objectName,&ret);
+
+                                ret = validate_table_object(reqObj->u.tableReq);
+                                if(ret == WDMP_SUCCESS)
+                                {
+                                        deleteRowTable(reqObj->u.tableReq->objectName,&ret);
+                                }
+                                else
+                                {
+                                        WalError("Table object validations failed\n");
+                                }
                                 WalPrint("Response:> ret = %d\n",ret);
                                 *resObj->retStatus = ret;
                                 WalPrint("Response:> retStatus = %d\n", *resObj->retStatus);
@@ -397,24 +426,33 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 WalPrint("Request:> Object Name = %s\n",reqObj->u.tableReq->objectName);
                                 resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
                                 resObj->timeSpan = NULL;
-                                resObj->u.tableRes = (table_res_t *) malloc(sizeof(table_res_t));
-                                memset(resObj->u.tableRes, 0, sizeof(table_res_t));
-                                        
-                                if(reqObj->u.tableReq->rowCnt > 0)
+
+                                ret = validate_table_object(reqObj->u.tableReq);
+                                if(ret == WDMP_SUCCESS)
                                 {
-                                        resObj->u.tableRes->newObj = (char *) malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
-                                        addRowTable(reqObj->u.tableReq->objectName, reqObj->u.tableReq->rows,&resObj->u.tableRes->newObj, &ret);
-                                }
-                                WalPrint("Response:> ret = %d\n",ret);
-                                
-                                if(resObj->u.tableRes->newObj == NULL)
-                                {
-                                        WAL_FREE(resObj->u.tableRes);
+                                        resObj->u.tableRes = (table_res_t *) malloc(sizeof(table_res_t));
+                                        memset(resObj->u.tableRes, 0, sizeof(table_res_t));
+
+                                        if(reqObj->u.tableReq->rowCnt > 0)
+                                        {
+                                                resObj->u.tableRes->newObj = (char *) malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
+                                                addRowTable(reqObj->u.tableReq->objectName, reqObj->u.tableReq->rows,&resObj->u.tableRes->newObj, &ret);
+                                        }
+
+                                        if(resObj->u.tableRes->newObj == NULL)
+                                        {
+                                                WAL_FREE(resObj->u.tableRes);
+                                        }
+                                        else
+                                        {
+                                                WalPrint("Response:> newObj = %s\n",resObj->u.tableRes->newObj);
+                                        }
                                 }
                                 else
                                 {
-                                        WalPrint("Response:> newObj = %s\n",resObj->u.tableRes->newObj);
+                                        WalError("Table object validations failed\n");
                                 }
+                                WalPrint("Response:> ret = %d\n",ret);
                                 *resObj->retStatus = ret;
                                 WalPrint("Response:> retStatus = %d\n", *resObj->retStatus);
                         }
@@ -525,13 +563,29 @@ static WDMP_STATUS set_cmc_and_cid(char *dbCMC, char *cid, int isNew)
  * @param[in] param arry if parameters
  * @param[in] paramCount input cid
  */
-static WDMP_STATUS validate_parameter(param_t *param, int paramCount)
+static WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type)
 {
         int i = 0;
         WalPrint("------------ validate_parameter ----------\n");
         for (i = 0; i < paramCount; i++) 
         {
-	        // If input parameter is wildcard ending with "." then send error as wildcard is not supported for TEST_AND_SET					
+                if(param[i].name == NULL || param[i].value == NULL)
+                {
+                        WalError("Parameter value is null\n");
+                        return WDMP_ERR_VALUE_IS_NULL;
+                }
+
+	        if(strlen(param[i].name) >= MAX_PARAMETERNAME_LEN)
+                {
+                        return WDMP_ERR_INVALID_PARAM;
+                }
+
+                if(strlen(param[i].value) >= MAX_PARAMETERVALUE_LEN)
+                {
+                        return WDMP_ERR_INVALID_PARAM;
+                }
+
+                // If input parameter is wildcard ending with "." then send error as wildcard is not supported for TEST_AND_SET
                 if(param[i].name[(strlen(param[i].name)-1)] == '.')
                 {
                         WalError("Wildcard SET/SET-ATTRIBUTES is not supported \n");
@@ -543,23 +597,46 @@ static WDMP_STATUS validate_parameter(param_t *param, int paramCount)
                         WalError("Invalid Input parameter - CID/CMC value cannot be set \n");
                         return WDMP_ERR_SET_OF_CMC_OR_CID_NOT_SUPPORTED;
                 }
-                
-                if(param[i].name == NULL || param[i].value == NULL)
-                {
-                        WalError("Parameter value is null\n");
-                        return WDMP_ERR_VALUE_IS_NULL;
-                }
-                
-                if(strlen(param[i].name) >= MAX_PARAMETERNAME_LEN)
-                {
-                        WalError("Invalid parameter name\n");
-                        return WDMP_ERR_INVALID_PARAM;
-                }
 
-                if(strlen(param[i].value) >= MAX_PARAMETERVALUE_LEN)
+                if((type == SET_ATTRIBUTES) && (atoi(param[i].value) != 0) && (atoi(param[i].value) != 1))
                 {
-                        WalError("Invalid parameter value\n");
-                        return WDMP_ERR_INVALID_PARAM;
+                        WalError("Notify value should be either 0 or 1\n");
+                        return WDMP_ERR_INVALID_ATTRIBUTES;
+                }
+        }
+        return WDMP_SUCCESS;
+}
+
+/**
+ * @brief validate_table_object validates table object values
+ *
+ * @param[in] table object
+ */
+static WDMP_STATUS validate_table_object(table_req_t *tableObj)
+{
+        int i = 0, j = 0;
+        WalPrint("------------ validate_table_object ----------\n");
+        if(strlen(tableObj->objectName) >= MAX_PARAMETERNAME_LEN)
+        {
+                return WDMP_ERR_INVALID_PARAM;
+        }
+
+        if(tableObj->rows != NULL)
+        {
+                for(i=0; i< (int)(tableObj->rowCnt); i++)
+                {
+                        for(j=0; j< (int)(tableObj->rows[i].paramCnt); j++)
+                        {
+                                if(strlen(tableObj->rows[i].names[j]) >= MAX_PARAMETERNAME_LEN)
+                                {
+                                        return WDMP_ERR_INVALID_PARAM;
+                                }
+
+                                if(strlen(tableObj->rows[i].values[j]) >= MAX_PARAMETERVALUE_LEN)
+                                {
+                                        return WDMP_ERR_INVALID_PARAM;
+                                }
+                        }
                 }
         }
         return WDMP_SUCCESS;
@@ -571,7 +648,7 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 	WDMP_STATUS retReason = WDMP_FAILURE;
 	param_t *rebootParam = NULL;
 	// Detect device reboot through WEBPA and log message for device reboot through webpa
-	if(strcmp(param.name, WEBPA_DEVICE_REBOOT_PARAM) == 0 && strcmp(param.value, WEBPA_DEVICE_REBOOT_VALUE) == 0)
+	if(param.name != NULL && strcmp(param.name, WEBPA_DEVICE_REBOOT_PARAM) == 0 && param.value != NULL && strcmp(param.value, WEBPA_DEVICE_REBOOT_VALUE) == 0)
 	{
 		rebootParam = (param_t *) malloc(sizeof(param_t));
 
