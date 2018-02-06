@@ -35,7 +35,8 @@
 #include "mock_stack.h"
 
 #define MAX_PARAMETER_LEN			512
-#define UNUSED(x) (void )(x)
+#define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
+
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -48,6 +49,18 @@ int libparodus_send (libpd_instance_t instance, wrp_msg_t *msg)
     UNUSED(instance);
     UNUSED(msg);
     function_called();
+    return (int) mock();
+}
+
+int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
+{
+    UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
+    return (int) mock();
+}
+
+int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
+{
+    UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
     return (int) mock();
 }
 /*----------------------------------------------------------------------------*/
