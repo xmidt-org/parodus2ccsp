@@ -411,7 +411,7 @@ void err_setAttrWithMultipleParametersOneInvalidParam()
 {
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
-    char *reqPayload = "{\"parameters\":[{\"name\":\"Device.NAT.PortMapping.1.Name\",\"attributes\": { \"notify\": 1}},{\"name\":\"Device.NAT.PortMapping.1.Alias\",\"attributes\": { \"notify\": 12}},{\"name\":\"Device.NAT.PortMapping.2.Port\",\"attributes\": { \"notify\": 123}},{\"name\":\"Device.NAT.PortMapping.20.Ver\",\"attributes\": { \"notify\": 012}}],\"command\":\"SET_ATTRIBUTES\"}";
+    char *reqPayload = "{\"parameters\":[{\"name\":\"Device.NAT.PortMapping.1.Name\",\"attributes\": { \"notify\": 1}},{\"name\":\"Device.NAT.PortMapping.1.Alias\",\"attributes\": { \"notify\": 0}},{\"name\":\"Device.NAT.PortMapping.2.Port\",\"attributes\": { \"notify\": 0}},{\"name\":\"Device.NAT.PortMapping.20.Ver\",\"attributes\": { \"notify\": 0}}],\"command\":\"SET_ATTRIBUTES\"}";
     char *getNames[] = {"Device.NAT.PortMapping.1.Name", "Device.NAT.PortMapping.1.Alias", "Device.NAT.PortMapping.2.Port","Device.NAT.PortMapping.20.Ver"};
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
