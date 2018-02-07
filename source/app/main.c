@@ -9,12 +9,16 @@
 #include "signal.h"
 #include "webpa_adapter.h"
 #include "libpd.h"
+#ifdef INCLUDE_BREAKPAD
+#include "breakpad_wrapper.h"
+#endif
 
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
-
+#ifndef INCLUDE_BREAKPAD
 static void sig_handler(int sig);
+#endif
 
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
@@ -22,9 +26,12 @@ static void sig_handler(int sig);
 
 int main()
 {
-
+        int ret = -1;
 	LOGInit();
-        
+
+#ifdef INCLUDE_BREAKPAD
+    breakpad_ExceptionHandler();
+#else
 	signal(SIGTERM, sig_handler);
 	signal(SIGINT, sig_handler);
 	signal(SIGUSR1, sig_handler);
@@ -37,20 +44,22 @@ int main()
 	signal(SIGQUIT, sig_handler);
 	signal(SIGHUP, sig_handler);
 	signal(SIGALRM, sig_handler);
-
+#endif
 	const char *pComponentName = WEBPA_COMPONENT_NAME;
 	WalInfo("********** Starting component: %s **********\n ", pComponentName); 
 
 	msgBusInit(pComponentName);
-	waitForOperationalReadyCondition();
-	
+	ret = waitForOperationalReadyCondition();
 	/* Backend Manager for Webpa Creation and Initilization */
 	CosaWebpaBEManagerCreate( );
 	libpd_client_mgr();
+	WalInfo("Syncing backend manager with DB....\n");
+	CosaWebpaSyncDB();
+	WalInfo("Webpa banckend manager is in sync with DB\n");
 	initComponentCaching();
 	// Initialize Apply WiFi Settings handler
 	initApplyWiFiSettings();
-	initNotifyTask();
+	initNotifyTask(ret);
 	parodus_receive_wait();
  
 	WalInfo("Exiting webpa main thread!!\n");
@@ -60,7 +69,7 @@ int main()
 /*----------------------------------------------------------------------------*/
 /*                             Internal functions                             */
 /*----------------------------------------------------------------------------*/
-
+#ifndef INCLUDE_BREAKPAD
 static void sig_handler(int sig)
 {
 
@@ -100,3 +109,4 @@ static void sig_handler(int sig)
 	}
 	
 }
+#endif

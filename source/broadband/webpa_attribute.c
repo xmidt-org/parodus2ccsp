@@ -34,8 +34,7 @@ extern BOOL applySettingsFlag;
 
 void getAttributes(const char *paramName[], const unsigned int paramCount, money_trace_spans *timeSpan, param_t **attr, int *retAttrCount, WDMP_STATUS *retStatus)
 {
-	unsigned int cnt1=0, compCount=0;
-        int cnt2=0, ret = -1, index = 0,error = 0, count =0, i= 0;
+	int cnt1=0,cnt2=0, ret = -1, index = 0,error = 0, compCount=0, count =0, i= 0;
 	char parameterName[MAX_PARAMETERNAME_LEN] = {'\0'};
 	ParamCompList *ParamGroup = NULL;
 	char **compName = NULL;
@@ -229,7 +228,15 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 	WalPrint("paramName: %s count: %d\n",paramName,count);
 	for(i = 0; i < count; i++)
 	{
-		WalPrint("compName[%d] : %s, dbusPath[%d] : %s\n", i,compName[i],i, dbusPath[i]);
+		WalInfo("compName[%d] : %s, dbusPath[%d] : %s\n", i,compName[i],i, dbusPath[i]);
+        if(!strcmp(compName[i],RDKB_WIFI_FULL_COMPONENT_NAME) && applySettingsFlag == TRUE)
+        {
+            ret = CCSP_ERR_WIFI_BUSY;
+            WalError("WiFi component is busy\n");
+            free_componentDetails(compName, dbusPath, count);
+            WAL_FREE(attriStruct);
+            return ret;
+        }
 	}
 	
 	for (cnt = 0; cnt < paramCount; cnt++) 

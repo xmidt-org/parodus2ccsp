@@ -26,6 +26,7 @@
 #include <cimplog/cimplog.h>
 #include <wdmp-c.h>
 #include <cJSON.h>
+#include "ccsp_dm_api.h"
 
 #define UNUSED(x) (void )(x)
 #define MAX_PARAMETER_LEN			512
@@ -98,6 +99,17 @@ WDMP_STATUS setParameterValue(char *paramName, char* value, DATA_TYPE type)
     return (WDMP_STATUS) mock();
 }
 
+int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
+{
+    UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
+    return (int) mock();
+}
+
+int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
+{
+    UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
+    return (int) mock();
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/

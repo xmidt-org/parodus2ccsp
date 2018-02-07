@@ -35,7 +35,8 @@
 #include "mock_stack.h"
 
 #define MAX_PARAMETER_LEN			512
-#define UNUSED(x) (void )(x)
+#define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
+#define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -50,15 +51,45 @@ int libparodus_send (libpd_instance_t instance, wrp_msg_t *msg)
     function_called();
     return (int) mock();
 }
+
+int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
+{
+    UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
+    return (int) mock();
+}
+
+int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
+{
+    UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
+    return (int) mock();
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/
 void test_device_status_notification()
 {
     strcpy(deviceMAC, "14cfe2142112");
+    parameterValStruct_t **bootTime = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    bootTime[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    bootTime[0]->parameterName = strndup(DEVICE_BOOT_TIME,MAX_PARAMETER_LEN);
+    bootTime[0]->parameterValue = strndup("157579132",MAX_PARAMETER_LEN);;
+    bootTime[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, bootTime);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
-    processDeviceStatusNotification();
+    processDeviceStatusNotification(0);
 }
 
 void test_factory_reset_notification()

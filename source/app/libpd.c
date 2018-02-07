@@ -1,16 +1,21 @@
 #include <stdio.h>
 #include <libparodus.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 #include "libpd.h"
 #include "webpa_adapter.h"
 
 #define CONTENT_TYPE_JSON       "application/json"
 #define DEVICE_PROPS_FILE   "/etc/device.properties"
-#define CLIENT_PORT_NUM     6667
 #define URL_SIZE 	    64
+#define MAX_PARALLEL_THREADS    2
 
 static void connect_parodus();
 static void get_parodus_url(char *parodus_url, char *client_url);
+static void parodus_receive();
+static void initParallelProcess();
 libpd_instance_t current_instance;
 char parodus_url[URL_SIZE] = {'\0'};
 char client_url[URL_SIZE] = {'\0'};
@@ -23,6 +28,7 @@ static void connect_parodus()
         //Retry Backoff count shall start at c=2 & calculate 2^c - 1.
         int c =2;
         int retval=-1;
+        int fd = 0;
 
         max_retry_sleep = (int) pow(2, backoff_max_time) -1;
         WalInfo("max_retry_sleep is %d\n", max_retry_sleep );
@@ -53,7 +59,19 @@ static void connect_parodus()
                         WalInfo("Init for parodus Success..!!\n");
                         WalInfo("WebPA is now ready to process requests\n");
 #ifdef RDKB_BUILD
-                        system("print_uptime \"boot_to_WEBPA_READY_uptime\" \"/rdklogs/logs/WEBPAlog.txt.0\"");
+                        if (access("/tmp/webpa_start", F_OK) == -1 && errno == ENOENT)
+                        {
+                                system("print_uptime \"boot_to_WEBPA_READY_uptime\" \"/rdklogs/logs/WEBPAlog.txt.0\"");
+
+                                if((fd = creat("/tmp/webpa_start", S_IRUSR | S_IWUSR)) == -1)
+                                {
+                                        fprintf(stderr, "File: /tmp/webpa_start creation failed with error:%d\n", errno);
+                                }
+                                else
+                                {
+                                        close(fd);
+                                }
+                        }
 #endif
                         break;
                 }
@@ -74,11 +92,10 @@ static void connect_parodus()
                 WalPrint("libparodus_shutdown retval %d\n", retval);
         }
 }
-
 	
-void parodus_receive_wait()
+static void parodus_receive()
 {
-	int rtn;
+        int rtn;
         wrp_msg_t *wrp_msg;
         wrp_msg_t *res_wrp_msg ;
 
@@ -87,62 +104,95 @@ void parodus_receive_wait()
         endPtr = &end;
         char *contentType = NULL;
 
-        while (1) 
+        rtn = libparodus_receive (current_instance, &wrp_msg, 2000);
+        if (rtn == 1)
         {
-                rtn = libparodus_receive (current_instance, &wrp_msg, 2000);
-                if (rtn == 1) 
-                {
-                        continue;
-                }
-
-                if (rtn != 0)
-                {
-                        WalError ("Libparodus failed to recieve message: '%s'\n",libparodus_strerror(rtn));
-                        sleep(5);
-                        continue;
-                }
-               
-                if (wrp_msg->msg_type == WRP_MSG_TYPE__REQ)
-                {
-                        res_wrp_msg = (wrp_msg_t *)malloc(sizeof(wrp_msg_t));
-                        memset(res_wrp_msg, 0, sizeof(wrp_msg_t));
-
-                        getCurrentTime(startPtr);
-                        processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))));
-
-                        WalPrint("Response payload is %s\n",(char *)(res_wrp_msg->u.req.payload));
-			if(res_wrp_msg->u.req.payload !=NULL)
-                        {
-                        	res_wrp_msg->u.req.payload_size = strlen(res_wrp_msg->u.req.payload);
-			}
-                        res_wrp_msg->msg_type = wrp_msg->msg_type;
-                        res_wrp_msg->u.req.source = wrp_msg->u.req.dest;
-                        res_wrp_msg->u.req.dest = wrp_msg->u.req.source;
-                        res_wrp_msg->u.req.transaction_uuid = wrp_msg->u.req.transaction_uuid;
-                        contentType = (char *)malloc(sizeof(char)*(strlen(CONTENT_TYPE_JSON)+1));
-                        strncpy(contentType,CONTENT_TYPE_JSON,strlen(CONTENT_TYPE_JSON)+1);
-                        res_wrp_msg->u.req.content_type = contentType;
-                        int sendStatus = libparodus_send(current_instance, res_wrp_msg);     
-                        WalPrint("sendStatus is %d\n",sendStatus);
-                        if(sendStatus == 0)
-                        {
-                                WalInfo("Sent message successfully to parodus\n");
-                        }
-                        else
-                        {
-                                WalError("Failed to send message: '%s'\n",libparodus_strerror(sendStatus));
-                        }
-                        getCurrentTime(endPtr);
-                        WalInfo("Elapsed time : %ld ms\n", timeValDiff(startPtr, endPtr));
-                        wrp_free_struct (res_wrp_msg); 
-                }        
-                free(wrp_msg);
+                return;
         }
 
-        libparodus_shutdown(&current_instance);
+        if (rtn != 0)
+        {
+                WalError ("Libparodus failed to recieve message: '%s'\n",libparodus_strerror(rtn));
+                sleep(5);
+                return;
+        }
 
+        if (wrp_msg->msg_type == WRP_MSG_TYPE__REQ)
+        {
+                res_wrp_msg = (wrp_msg_t *)malloc(sizeof(wrp_msg_t));
+                memset(res_wrp_msg, 0, sizeof(wrp_msg_t));
+
+                getCurrentTime(startPtr);
+                processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))));
+
+                WalPrint("Response payload is %s\n",(char *)(res_wrp_msg->u.req.payload));
+                if(res_wrp_msg->u.req.payload !=NULL)
+                {
+                        res_wrp_msg->u.req.payload_size = strlen(res_wrp_msg->u.req.payload);
+                }
+                res_wrp_msg->msg_type = wrp_msg->msg_type;
+                res_wrp_msg->u.req.source = wrp_msg->u.req.dest;
+                res_wrp_msg->u.req.dest = wrp_msg->u.req.source;
+                res_wrp_msg->u.req.transaction_uuid = wrp_msg->u.req.transaction_uuid;
+                contentType = (char *)malloc(sizeof(char)*(strlen(CONTENT_TYPE_JSON)+1));
+                strncpy(contentType,CONTENT_TYPE_JSON,strlen(CONTENT_TYPE_JSON)+1);
+                res_wrp_msg->u.req.content_type = contentType;
+                int sendStatus = libparodus_send(current_instance, res_wrp_msg);
+                WalPrint("sendStatus is %d\n",sendStatus);
+                if(sendStatus == 0)
+                {
+                        WalInfo("Sent message successfully to parodus\n");
+                }
+                else
+                {
+                        WalError("Failed to send message: '%s'\n",libparodus_strerror(sendStatus));
+                }
+                getCurrentTime(endPtr);
+                WalInfo("Elapsed time : %ld ms\n", timeValDiff(startPtr, endPtr));
+                wrp_free_struct (res_wrp_msg);
+        }
+        free(wrp_msg);
+}
+
+void *parallelProcessTask()
+{
+        pthread_detach(pthread_self());
+        while(1)
+        {
+                parodus_receive();
+        }
+        return NULL;
+}
+
+static void initParallelProcess()
+{
+        int err = 0, i = 0;
+        pthread_t threadId[MAX_PARALLEL_THREADS-1];
+        WalPrint("============ initParallelProcess ==============\n");
+        for(i=0; i<MAX_PARALLEL_THREADS-1; i++)
+        {
+                err = pthread_create(&threadId[i], NULL, parallelProcessTask, NULL);
+                if (err != 0)
+                {
+                        WalError("Error creating parallelProcessTask thread %d :[%s]\n", i, strerror(err));
+                }
+                else
+                {
+                        WalPrint("parallelProcessTask thread %d created Successfully\n",i);
+                }
+        }
+}
+
+void parodus_receive_wait()
+{
+        if(MAX_PARALLEL_THREADS > 1)
+        {
+                WalInfo("Parallel request processing is enabled\n");
+        }
+        initParallelProcess();
+        parallelProcessTask();
+        libparodus_shutdown(&current_instance);
         WalPrint ("End of parodus_upstream\n");
-        return 0;
 }
 
 void sendNotification(char *payload, char *source, char *destination)
@@ -163,9 +213,9 @@ void sendNotification(char *payload, char *source, char *destination)
 	WalPrint("destination: %s\n", destination);
 	notif_wrp_msg ->u.event.dest = strdup(destination);
 	contentType = (char *)malloc(sizeof(char)*(strlen(CONTENT_TYPE_JSON)+1));
-  strncpy(contentType,CONTENT_TYPE_JSON,strlen(CONTENT_TYPE_JSON)+1);
-  notif_wrp_msg->u.event.content_type = contentType;
-  WalPrint("content_type is %s\n",notif_wrp_msg->u.event.content_type);
+        strncpy(contentType,CONTENT_TYPE_JSON,strlen(CONTENT_TYPE_JSON)+1);
+        notif_wrp_msg->u.event.content_type = contentType;
+        WalPrint("content_type is %s\n",notif_wrp_msg->u.event.content_type);
 	
 	WalInfo("Notification payload: %s\n",payload);
 	notif_wrp_msg ->u.event.payload = (void *)payload;
@@ -207,7 +257,6 @@ static void get_parodus_url(char *parodus_url, char *client_url)
 {
 
 	FILE *fp = fopen(DEVICE_PROPS_FILE, "r");
-	char atom_ip[URL_SIZE] = {'\0'};
 	
 	if (NULL != fp)
 	{
@@ -219,13 +268,13 @@ static void get_parodus_url(char *parodus_url, char *client_url)
 		    if(value = strstr(str, "PARODUS_URL="))
 		    {
 			value = value + strlen("PARODUS_URL=");
-			strncpy(parodus_url, value, (strlen(str) - strlen("PARODUS_URL=")));
+			strncpy(parodus_url, value, (strlen(str) - strlen("PARODUS_URL="))+1);
 		    }
 		    
-		    if(value = strstr(str, "ATOM_PROXY_SERVER="))
+		    if(value = strstr(str, "WEBPA_CLIENT_URL="))
 		    {
-			value = value + strlen("ATOM_PROXY_SERVER=");
-			strncpy(atom_ip, value, (strlen(str) - strlen("ATOM_PROXY_SERVER=")));
+			value = value + strlen("WEBPA_CLIENT_URL=");
+			strncpy(client_url, value, (strlen(str) - strlen("WEBPA_CLIENT_URL="))+1);
 		    }
 		   
 		}
@@ -240,20 +289,14 @@ static void get_parodus_url(char *parodus_url, char *client_url)
 	{
 		WalError("parodus_url is not present in device. properties:%s\n", parodus_url);
 	}
-	else
+
+	if (0 == client_url[0])
 	{
-	    WalPrint("parodus_url formed is %s\n", parodus_url);
+		WalError("client_url is not present in device. properties:%s\n", client_url);
 	}
-	if (0 == atom_ip[0])
-	{
-		WalError("atom_ip is not present in device. properties:%s\n", atom_ip);
-	}
-	else
-	{
-	    snprintf(client_url, URL_SIZE, "tcp://%s:%d", atom_ip, CLIENT_PORT_NUM);
-	    WalPrint("client_url formed is %s\n", client_url);
-	}
- 
+
+	WalPrint("client_url formed is %s\n", client_url);
+	WalPrint("parodus_url formed is %s\n", parodus_url);
  }
  
 const char *rdk_logger_module_fetch(void)

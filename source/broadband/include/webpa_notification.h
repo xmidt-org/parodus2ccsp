@@ -60,6 +60,11 @@ typedef struct
    char *hostname;
 }NodeData;
 
+typedef struct
+{
+   int status;
+}DeviceStatus;
+
 typedef enum
 {
     PARAM_NOTIFY = 0,
@@ -77,6 +82,7 @@ typedef struct
     	ParamNotify *notify;
     	TransData * status;
         NodeData * node;
+        DeviceStatus *device;
     } u;
 } NotifyData;
 

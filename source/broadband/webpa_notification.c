@@ -6,7 +6,6 @@
  * Copyright (c) 2015  Comcast
  */
 
-#include <math.h>
 #include "webpa_notification.h"
 #include "webpa_internal.h"
 
@@ -17,12 +16,16 @@
 #define WEBPA_SET_INITIAL_NOTIFY_RETRY_COUNT            5
 #define WEBPA_SET_INITIAL_NOTIFY_RETRY_SEC              15
 #define WEBPA_NOTIFY_EVENT_HANDLE_INTERVAL_MSEC         250
+#define WEBPA_NOTIFY_EVENT_MAX_LENGTH                   256
+#define MAX_REASON_LENGTH                               64
 #define WEBPA_PARAM_HOSTS_NAME		        "Device.Hosts.Host."
 #define WRP_TRANSACTION_ID			"transaction_uuid"
 #define PARAM_HOSTS_VERSION	        "Device.Hosts.X_RDKCENTRAL-COM_HostVersionId"
 #define PARAM_SYSTEM_TIME		        "Device.DeviceInfo.X_RDKCENTRAL-COM_SystemTime"
+#define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
 #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
 #define WEBPA_CFG_FIRMWARE_VER		"oldFirmwareVersion"
+#define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -96,7 +99,7 @@ const char * notifyparameters[]={
 static void loadCfgFile();
 static void getDeviceMac();
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
-static void *notifyTask();
+static void *notifyTask(void *status);
 static void notifyCallback(NotifyData *notifyData);
 static void addNotifyMsgToQueue(NotifyData *notifyData);
 static void handleNotificationEvents();
@@ -110,19 +113,23 @@ static WDMP_STATUS processParamNotification(ParamNotify *paramNotify, unsigned i
 static void processConnectedClientNotification(NodeData *connectedNotify, char *deviceId, char **version, char ** nodeMacId, char **timeStamp, char **destination);
 static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
 static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
-void processDeviceStatusNotification();
+void processDeviceStatusNotification(int status);
+static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason);
+
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
 
 
-void initNotifyTask()
+void initNotifyTask(int status)
 {
 	int err = 0;
 	pthread_t threadId;
 	notifyMsgQ = NULL;
+	int *device_status = (int *) malloc(sizeof(int));
+	*device_status = status;
 
-	err = pthread_create(&threadId, NULL, notifyTask, NULL);
+	err = pthread_create(&threadId, NULL, notifyTask, (void *) device_status);
 	if (err != 0) 
 	{
 		WalError("Error creating notifyTask thread :[%s]\n", strerror(err));
@@ -156,7 +163,7 @@ void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size, void* user_dat
 	notifyDataPtr->type = PARAM_NOTIFY;
 	notifyDataPtr->u.notify = paramNotify;
 
-	WalInfo("Notification Event from stack: Parameter Name: %s, Old Value: %s, New Value: %s, Data Type: %d, Change Source: %d\n", paramNotify->paramName, paramNotify->oldValue, paramNotify->newValue, paramNotify->type, paramNotify->changeSource);
+	WalInfo("Notification Event from stack: Parameter Name: %s, Data Type: %d, Change Source: %d\n", paramNotify->paramName, paramNotify->type, paramNotify->changeSource);
 
 	(*notifyCbFn)(notifyDataPtr);
 }
@@ -455,17 +462,18 @@ static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID)
 /*
  * @brief To handle notification tasks
  */
-static void *notifyTask() 
+static void *notifyTask(void *status)
 {
 	pthread_detach(pthread_self());
 	getDeviceMac();
 	loadCfgFile();
-	processDeviceStatusNotification();
+	processDeviceStatusNotification(*(int *)status);
 	RegisterNotifyCB(&notifyCallback);
 	sendNotificationForFactoryReset();
 	sendNotificationForFirmwareUpgrade();
 	setInitialNotify();
 	handleNotificationEvents();
+	WAL_FREE(status);
 	WalPrint("notifyTask ended!\n");
 	return NULL;
 }
@@ -748,151 +756,175 @@ void processNotification(NotifyData *notifyData)
 	char *stringifiedNotifyPayload = NULL;
 	notifyPayload = cJSON_CreateObject();
 	unsigned int cmc;
+	char *strBootTime = NULL;
+	char *reason = NULL;
 
 	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
 	WalPrint("Device_id %s\n", device_id);
 
 	cJSON_AddStringToObject(notifyPayload, "device_id", device_id);
 
-	dest = (char*) malloc(sizeof(char) * 256);
+	dest = (char*) malloc(sizeof(char) * WEBPA_NOTIFY_EVENT_MAX_LENGTH);
 
-	switch (notifyData->type)
-	{
-		case PARAM_NOTIFY:
-		{
-			strcpy(dest, "event:SYNC_NOTIFICATION");
+        if (dest != NULL)
+        {
+            if (notifyData != NULL)
+            {
+	        switch (notifyData->type)
+	        {
+	        	case PARAM_NOTIFY:
+	        	{
+	        		strcpy(dest, "event:SYNC_NOTIFICATION");
 
-			ret = processParamNotification(notifyData->u.notify, &cmc, &cid);
+	        		ret = processParamNotification(notifyData->u.notify, &cmc, &cid);
 
-			if (ret != WDMP_SUCCESS)
-			{
-				free(dest);
-				return;
-			}
-			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
-			cJSON_AddStringToObject(notifyPayload, "cid", cid);
-		}
-			break;
+	        		if (ret != WDMP_SUCCESS)
+	        		{
+	        			free(dest);
+	        			return;
+	        		}
+	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
+	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
+	        	}
+	        		break;
 
-		case FACTORY_RESET:
-		{
-			WalPrint("----- Inside FACTORY_RESET type -----\n");
+	        	case FACTORY_RESET:
+	        	{
+	        		WalPrint("----- Inside FACTORY_RESET type -----\n");
 
-			strcpy(dest, "event:SYNC_NOTIFICATION");
+	        		strcpy(dest, "event:SYNC_NOTIFICATION");
 
-			ret = processFactoryResetNotification(notifyData->u.notify, &cmc, &cid);
+	        		ret = processFactoryResetNotification(notifyData->u.notify, &cmc, &cid);
 
-			if (ret != WDMP_SUCCESS)
-			{
-				free(dest);
-				return;
-			}
-			WalPrint("Framing notifyPayload for Factory reset\n");
-			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
-			cJSON_AddStringToObject(notifyPayload, "cid", cid);
-		}
-			break;
+	        		if (ret != WDMP_SUCCESS)
+	        		{
+	        			free(dest);
+	        			return;
+	        		}
+	        		WalPrint("Framing notifyPayload for Factory reset\n");
+	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
+	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
+	        	}
+	        		break;
 
-		case FIRMWARE_UPGRADE:
-			{
-				WalPrint("----- Inside FIRMWARE_UPGRADE type -----\n");
+	        	case FIRMWARE_UPGRADE:
+	        		{
+	        			WalPrint("----- Inside FIRMWARE_UPGRADE type -----\n");
 
-				strcpy(dest, "event:SYNC_NOTIFICATION");
+	        			strcpy(dest, "event:SYNC_NOTIFICATION");
 
-				ret = processFirmwareUpgradeNotification(notifyData->u.notify, &cmc, &cid);
+	        			ret = processFirmwareUpgradeNotification(notifyData->u.notify, &cmc, &cid);
 
-				if (ret != WDMP_SUCCESS)
+	        			if (ret != WDMP_SUCCESS)
+	        			{
+	        				free(dest);
+	        				return;
+	        			}
+	        			WalPrint("Framing notifyPayload for Firmware upgrade\n");
+	        			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
+	        			cJSON_AddStringToObject(notifyPayload, "cid", cid);
+	        		}
+	        			break;
+
+	        	case CONNECTED_CLIENT_NOTIFY:
+	        	{
+	        		WalPrint("Processing connected client notification\n");
+	        		processConnectedClientNotification(notifyData->u.node, device_id,
+	        				&version, &nodeMacId, &timeStamp, &dest);
+
+	        		cJSON_AddStringToObject(notifyPayload, "timestamp",
+	        				(NULL != timeStamp) ? timeStamp : "unknown");
+	        		cJSON_AddItemToObject(notifyPayload, "nodes", nodes =
+	        				cJSON_CreateArray());
+	        		cJSON_AddItemToArray(nodes, one_node = cJSON_CreateObject());
+	        		cJSON_AddStringToObject(one_node, "name", WEBPA_PARAM_HOSTS_NAME);
+	        		cJSON_AddNumberToObject(one_node, "version",
+	        				(NULL != version) ? atoi(version) : 0);
+	        		cJSON_AddStringToObject(one_node, "node-mac",
+	        				(NULL != nodeMacId) ? nodeMacId : "unknown");
+	        		cJSON_AddStringToObject(one_node, "interface",
+	        				(NULL != notifyData->u.node->interface) ? notifyData->u.node->interface : "unknown");
+	        		cJSON_AddStringToObject(one_node, "hostname",
+	        				(NULL != notifyData->u.node->hostname) ? notifyData->u.node->hostname : "unknown");
+	        		cJSON_AddStringToObject(one_node, "status",
+	        				(NULL != notifyData->u.node->status) ? notifyData->u.node->status : "unknown");
+	        		if (NULL != nodeMacId) {
+	        			free(nodeMacId);
+	        		}
+
+	        		if (NULL != version) {
+	        			free(version);
+	        		}
+	        	}
+	        		break;
+
+	        	case TRANS_STATUS:
+	        	{
+	        		strcpy(dest, "event:transaction-status");
+
+	        		cJSON_AddStringToObject(notifyPayload, "state", "complete");
+	        		if (notifyData->u.status != NULL)
+	        		{
+	        			cJSON_AddStringToObject(notifyPayload, WRP_TRANSACTION_ID,
+	        					(NULL != notifyData->u.status->transId)? notifyData->u.status->transId : "unknown");
+	        		}
+	        		else
+	        		{
+	        			free(dest);
+	        			return;
+	        		}
+	        	}
+	        		break;
+
+	        	case DEVICE_STATUS:
+	        	{
+				strBootTime = getParameterValue(DEVICE_BOOT_TIME);
+                                if(notifyData->u.device->status != 0)
+                                {
+                                        reason = (char *)malloc(sizeof(char)*MAX_REASON_LENGTH);
+				        mapComponentStatusToGetReason(notifyData->u.device->status, reason);
+                                        snprintf(dest, WEBPA_NOTIFY_EVENT_MAX_LENGTH, "event:device-status/%s/non-operational/%s/%s", device_id,(NULL != strBootTime)?strBootTime:"unknown",reason);
+                                        cJSON_AddStringToObject(notifyPayload, "status", "non-operational");
+                                        cJSON_AddStringToObject(notifyPayload, "reason", reason);
+                                        WAL_FREE(reason);
+                                }
+                                else
+                                {
+                                        snprintf(dest, WEBPA_NOTIFY_EVENT_MAX_LENGTH, "event:device-status/%s/operational/%s", device_id,(NULL != strBootTime)?strBootTime:"unknown");
+                                        cJSON_AddStringToObject(notifyPayload, "status", "operational");
+                                }
+				WalPrint("dest: %s\n",dest);
+				cJSON_AddStringToObject(notifyPayload,"boot-time", (NULL != strBootTime)?strBootTime:"unknown");
+				if (strBootTime != NULL)
 				{
-					free(dest);
-					return;
+					WAL_FREE(strBootTime);
 				}
-				WalPrint("Framing notifyPayload for Firmware upgrade\n");
-				cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
-				cJSON_AddStringToObject(notifyPayload, "cid", cid);
 			}
-				break;
+	        		break;
 
-		case CONNECTED_CLIENT_NOTIFY:
-		{
-			WalPrint("Processing connected client notification\n");
-			processConnectedClientNotification(notifyData->u.node, device_id,
-					&version, &nodeMacId, &timeStamp, &dest);
+	        	default:
+	        		break;
+	        }
 
-			cJSON_AddStringToObject(notifyPayload, "timestamp",
-					(NULL != timeStamp) ? timeStamp : "unknown");
-			cJSON_AddItemToObject(notifyPayload, "nodes", nodes =
-					cJSON_CreateArray());
-			cJSON_AddItemToArray(nodes, one_node = cJSON_CreateObject());
-			cJSON_AddStringToObject(one_node, "name", WEBPA_PARAM_HOSTS_NAME);
-			cJSON_AddNumberToObject(one_node, "version",
-					(NULL != version) ? atoi(version) : 0);
-			cJSON_AddStringToObject(one_node, "node-mac",
-					(NULL != nodeMacId) ? nodeMacId : "unknown");
-			cJSON_AddStringToObject(one_node, "interface",
-					(NULL != notifyData->u.node->interface) ? notifyData->u.node->interface : "unknown");
-			cJSON_AddStringToObject(one_node, "hostname",
-					(NULL != notifyData->u.node->hostname) ? notifyData->u.node->hostname : "unknown");
-			cJSON_AddStringToObject(one_node, "status",
-					(NULL != notifyData->u.node->status) ? notifyData->u.node->status : "unknown");
-			if (NULL != nodeMacId) {
-				free(nodeMacId);
-			}
+	        stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
+	        WalPrint("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
 
-			if (NULL != version) {
-				free(version);
-			}
-		}
-			break;
+	        if (stringifiedNotifyPayload != NULL
+	        		&& strlen(device_id) != 0)
+	        {
+	        	source = (char*) malloc(sizeof(char) * sizeof(device_id));
+	        	walStrncpy(source, device_id, sizeof(device_id));
+	        	sendNotification(stringifiedNotifyPayload, source, dest);
+	        	WalPrint("After sendNotification\n");
+	        }
 
-		case TRANS_STATUS:
-		{
-			strcpy(dest, "event:transaction-status");
+	        WalPrint("Freeing notifyData ....\n");
+	        freeNotifyMessage(notifyData);
+	        WalPrint("notifyData is freed.\n");
+	    }
 
-			cJSON_AddStringToObject(notifyPayload, "state", "complete");
-			if (notifyData->u.status != NULL)
-			{
-				cJSON_AddStringToObject(notifyPayload, WRP_TRANSACTION_ID,
-						(NULL != notifyData->u.status->transId)? notifyData->u.status->transId : "unknown");
-			}
-			else
-			{
-				free(dest);
-				return;
-			}
-		}
-			break;
-
-		case DEVICE_STATUS:
-		{
-			strcpy(dest, "event:device-status");
-			cJSON_AddStringToObject(notifyPayload, "status", "operational");
-		}
-			break;
-
-		default:
-			break;
-	}
-
-	stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
-	WalPrint("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
-
-	if (stringifiedNotifyPayload != NULL
-			&& strlen(device_id) != 0&& dest != NULL)
-	{
-		source = (char*) malloc(sizeof(char) * sizeof(device_id));
-		walStrncpy(source, device_id, sizeof(device_id));
-		sendNotification(stringifiedNotifyPayload, source, dest);
-		WalPrint("After sendNotification\n");
-	}
-
-	if (notifyData != NULL)
-	{
-		WalPrint("Freeing notifyData ....\n");
-		freeNotifyMessage(notifyData);
-		WalPrint("notifyData is freed.\n");
-	}
-
-	free(dest);
+	    free(dest);
+        }
 }
 
 /*
@@ -958,13 +990,16 @@ static WDMP_STATUS processParamNotification(ParamNotify *paramNotify,
 /*
  * @brief To process notification during device status
  */
-void processDeviceStatusNotification()
+void processDeviceStatusNotification(int status)
 {
 	WalPrint("processDeviceStatusNotification\n");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
 	notifyData->type = DEVICE_STATUS;
+	notifyData->u.device = (DeviceStatus*) malloc(sizeof(DeviceStatus));
+	notifyData->u.device->status = status;
+	WalPrint("notifyData->u.device->status : %d\n",notifyData->u.device->status);
 	processNotification(notifyData);
 }
 
@@ -1166,6 +1201,11 @@ static void freeNotifyMessage(NotifyData *notifyData)
 		WalPrint("Free notifyData->u.node\n");
 		WAL_FREE(notifyData->u.node);
 	}
+	else if(notifyData->type == DEVICE_STATUS)
+	{
+		WalPrint("Free notifyData->u.device\n");
+		WAL_FREE(notifyData->u.device);
+	}
 
 	WalPrint("Free notifyData\n");
 	WAL_FREE(notifyData);
@@ -1173,3 +1213,34 @@ static void freeNotifyMessage(NotifyData *notifyData)
 	WalPrint("free done from freeNotifyMessage\n");
 }
 
+static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
+{
+        if (status == SUCCESS)
+	{
+		walStrncpy(reason,"Success",MAX_REASON_LENGTH);
+	}
+	else if (status == PAM_FAILED)
+	{
+		walStrncpy(reason, "PAM health timeout",MAX_REASON_LENGTH);
+	}
+	else if (status == EPON_FAILED)
+	{
+		walStrncpy(reason,"EPON health timeout",MAX_REASON_LENGTH);
+	}
+	else if (status == CM_FAILED)
+	{
+		walStrncpy(reason,"CM Agent health timeout",MAX_REASON_LENGTH);
+	}
+	else if (status == PSM_FAILED)
+	{
+		walStrncpy(reason,"PSM health timeout",MAX_REASON_LENGTH);
+	}
+	else if (status == WIFI_FAILED)
+	{
+	        walStrncpy(reason, "WiFi health timeout",MAX_REASON_LENGTH);
+	}
+	else
+	{
+	        walStrncpy(reason, "Failed",MAX_REASON_LENGTH);
+	}
+}

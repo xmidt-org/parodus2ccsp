@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
-
+#define RDKB_WEBPA_FULL_COMPONENT_NAME      "eRT.com.cisco.spvtg.ccsp.webpaagent"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -174,7 +174,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                 
                 for(j = 0; j < compCount ;j++)
                 {
-                        WalInfo("ParamGroup[%d].comp_name :%s, ParamGroup[%d].dbus_path :%s, ParamGroup[%d].parameterCount :%d\n",j,ParamGroup[j].comp_name, j,ParamGroup[j].dbus_path, j,ParamGroup[j].parameterCount);
+                        WalPrint("ParamGroup[%d].comp_name :%s, ParamGroup[%d].dbus_path :%s, ParamGroup[%d].parameterCount :%d\n",j,ParamGroup[j].comp_name, j,ParamGroup[j].dbus_path, j,ParamGroup[j].parameterCount);
 
                         val[j] = (param_t *) malloc(sizeof(param_t) * ParamGroup[j].parameterCount);
                         rollbackVal[j] = (param_t *) malloc(sizeof(param_t) * ParamGroup[j].parameterCount);
@@ -309,7 +309,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                 if(ret != CCSP_SUCCESS)
                                 {
                                         WalError("Failed atomic set for WIFI hence rollbacking the changes. ret :%d and i is %d\n",ret,i);
-                                        WalPrint("------ Start of rollback ------\n");
+
                                         // Rollback data in failure case
                                         for(rev =i-1;rev>=0;rev--)
                                         {
@@ -433,9 +433,16 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
 
     if(error != 1)
     {
-        WalPrint("CompName = %s, dbusPath : %s, paramCount = %d\n", CompName, dbusPath, paramCount);
-        ret = CcspBaseIf_getParameterValues(bus_handle,CompName,dbusPath,parameterNamesLocal,paramCount, &val_size, &parameterval);
-        WalPrint("----- After GPA ret = %d------\n",ret);
+        WalInfo("CompName = %s, dbusPath : %s, paramCount = %d\n", CompName, dbusPath, paramCount);
+        if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
+        {
+            ret = getWebpaParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
+        }
+        else
+        {
+            ret = CcspBaseIf_getParameterValues(bus_handle,CompName,dbusPath,parameterNamesLocal,paramCount, &val_size, &parameterval);
+        }
+        WalPrint("----- After GPV ret = %d------\n",ret);
         if (ret != CCSP_SUCCESS)
         {
             WalError("Error:Failed to GetValue for parameters ret: %d\n", ret);
@@ -445,7 +452,7 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
             WalPrint("val_size : %d\n",val_size);
             if (val_size > 0)
             {
-                if(paramCount == val_size)
+		if((paramCount == val_size) && (parameterNamesLocal[0][strlen(parameterNamesLocal[0])-1] != '.'))
                 {
                     for (cnt = 0; cnt < val_size; cnt++)
                     {
@@ -620,6 +627,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
         char* faultParam = NULL;
         int ret=0, cnt = 0, retIndex=0;
         char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
+        char objectName[MAX_PARAMETERNAME_LEN] = { 0 };
         unsigned int writeID = CCSP_COMPONENT_ID_WebPA;
 
         WalPrint("------------------ start of setParamValues ----------------\n");
@@ -665,7 +673,14 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
                 bRadioRestartEn = TRUE;
         }
 
-        ret = CcspBaseIf_setParameterValues(bus_handle, CompName, dbusPath, 0, writeID, val, paramCount, TRUE, &faultParam);
+        if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
+        {
+            ret = setWebpaParameterValues(val, paramCount,&faultParam);
+        }
+        else
+        {
+            ret = CcspBaseIf_setParameterValues(bus_handle, CompName, dbusPath, 0, writeID, val, paramCount, TRUE, &faultParam);
+        }
 
         if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME))
         {
@@ -709,7 +724,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
  */
 static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2) 
 {
-	int x =0 ,index =0, apply_rf =0;
+	int x =0 ,index =0, SSID =0,apply_rf =0;
 	for (x = 0; x < paramCount; x++)
 	{
 		WalPrint("val[%d].parameterName : %s\n",x,val[x].parameterName);
@@ -727,6 +742,7 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 			{
 				sscanf(val[x].parameterName, "Device.WiFi.SSID.%d", &index);
 				WalPrint("SSID index = %d\n", index);
+				SSID = (1 << ((index) - 1));
 				apply_rf = (2 - ((index) % 2));
 				WalPrint("apply_rf = %d\n", apply_rf);
 
@@ -743,6 +759,7 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 			{
 				sscanf(val[x].parameterName, "Device.WiFi.AccessPoint.%d", &index);
 				WalPrint("AccessPoint index = %d\n", index);
+				SSID = (1 << ((index) - 1));
 				apply_rf = (2 - ((index) % 2));
 				WalPrint("apply_rf = %d\n", apply_rf);
 

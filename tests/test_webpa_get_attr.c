@@ -39,7 +39,17 @@ extern BOOL applySettingsFlag;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
+int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
+{
+    UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
+    return (int) mock();
+}
 
+int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
+{
+    UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
+    return (int) mock();
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/
