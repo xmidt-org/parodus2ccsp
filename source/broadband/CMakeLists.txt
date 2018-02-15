@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 set(PROJ_BROADBAND broadband)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_ANSC_LINUX ")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_ANSC_LINUX -shared -fPIC ")
 set(SOURCES ssp_messagebus_interface.c ssp_main.c ssp_action.c cosa_webpa_dml.c cosa_webpa_internal.c cosa_webpa_apis.c plugin_main.c webpa_adapter.c webpa_internal.c webpa_table.c webpa_parameter.c webpa_attribute.c webpa_notification.c webpa_log.c)
 
 set (COMMON_FLAGS -ldbus-1 -lccsp_common -lwdmp-c -lcjson -lpthread -lrt -lcimplog -lm)
