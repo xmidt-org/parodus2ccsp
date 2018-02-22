@@ -13,19 +13,18 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <wdmp-c.h>
+#include <cimplog.h>
 
 #define WAL_FREE(__x__) if(__x__ != NULL) { free((void*)(__x__)); __x__ = NULL;} else {printf("Trying to free null pointer\n");}
 
 #define WEBPA_COMPONENT_NAME               "com.cisco.spvtg.ccsp.webpaagent"
+#define LOGGING_MODULE                     "WEBPA"
 /**
  * @brief Enables or disables debug logs.
  */
-#define WEBPA_LOG_ERROR                 0
-#define WEBPA_LOG_INFO                  1
-#define WEBPA_LOG_PRINT                 2
-#define WalError(...)                   _WEBPA_LOG(WEBPA_LOG_ERROR, __VA_ARGS__)
-#define WalInfo(...)                    _WEBPA_LOG(WEBPA_LOG_INFO, __VA_ARGS__)
-#define WalPrint(...)                   _WEBPA_LOG(WEBPA_LOG_PRINT, __VA_ARGS__)
+#define WalError(...)                   cimplog_error(LOGGING_MODULE, __VA_ARGS__)
+#define WalInfo(...)                    cimplog_info(LOGGING_MODULE, __VA_ARGS__)
+#define WalPrint(...)                   cimplog_debug(LOGGING_MODULE, __VA_ARGS__)
 
 /**
  * @brief Set operations supported by WebPA.
@@ -64,20 +63,6 @@ void initApplyWiFiSettings();
  * @brief Function to keep listening for parodus downstream messages
  */
 void parodus_receive_wait();
-
-/**
- * @brief LOGInit Initialize RDK Logger
- */
-void LOGInit();
-
-/**
- * @brief _WEBPA_LOG WEBPA RDK Logger API
- *
- * @param[in] level LOG Level
- * @param[in] msg Message to be logged 
- */
-void _WEBPA_LOG(unsigned int level, const char *msg, ...)
-    __attribute__((format (printf, 2, 3)));
 
 /**
  * @brief displays the current time.

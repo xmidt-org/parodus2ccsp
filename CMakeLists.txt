@@ -266,8 +266,7 @@ link_directories ( ${LIBRARY_DIR} ${COMMON_LIBRARY_DIR} ${LIBRARY_DIR64} )
 
 enable_testing()
 
-add_subdirectory(source/broadband)
-add_subdirectory(source/app)
+add_subdirectory(source)
 
 if (BUILD_TESTING)
 add_subdirectory(tests)
