@@ -8,6 +8,7 @@
 #include "ssp_global.h"
 #include "dslh_dmagnt_interface.h"
 #include "ccsp_trace.h"
+#include "plugin_main.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -107,6 +108,7 @@ ANSC_STATUS ssp_create()
             pDslhLcbIf->InterfaceId              = CCSP_LIBCBK_INTERFACE_ID;
             pDslhLcbIf->hOwnerContext            = NULL;
             pDslhLcbIf->Size                     = sizeof(DSLH_LCB_INTERFACE);
+            pDslhLcbIf->InitLibrary              = COSA_Init;
         }
     }
 
