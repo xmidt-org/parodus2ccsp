@@ -27,7 +27,6 @@ static void sig_handler(int sig);
 int main()
 {
         int ret = -1;
-	LOGInit();
 
 #ifdef INCLUDE_BREAKPAD
     breakpad_ExceptionHandler();
