@@ -4,10 +4,7 @@
         <moduleName>COSA_TR181_Webpa</moduleName>
         <author></author>
         <description></description>
-        <library>
-                <path>libbroadband</path>
-                <func_Init>COSA_Init</func_Init>
-        </library>
+        <library />
         <objects>
                 <object>
                         <name>Webpa</name>

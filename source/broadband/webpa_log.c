@@ -7,7 +7,9 @@
  */
 
 #include "webpa_internal.h"
+#ifndef FEATURE_SUPPORT_RDKLOG
 #include <cimplog/cimplog.h>
+#endif
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -90,6 +92,7 @@ void _WEBPA_LOG(unsigned int level, const char *msg, ...)
 void webpa_logger(unsigned int level, const char *module,
         const char *format, char *msg)
 {
+#ifndef FEATURE_SUPPORT_RDKLOG
         switch(level)
 	{
 		case LOG_ERROR:
@@ -104,4 +107,5 @@ void webpa_logger(unsigned int level, const char *module,
 			cimplog_debug(module, msg);
 			break;
 	}
+#endif
 }
