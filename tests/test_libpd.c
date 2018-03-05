@@ -29,14 +29,11 @@
 #include <cimplog/cimplog.h>
 #include <libparodus.h>
 
-#define URL_SIZE 	    64
 #define UNUSED(x) (void )(x)
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern libpd_instance_t current_instance;
-extern char parodus_url[URL_SIZE];
-extern char client_url[URL_SIZE];
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -80,9 +77,6 @@ int libparodus_send (libpd_instance_t instance, wrp_msg_t *msg)
 
 void test_libpd_client_mgr()
 {
-    strcpy(parodus_url, "tcp://localhost:6666");
-    strcpy(client_url ,"tcp://localhost:6667");
-    
     will_return(libparodus_init, (intptr_t)0);
     expect_function_call(libparodus_init);
     libpd_client_mgr();
