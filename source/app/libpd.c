@@ -4,6 +4,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
+
 #include "libpd.h"
 #include "webpa_adapter.h"
 

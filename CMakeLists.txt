@@ -54,7 +54,7 @@ include_directories (SYSTEM /usr/include)
 
 # pthread external dependency
 #-------------------------------------------------------------------------------
-find_package (Threads)
+find_package (Threads REQUIRED)
 
 # Get git commit hash
 #-------------------------------------------------------------------------------
