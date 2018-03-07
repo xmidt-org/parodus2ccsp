@@ -5,6 +5,9 @@
  *
  * Copyright (c) 2015  Comcast
  */
+
+#include <pthread.h>
+
 #include "webpa_internal.h"
 #include "webpa_notification.h"
 
