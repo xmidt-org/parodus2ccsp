@@ -76,10 +76,10 @@ int libparodus_send (libpd_instance_t instance, wrp_msg_t *msg)
 /*----------------------------------------------------------------------------*/
 
 void test_libpd_client_mgr()
-{
-    will_return(libparodus_init, (intptr_t)0);
-    expect_function_call(libparodus_init);
-    libpd_client_mgr();
+{    
+        will_return(libparodus_init, (intptr_t)0);
+        expect_function_call(libparodus_init);
+        libpd_client_mgr();           
 }
 
 void test_sendNotification()
