@@ -10,9 +10,24 @@ Webpa client to communicate with parodus in RDK environment.
 # Building and Testing Instructions
 
 ```
+Pre-Requisite:
+--------------
+- cmake >= 2.8.7
+- openssl >= 1.0.2i
+- expat
+
+Configuration & Build:
+----------------------
 mkdir build
 cd build
-cmake ..
-make
+cmake .. -D<option>
+sudo make
+
+Test:
+-----
+By default tests will be disabled. Enable tests by configuring BUILD_TESTING to true and re-build.
+
+cmake .. -DBUILD_TESTING:BOOL=true
+sudo make
 make test
 ```
