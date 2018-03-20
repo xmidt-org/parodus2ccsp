@@ -13,7 +13,7 @@ Webpa client to communicate with parodus in RDK environment.
 Pre-Requisite:
 --------------
 - cmake >= 2.8.7
-- openssl >= 1.0.2i
+- openssl >= 1.0.2i and < 1.1.0
 - expat
 
 Configuration & Build:
