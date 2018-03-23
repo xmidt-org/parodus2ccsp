@@ -32,6 +32,9 @@ set(SHARE_DIR ${INSTALL_DIR}/share)
 set(DOC_DIR ${INSTALL_DIR}/doc)
 set(COMMON_LIBRARY_DIR ${INSTALL_DIR}/lib/${CMAKE_LIBRARY_ARCHITECTURE})
 
+option(BUILD_RASPBERRYPI "BUILD_RASPBERRYPI" OFF)
+option(BUILD_EMULATOR "BUILD_EMULATOR" OFF)
+
 include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/cjson
                     ${INCLUDE_DIR}/msgpack
@@ -66,6 +69,14 @@ execute_process(
 )
 
 add_definitions("-DWEBPA_GIT_VERSION=\"${GIT_COMMIT_TAG}\"")
+
+if (BUILD_RASPBERRYPI)
+add_definitions(-DPLATFORM_RASPBERRYPI)
+endif (BUILD_RASPBERRYPI)
+
+if (BUILD_EMULATOR)
+add_definitions(-DRDKB_EMU)
+endif (BUILD_EMULATOR)
 
 if (NOT BUILD_YOCTO)
 # cJSON external dependency

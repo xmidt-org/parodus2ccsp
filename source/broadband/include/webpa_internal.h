@@ -48,6 +48,10 @@
 #define PARAM_CMC                      "Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC"
 #if defined(_COSA_BCM_MIPS_)
 #define DEVICE_MAC                   "Device.DPoE.Mac_address"
+#elif defined(PLATFORM_RASPBERRYPI)
+#define DEVICE_MAC                   "Device.Ethernet.Interface.5.MACAddress"
+#elif defined(RDKB_EMU)
+#define DEVICE_MAC                   "Device.DeviceInfo.X_COMCAST-COM_WAN_MAC"
 #else
 #define DEVICE_MAC                   "Device.X_CISCO_COM_CableModem.MACAddress"
 #endif
