@@ -184,6 +184,7 @@ ExternalProject_Add(dbus
     CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --enable-verbose-mode=no
                                                       --quiet
                                                       --disable-tests
+						      --disable-Werror
                                                       --enable-asserts=no
                                                       --disable-xml-docs
                                                       --disable-doxygen-docs
