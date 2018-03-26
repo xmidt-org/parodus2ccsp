@@ -100,6 +100,7 @@ const char * notifyparameters[]={
 /*----------------------------------------------------------------------------*/
 static void loadCfgFile();
 static void getDeviceMac();
+static int writeToJson(char *data);
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
 static void *notifyTask(void *status);
 static void notifyCallback(NotifyData *notifyData);
@@ -610,88 +611,93 @@ void sendNotificationForFactoryReset()
 
 }
 
+static int writeToJson(char *data)
+{
+	FILE *fp;
+	fp = fopen(WEBPA_CFG_FILE, "w");
+	if (fp == NULL)
+	{
+		WalPrint("Failed to open file %s\n", WEBPA_CFG_FILE);
+		return -1;
+	}
+
+	fwrite(data, strlen(data), 1, fp);
+	fclose(fp);
+	return 0;
+}
+
 /*
  * @brief To add or update webpa config file with the "oldFirmwareVersion"
  */
 static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 {
-	int fileSize = 0;
-	char *cfg_file_content;
-	FILE *fp;
-	char * token;
-	char *cfg_oldFirmwareVer;
-	char str[512] = { '\0' };
-
-	fp = fopen(WEBPA_CFG_FILE, "r");
-	if (fp == NULL)
+	char *data = NULL;
+	cJSON *cfgValObj = NULL;
+	cJSON *json = NULL;
+	FILE *fileRead;
+	char *cJsonOut =NULL;
+	int len;
+	int configUpdateStatus = -1;
+	fileRead = fopen( WEBPA_CFG_FILE, "r+" );    
+	if( fileRead == NULL ) 
 	{
-		WalError("Cannot open %s in read mode\n", WEBPA_CFG_FILE);
+		WalError( "Error opening file in read mode\n" );
 		return WDMP_FAILURE;
 	}
 
-	if (ferror(fp))
-	{
-		WalError("Error while reading webpa config file under %s\n",
-				WEBPA_CFG_FILE);
-		fclose(fp);
-		return WDMP_FAILURE;
+	fseek( fileRead, 0, SEEK_END );
+	len = ftell( fileRead );
+	fseek( fileRead, 0, SEEK_SET );
+	data = ( char* )malloc( len + 1 );
+	if (data != NULL) {
+		fread( data, 1, len, fileRead );
+	} else {
+		WalError("malloc() failed\n");
 	}
 
-	fseek(fp, 0, SEEK_END);
-	fileSize = ftell(fp);
+	fclose( fileRead );
 
-	WalPrint("fileSize is %d\n", fileSize);
-	fseek(fp, 0, SEEK_SET);
-
-	//accomodate extra bytes for new field "oldFirmwareVersion"
-	cfg_file_content = (char *) malloc(
-			sizeof(char) * (fileSize + 1 + sizeof(str)));
-	fread(cfg_file_content, 1, fileSize, fp);
-	WalPrint("file content:  %s\n", cfg_file_content);
-
-	// If "oldFirmwareVersion" already exists in config file update it else add it
-	cfg_oldFirmwareVer = strstr(cfg_file_content, WEBPA_CFG_FIRMWARE_VER);
-	if (cfg_oldFirmwareVer != NULL)
+	if( data != NULL ) 
 	{
-		snprintf(str, sizeof(str), "%s\": \"%s\"\n}", WEBPA_CFG_FIRMWARE_VER,
-				value);
-		WalPrint("Ater formatting: str:%s\n", str);
-		strcpy(cfg_oldFirmwareVer, str);
-	}
-	else
-	{
-		token = strstr(cfg_file_content, "}");
-		token = token - 1;
-		snprintf(str, sizeof(str), "\t\"%s\": \"%s\"\n}",
-				WEBPA_CFG_FIRMWARE_VER, value);
-		WalPrint("Ater formatting: str:%s\n", str);
-		strcpy(++token, str);
-	}
-	WalPrint("%s\n", cfg_file_content);
-	fclose(fp);
+		json = cJSON_Parse( data );
+		if( !json )
+		{
+			WalError( "json parse error: [%s]\n", cJSON_GetErrorPtr() );
+		}
+		else
+		{
+			cfgValObj = cJSON_GetObjectItem( json, WEBPA_CFG_FIRMWARE_VER );
+			if( cfgValObj != NULL)
+			{
+				cJSON_ReplaceItemInObject(json, WEBPA_CFG_FIRMWARE_VER, cJSON_CreateString(value));
+				WalPrint("Updated current firmware in config file %s\n",value);
 
-	WalPrint("opening WEBPA_CFG_FILE for writing the content\n");
-	fp = fopen(WEBPA_CFG_FILE, "w");
-	if (fp == NULL)
-	{
-		WalPrint("Cannot open %s in write mode\n", WEBPA_CFG_FILE);
-		WAL_FREE(cfg_file_content);
-		return WDMP_FAILURE;
-	}
-	if (ferror(fp))
-	{
-		WalError("Error while writing webpa config file.\n");
-		WAL_FREE(cfg_file_content);
-		fclose(fp);
-		return WDMP_FAILURE;
-	}
+			}
+			else {
+				cJSON_AddStringToObject(json, WEBPA_CFG_FIRMWARE_VER, value);
+				WalPrint("Firmware version is not available in webpa_cfg.json, adding %s as %s\n",WEBPA_CFG_FIRMWARE_VER,value);
+			}
 
-	fprintf(fp, "%s", cfg_file_content);
-	WalPrint("After writing cfg_file_content to config\n");
-	fclose(fp);
-	WAL_FREE(cfg_file_content);
-	WalPrint("End of addFirmwareVerToConfig\n");
-	return WDMP_SUCCESS;
+			cJsonOut = cJSON_Print(json);
+			configUpdateStatus = writeToJson(cJsonOut);
+			if (configUpdateStatus == 0)
+			{
+				WalPrint("Updated current Firmware version to config file\n");
+				WAL_FREE(cJsonOut);
+				cJSON_Delete(json);
+				WAL_FREE(data);
+				return WDMP_SUCCESS;
+			}
+			else
+			{
+				WalPrint("Unable to update Firmware version to config file\n");
+			}
+			WAL_FREE(cJsonOut);
+			cJSON_Delete(json);
+		}
+		WAL_FREE(data);
+	}
+	return WDMP_FAILURE;
 }
 
 /*
