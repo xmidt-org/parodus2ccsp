@@ -73,7 +73,7 @@ if (NOT BUILD_YOCTO)
 ExternalProject_Add(cJSON
     PREFIX ${PREFIX_DIR}/cJSON
     GIT_REPOSITORY https://github.com/DaveGamble/cJSON.git
-    GIT_TAG "master"
+    GIT_TAG "0e0c463491004d0e69aad1368450e92d6647dff3"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libcJSON STATIC IMPORTED)
@@ -85,7 +85,7 @@ add_dependencies(libcJSON cJSON)
 ExternalProject_Add(cimplog
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/cimplog
     GIT_REPOSITORY https://github.com/Comcast/cimplog.git
-    GIT_TAG "master"
+    GIT_TAG "8a5fb3c2f182241d17f5342bea5b7688c28cd1fd"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libcimplog STATIC SHARED IMPORTED)
@@ -96,7 +96,7 @@ add_dependencies(libcimplog cimplog)
 ExternalProject_Add(trower-base64
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/trower-base64
     GIT_REPOSITORY https://github.com/Comcast/trower-base64.git
-    GIT_TAG "master"
+    GIT_TAG "fbb9440ae2bc1118866baefcea7ff814f16613dd"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DBUILD_TESTING=OFF
 )
 add_library(libtrower-base64 STATIC SHARED IMPORTED)
@@ -119,7 +119,7 @@ add_dependencies(libwdmp-c wdmp-c)
 ExternalProject_Add(nanomsg
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/nanomsg
     GIT_REPOSITORY https://github.com/nanomsg/nanomsg.git
-    #GIT_TAG "096998834451219ee7813d8977f6a4027b0ccb43"
+    GIT_TAG "0c1aa2b288f6b167dbafe7e29c20e6fc7e71c000"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libnanomsg STATIC SHARED IMPORTED)
@@ -144,7 +144,7 @@ ExternalProject_Add(wrp-c
 	DEPENDS trower-base64 msgpack cimplog
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/wrp-c
     GIT_REPOSITORY https://github.com/Comcast/wrp-c.git
-    GIT_TAG "master"
+    GIT_TAG "d42ac3a63b8d6e723995b63e23aa1969e622faa5"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
                   -DMSGPACK_ENABLE_CXX=OFF
                   -DMSGPACK_BUILD_EXAMPLES=OFF
@@ -162,7 +162,7 @@ ExternalProject_Add(libparodus
     DEPENDS trower-base64 msgpack nanomsg wrp-c
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/libparodus
     GIT_REPOSITORY https://github.com/Comcast/libparodus.git
-    GIT_TAG "master"
+    GIT_TAG "a7615d69bd5859e337f467fb7e33182da970a5de"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
                   -DMAIN_PROJ_BUILD=ON
                   -DMAIN_PROJ_LIB_PATH=${LIBRARY_DIR}
@@ -184,6 +184,7 @@ ExternalProject_Add(dbus
     CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --enable-verbose-mode=no
                                                       --quiet
                                                       --disable-tests
+						      --disable-Werror
                                                       --enable-asserts=no
                                                       --disable-xml-docs
                                                       --disable-doxygen-docs
@@ -206,7 +207,7 @@ ExternalProject_Add(CcspCommonLibrary
     DEPENDS dbus
     PREFIX ${PREFIX_DIR}/CcspCommonLibrary
     GIT_REPOSITORY https://github.com/rdkcmf/rdkb-CcspCommonLibrary.git
-    GIT_TAG "master"
+    GIT_TAG "a3117b5c45532a24507557886910cdaa9d0c411c"
     CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --quiet CPPFLAGS=${CCSP_HEADERS}
                                                       --prefix=${INSTALL_DIR}
                                                       --includedir=${INCLUDE_DIR}
@@ -252,8 +253,8 @@ if (BUILD_TESTING)
 #-------------------------------------------------------------------------------
 ExternalProject_Add(cmocka
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/cmocka
-    GIT_REPOSITORY https://git.cryptomilk.org/projects/cmocka.git
-    GIT_TAG "master"
+    GIT_REPOSITORY https://github.com/elventear/cmocka.git
+    GIT_TAG "b71a3060699bc1a5b00e958be353772f42545ac2"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libcmocka STATIC SHARED IMPORTED)
