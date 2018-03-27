@@ -73,7 +73,7 @@ if (NOT BUILD_YOCTO)
 ExternalProject_Add(cJSON
     PREFIX ${PREFIX_DIR}/cJSON
     GIT_REPOSITORY https://github.com/DaveGamble/cJSON.git
-    GIT_TAG "0e0c463491004d0e69aad1368450e92d6647dff3"
+    GIT_TAG "aafb64a1c549b7b927e339df6d35b1d5059dc235"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libcJSON STATIC IMPORTED)
