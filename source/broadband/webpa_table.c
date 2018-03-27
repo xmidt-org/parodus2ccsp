@@ -257,7 +257,9 @@ static int addRow(char *object,char *compName,char *dbusPath,int *retIndex)
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };	
 	componentStruct_t ** ppComponents = NULL;
+#if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
+#endif
 	snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);	
 	
 	WalPrint("<==========start of addRow ========>\n ");
@@ -398,7 +400,9 @@ static int deleteRow(char *object)
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
 	componentStruct_t ** ppComponents = NULL;
+#if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
+#endif
 	snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);
 	
 	WalPrint("<==========Start of deleteRow ========>\n ");
@@ -458,7 +462,9 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = {'\0'};
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = {'\0'};
 	componentStruct_t ** ppComponents = NULL;
+#if defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
+#endif
 	char *parameterNames[1];
 	char **rows = NULL;
 	char paramName[MAX_PARAMETERNAME_LEN] = {'\0'};
@@ -751,7 +757,9 @@ static void getWritableParams(char *paramName, char ***writableParams, int *para
 	componentStruct_t ** ppComponents = NULL;
 	char *tempStr = NULL;
 	char temp[MAX_PARAMETERNAME_LEN] = { 0 };
+#if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
+#endif
 	parameterInfoStruct_t **parameterInfo = NULL;
 	WalPrint("==================== Start of getWritableParams ==================\n");
 	snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);

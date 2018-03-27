@@ -165,7 +165,7 @@ int waitForOperationalReadyCondition()
 	{
 		return EPON_FAILED;
 	}
-#else
+#elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU)
 	if(waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH) != CCSP_SUCCESS)
 	{
 		return CM_FAILED;
@@ -223,8 +223,9 @@ static void *WALInit()
 	WalPrint("------------ WALInit ----------\n");
 	pthread_detach(pthread_self());
 	waitUntilSystemReady();
-
+#if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
+#endif
 	snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);
 
 	WalPrint("-------- Start of populateComponentValArray -------\n");
@@ -333,7 +334,9 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 	char tempDbusPath[MAX_PARAMETERNAME_LEN/2] = {'\0'};
 	
 	componentStruct_t ** ppComponents = NULL;
+#if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
+#endif
 	snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);
 	strncpy(tempParamName, parameterName,sizeof(tempParamName));
 	WalPrint("======= start of getComponentDetails ========\n");

@@ -110,7 +110,11 @@ WDMP_STATUS msgBusInit(const char *pComponentName)
     extern ANSC_HANDLE bus_handle;
     char *subSys            = NULL;  
     DmErr_t    err;
+#if !defined(RDKB_EMU)
     AnscCopyString(g_Subsystem, "eRT.");
+#else
+    AnscCopyString(g_Subsystem, "");
+#endif
 
     if ( bRunAsDaemon ) 
         daemonize();
