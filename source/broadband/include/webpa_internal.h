@@ -219,3 +219,5 @@ void macToLower(char macValue[],char macConverted[]);
 
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
+
+WDMP_STATUS check_ethernet_wan_status();

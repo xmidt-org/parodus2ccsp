@@ -166,9 +166,12 @@ int waitForOperationalReadyCondition()
 		return EPON_FAILED;
 	}
 #elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU)
-	if(waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH) != CCSP_SUCCESS)
+    if(check_ethernet_wan_status() != WDMP_SUCCESS)
 	{
-		return CM_FAILED;
+	    if(waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH) != CCSP_SUCCESS)
+	    {
+		    return CM_FAILED;
+	    }
 	}
 #endif
 	if(waitForComponentReady(CCSP_DBUS_PSM,CCSP_DBUS_PATH_PSM) != CCSP_SUCCESS)

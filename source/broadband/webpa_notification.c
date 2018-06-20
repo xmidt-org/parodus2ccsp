@@ -484,7 +484,7 @@ static void *notifyTask(void *status)
 	return NULL;
 }
 
-static WDMP_STATUS check_ethernet_wan_status()
+WDMP_STATUS check_ethernet_wan_status()
 {
     char *status = NULL;
     status = getParameterValue(ETH_WAN_STATUS_PARAM);
@@ -515,7 +515,6 @@ static void getDeviceMac()
             int fd = s_sysevent_connect(&token);
             if(WDMP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
             {
-		WalInfo("deviceMACValue is %s\n",deviceMACValue);
                 macToLower(deviceMACValue, deviceMAC);
                 WalInfo("deviceMAC is %s\n", deviceMAC);
             }
