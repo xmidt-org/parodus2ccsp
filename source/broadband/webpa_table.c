@@ -462,7 +462,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = {'\0'};
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = {'\0'};
 	componentStruct_t ** ppComponents = NULL;
-#if defined(RDKB_EMU)
+#if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
 	char *parameterNames[1];
