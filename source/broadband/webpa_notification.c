@@ -1248,6 +1248,10 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	{
 		walStrncpy(reason,"EPON health timeout",MAX_REASON_LENGTH);
 	}
+	else if (status == ETHAGENT_FAILED)
+	{
+		walStrncpy(reason,"ETHAGENT health timeout",MAX_REASON_LENGTH);
+	}
 	else if (status == CM_FAILED)
 	{
 		walStrncpy(reason,"CM Agent health timeout",MAX_REASON_LENGTH);
