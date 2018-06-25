@@ -63,6 +63,7 @@
 #define RDKB_EPON_COMPONENT_NAME                  "com.cisco.spvtg.ccsp.epon"
 #define RDKB_EPON_DBUS_PATH                       "/com/cisco/spvtg/ccsp/epon"
 #endif
+#define ETH_WAN_STATUS_PARAM "Device.Ethernet.X_RDKCENTRAL-COM_WAN.Enabled"
 
 /* RDKB Logger defines */
 #define LOG_FATAL       0
@@ -220,4 +221,4 @@ void macToLower(char macValue[],char macConverted[]);
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
 
-WDMP_STATUS check_ethernet_wan_status();
+BOOL get_eth_wan_status();

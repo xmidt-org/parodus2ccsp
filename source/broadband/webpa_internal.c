@@ -116,6 +116,7 @@ CpeWebpaIndexMap IndexMap[WIFI_INDEX_MAP_SIZE] = {
 {10107, 14},
 {10108, 16}
 };
+BOOL eth_wan_status = FALSE;
 
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
@@ -133,6 +134,7 @@ static int checkIfSystemReady();
 extern ANSC_HANDLE bus_handle;
 static void *WALInit();
 static void retryFailedComponentCaching();
+static WDMP_STATUS check_ethernet_wan_status();
 
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
@@ -236,36 +238,43 @@ static void *WALInit()
 	WalPrint("Length of object list : %d\n",len);
 	for(i = 0; i < len ; i++)
 	{
-		strncpy(paramName,objectList[i],sizeof(paramName));
-		ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,dst_pathname_cr, paramName,l_Subsystem, &ppComponents, &size);
-			
-		if (ret == CCSP_SUCCESS)
-		{	    
-			WalPrint("WALInit(): %s Component caching is successful\n",objectList[i]);
-			// Allocate memory for ComponentVal obj_name, comp_name, dbus_path
-			ComponentValArray[cnt].obj_name = (char *)malloc(sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
-			memset(ComponentValArray[cnt].obj_name, 0, sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
-			ComponentValArray[cnt].comp_name = (char *)malloc(sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
-			ComponentValArray[cnt].dbus_path = (char *)malloc(sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
-
-			ComponentValArray[cnt].comp_id = cnt;
-			ComponentValArray[cnt].comp_size = size;
-			getObjectName(paramName,ComponentValArray[cnt].obj_name,1);
-			strncpy(ComponentValArray[cnt].comp_name,ppComponents[0]->componentName,MAX_PARAMETERNAME_LEN/2);
-			strncpy(ComponentValArray[cnt].dbus_path,ppComponents[0]->dbusPath,MAX_PARAMETERNAME_LEN/2);
-					   
-			WalInfo("ComponentValArray[%d].comp_id = %d,ComponentValArray[cnt].comp_size = %d, ComponentValArray[%d].obj_name = %s, ComponentValArray[%d].comp_name = %s, ComponentValArray[%d].dbus_path = %s\n", cnt, ComponentValArray[cnt].comp_id,ComponentValArray[cnt].comp_size, cnt, ComponentValArray[cnt].obj_name, cnt, ComponentValArray[cnt].comp_name, cnt, ComponentValArray[cnt].dbus_path);  
-				cnt++;
-		}
+	    if(strncmp(objectList[i], "Device.X_CISCO_COM_CableModem.", strlen("Device.X_CISCO_COM_CableModem.")) == 0 && get_eth_wan_status() == TRUE )
+	    {
+	        WalInfo("Skipped caching of CM Agent parameter\n");
+	    }
 		else
 		{
-			WalPrint("Component caching is failed for %s\n",paramName);
-			WalError("---Failed to get component info for object %s---: ret = %d, size = %d, Adding into failedCompList....\n", objectList[i], ret, size);
-			failedCompList[count] = objectList[i];
-			WalInfo("failedCompList[%d] : %s\n", count, failedCompList[count]);
-			count++;
+		    strncpy(paramName,objectList[i],sizeof(paramName));
+		    ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,dst_pathname_cr, paramName,l_Subsystem, &ppComponents, &size);
+			
+		    if (ret == CCSP_SUCCESS)
+		    {	    
+			    WalPrint("WALInit(): %s Component caching is successful\n",objectList[i]);
+			    // Allocate memory for ComponentVal obj_name, comp_name, dbus_path
+			    ComponentValArray[cnt].obj_name = (char *)malloc(sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
+			    memset(ComponentValArray[cnt].obj_name, 0, sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
+			    ComponentValArray[cnt].comp_name = (char *)malloc(sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
+			    ComponentValArray[cnt].dbus_path = (char *)malloc(sizeof(char) * (MAX_PARAMETERNAME_LEN/2));
+
+			    ComponentValArray[cnt].comp_id = cnt;
+			    ComponentValArray[cnt].comp_size = size;
+			    getObjectName(paramName,ComponentValArray[cnt].obj_name,1);
+			    strncpy(ComponentValArray[cnt].comp_name,ppComponents[0]->componentName,MAX_PARAMETERNAME_LEN/2);
+			    strncpy(ComponentValArray[cnt].dbus_path,ppComponents[0]->dbusPath,MAX_PARAMETERNAME_LEN/2);
+					       
+			    WalInfo("ComponentValArray[%d].comp_id = %d,ComponentValArray[cnt].comp_size = %d, ComponentValArray[%d].obj_name = %s, ComponentValArray[%d].comp_name = %s, ComponentValArray[%d].dbus_path = %s\n", cnt, ComponentValArray[cnt].comp_id,ComponentValArray[cnt].comp_size, cnt, ComponentValArray[cnt].obj_name, cnt, ComponentValArray[cnt].comp_name, cnt, ComponentValArray[cnt].dbus_path);  
+				    cnt++;
+		    }
+		    else
+		    {
+			    WalPrint("Component caching is failed for %s\n",paramName);
+			    WalError("---Failed to get component info for object %s---: ret = %d, size = %d, Adding into failedCompList....\n", objectList[i], ret, size);
+			    failedCompList[count] = objectList[i];
+			    WalInfo("failedCompList[%d] : %s\n", count, failedCompList[count]);
+			    count++;
+		    }
+		    free_componentStruct_t(bus_handle, size, ppComponents);
 		}
-		free_componentStruct_t(bus_handle, size, ppComponents);
 	}
 	
 	compCacheSuccessCnt = cnt;
@@ -802,6 +811,10 @@ void macToLower(char macValue[],char macConverted[])
 	}
 }
 
+BOOL get_eth_wan_status()
+{
+    return eth_wan_status;
+}
 /*----------------------------------------------------------------------------*/
 /*                             Internal functions                             */
 /*----------------------------------------------------------------------------*/
@@ -1234,3 +1247,16 @@ static void retryFailedComponentCaching()
 	}
 }
 
+static WDMP_STATUS check_ethernet_wan_status()
+{
+    char *status = NULL;
+    status = getParameterValue(ETH_WAN_STATUS_PARAM);
+    if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
+    {
+        WalInfo("Ethernet WAN is enabled\n");
+        eth_wan_status = TRUE;
+        WAL_FREE(status);
+        return WDMP_SUCCESS;
+    }
+    return WDMP_FAILURE;
+}

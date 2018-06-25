@@ -30,7 +30,6 @@
 #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
 #define WEBPA_CFG_FIRMWARE_VER		"oldFirmwareVersion"
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
-#define ETH_WAN_STATUS_PARAM "Device.Ethernet.X_RDKCENTRAL-COM_WAN.Enabled"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -242,6 +241,7 @@ void sendConnectedClientNotification(char * macId, char *status, char *interface
 
 	(*notifyCbFn)(notifyDataPtr);
 }
+
 /*----------------------------------------------------------------------------*/
 /*                               Internal functions                              */
 /*----------------------------------------------------------------------------*/
@@ -484,19 +484,6 @@ static void *notifyTask(void *status)
 	return NULL;
 }
 
-WDMP_STATUS check_ethernet_wan_status()
-{
-    char *status = NULL;
-    status = getParameterValue(ETH_WAN_STATUS_PARAM);
-    if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
-    {
-        WalInfo("Ethernet WAN is enabled\n");
-        WAL_FREE(status);
-        return WDMP_SUCCESS;
-    }
-    return WDMP_FAILURE;
-}
-
 static void getDeviceMac()
 {
     char *macID = NULL;
@@ -513,7 +500,7 @@ static void getDeviceMac()
 #ifdef RDKB_BUILD
             token_t  token;
             int fd = s_sysevent_connect(&token);
-            if(WDMP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
+            if(TRUE == get_eth_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
             {
                 macToLower(deviceMACValue, deviceMAC);
                 WalInfo("deviceMAC is %s\n", deviceMAC);
