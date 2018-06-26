@@ -10,7 +10,9 @@
 
 #include "webpa_notification.h"
 #include "webpa_internal.h"
-
+#ifdef RDKB_BUILD
+#include <sysevent/sysevent.h>
+#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -239,6 +241,7 @@ void sendConnectedClientNotification(char * macId, char *status, char *interface
 
 	(*notifyCbFn)(notifyDataPtr);
 }
+
 /*----------------------------------------------------------------------------*/
 /*                               Internal functions                              */
 /*----------------------------------------------------------------------------*/
@@ -483,37 +486,47 @@ static void *notifyTask(void *status)
 
 static void getDeviceMac()
 {
-        char *macID = NULL;
-        char deviceMACValue[32] = { '\0' };
-	int retryCount = 0;
-	int backoffRetryTime = 0;  
-	int c=2;
-	
-        if(strlen(deviceMAC) == 0)
-        {
-                do
-                {
-                        backoffRetryTime = (int) pow(2, c) -1;	
-                        macID = getParameterValue(DEVICE_MAC);
-	                if (macID != NULL)
-	                {
-		                strncpy(deviceMACValue, macID, strlen(macID)+1);
-		                macToLower(deviceMACValue, deviceMAC);
-		                WalInfo("deviceMAC: %s\n",deviceMAC);
-		                WAL_FREE(macID);
-	                }
-	                else
-	                {
-	                        WalError("Failed to GetValue for MAC. Retrying...\n");
-	                        WalInfo("backoffRetryTime %d seconds\n", backoffRetryTime);
-			        sleep(backoffRetryTime);
-                                c++;
-			        retryCount++;
-	                }
-	        }while((retryCount >= 1) && (retryCount <= 5));
-	        
-	}
+    char *macID = NULL;
+    char deviceMACValue[32] = { '\0' };
+    int retryCount = 0;
+    int backoffRetryTime = 0;  
+    int c=2;
 
+    if(strlen(deviceMAC) == 0)
+    {
+        do
+        {
+            backoffRetryTime = (int) pow(2, c) -1;
+#ifdef RDKB_BUILD
+            token_t  token;
+            int fd = s_sysevent_connect(&token);
+            if(TRUE == get_eth_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
+            {
+                macToLower(deviceMACValue, deviceMAC);
+                WalInfo("deviceMAC is %s\n", deviceMAC);
+            }
+            else
+#endif
+            {
+                macID = getParameterValue(DEVICE_MAC);
+                if (macID != NULL)
+                {
+                    strncpy(deviceMACValue, macID, strlen(macID)+1);
+                    macToLower(deviceMACValue, deviceMAC);
+                    WalInfo("deviceMAC: %s\n",deviceMAC);
+                    WAL_FREE(macID);
+                }
+            }
+            if(strlen(deviceMAC) == 0)
+            {
+                WalError("Failed to GetValue for MAC. Retrying...\n");
+                WalInfo("backoffRetryTime %d seconds\n", backoffRetryTime);
+                sleep(backoffRetryTime);
+                c++;
+                retryCount++;
+            }
+        }while((retryCount >= 1) && (retryCount <= 5));
+    }
 }
 /*
  * @brief notifyCallback is to check if notification event needs to be sent
@@ -1234,6 +1247,10 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	else if (status == EPON_FAILED)
 	{
 		walStrncpy(reason,"EPON health timeout",MAX_REASON_LENGTH);
+	}
+	else if (status == ETHAGENT_FAILED)
+	{
+		walStrncpy(reason,"ETHAGENT health timeout",MAX_REASON_LENGTH);
 	}
 	else if (status == CM_FAILED)
 	{

@@ -63,6 +63,9 @@
 #define RDKB_EPON_COMPONENT_NAME                  "com.cisco.spvtg.ccsp.epon"
 #define RDKB_EPON_DBUS_PATH                       "/com/cisco/spvtg/ccsp/epon"
 #endif
+#define ETH_WAN_STATUS_PARAM "Device.Ethernet.X_RDKCENTRAL-COM_WAN.Enabled"
+#define RDKB_ETHAGENT_COMPONENT_NAME                  "com.cisco.spvtg.ccsp.ethagent"
+#define RDKB_ETHAGENT_DBUS_PATH                       "/com/cisco/spvtg/ccsp/ethagent"
 
 /* RDKB Logger defines */
 #define LOG_FATAL       0
@@ -105,6 +108,7 @@ typedef enum
     SUCCESS = 0,
     PAM_FAILED,
     EPON_FAILED,
+    ETHAGENT_FAILED,
     CM_FAILED,
     PSM_FAILED,
     WIFI_FAILED
@@ -219,3 +223,5 @@ void macToLower(char macValue[],char macConverted[]);
 
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
+
+BOOL get_eth_wan_status();
