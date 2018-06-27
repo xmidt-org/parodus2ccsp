@@ -134,7 +134,6 @@ static int checkIfSystemReady();
 extern ANSC_HANDLE bus_handle;
 static void *WALInit();
 static void retryFailedComponentCaching();
-static WDMP_STATUS check_ethernet_wan_status();
 
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
@@ -168,10 +167,6 @@ int waitForOperationalReadyCondition()
 		return EPON_FAILED;
 	}
 #elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU)
-    if(waitForComponentReady(RDKB_ETHAGENT_COMPONENT_NAME,RDKB_ETHAGENT_DBUS_PATH) != CCSP_SUCCESS)
-	{
-		return ETHAGENT_FAILED;
-	}
     if(check_ethernet_wan_status() != WDMP_SUCCESS)
 	{
 	    if(waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH) != CCSP_SUCCESS)
@@ -1251,16 +1246,32 @@ static void retryFailedComponentCaching()
 	}
 }
 
-static WDMP_STATUS check_ethernet_wan_status()
+WDMP_STATUS check_ethernet_wan_status()
 {
     char *status = NULL;
-    status = getParameterValue(ETH_WAN_STATUS_PARAM);
-    if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
+    char isEthEnabled[64]={'\0'};
+#ifdef RDKB_BUILD
+    if(0 == syscfg_init())
     {
-        WalInfo("Ethernet WAN is enabled\n");
-        eth_wan_status = TRUE;
-        WAL_FREE(status);
-        return WDMP_SUCCESS;
+        if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0))
+        {
+            WalInfo("Ethernet WAN is enabled\n");
+            eth_wan_status = TRUE;
+            return WDMP_SUCCESS;
+        }
+    }
+    else
+#endif
+    {
+        waitForComponentReady(RDKB_ETHAGENT_COMPONENT_NAME,RDKB_ETHAGENT_DBUS_PATH);
+        status = getParameterValue(ETH_WAN_STATUS_PARAM);
+        if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
+        {
+            WalInfo("Ethernet WAN is enabled\n");
+            eth_wan_status = TRUE;
+            WAL_FREE(status);
+            return WDMP_SUCCESS;
+        }
     }
     return WDMP_FAILURE;
 }

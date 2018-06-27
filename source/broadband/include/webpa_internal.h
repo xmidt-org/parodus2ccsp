@@ -108,7 +108,6 @@ typedef enum
     SUCCESS = 0,
     PAM_FAILED,
     EPON_FAILED,
-    ETHAGENT_FAILED,
     CM_FAILED,
     PSM_FAILED,
     WIFI_FAILED
@@ -225,3 +224,5 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
 
 BOOL get_eth_wan_status();
+
+WDMP_STATUS check_ethernet_wan_status();
