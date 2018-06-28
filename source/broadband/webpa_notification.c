@@ -500,7 +500,7 @@ static void getDeviceMac()
 #ifdef RDKB_BUILD
             token_t  token;
             int fd = s_sysevent_connect(&token);
-            if(TRUE == get_eth_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
+            if(WDMP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
             {
                 macToLower(deviceMACValue, deviceMAC);
                 WalInfo("deviceMAC is %s\n", deviceMAC);
@@ -1247,10 +1247,6 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	else if (status == EPON_FAILED)
 	{
 		walStrncpy(reason,"EPON health timeout",MAX_REASON_LENGTH);
-	}
-	else if (status == ETHAGENT_FAILED)
-	{
-		walStrncpy(reason,"ETHAGENT health timeout",MAX_REASON_LENGTH);
 	}
 	else if (status == CM_FAILED)
 	{
