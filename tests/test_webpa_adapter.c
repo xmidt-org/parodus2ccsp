@@ -110,6 +110,12 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
     UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
     return (int) mock();
 }
+
+uint64_t getCurrentTimeInMicroSeconds(struct timespec *timer)
+{
+    UNUSED(timer);
+    return (uint64_t) mock();
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/
@@ -129,9 +135,11 @@ void test_processRequest_singleGet()
     strncpy(parameterList[0]->value, "true",MAX_PARAMETER_LEN);
     parameterList[0]->type = WDMP_BOOLEAN;
     status = WDMP_SUCCESS;
+    will_return(getCurrentTimeInMicroSeconds, 1543215678899);
     expect_value(getValues, paramCount, 1);
     expect_value(getValues, index, 0);
     expect_function_call(getValues);
+    will_return(getCurrentTimeInMicroSeconds, 1543215679000);
     processRequest(reqPayload, transactionId, &resPayload);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
@@ -171,9 +179,11 @@ void test_processRequest_WildcardsGet()
         parameterList[0][i].type = WDMP_STRING;
     }
     status = WDMP_SUCCESS;
+    will_return(getCurrentTimeInMicroSeconds, 1543215678000);
     expect_value(getValues, paramCount, 1);
     expect_value(getValues, index, 0);
     expect_function_call(getValues);
+    will_return(getCurrentTimeInMicroSeconds, 1543215678899);
     processRequest(reqPayload, transactionId, &resPayload);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);

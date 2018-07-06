@@ -33,7 +33,7 @@ static char current_transaction_id[MAX_PARAMETERVALUE_LEN] = {'\0'};
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 
-static int getParamValues(char *parameterNames[], int paramCount, char *CompName, char *dbusPath, money_trace_spans *timeSpan, int paramIndex,int startIndex, param_t ***paramArr,int *TotalParams);
+static int getParamValues(char *parameterNames[], int paramCount, char *CompName, char *dbusPath, money_trace_spans *timeSpan, int compIndex, int paramIndex,int startIndex, param_t ***paramArr,int *TotalParams);
 static void free_set_param_values_memory(parameterValStruct_t* val, int paramCount, char * faultParam);
 static void free_paramVal_memory(param_t ** val, int paramCount);
 static int prepare_parameterValueStruct(parameterValStruct_t* val, param_t *paramVal, char *paramName);
@@ -87,6 +87,13 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
             isLargeWildCard = 1;
         }
 
+        if(timeSpan)
+        {
+            timeSpan->spans = (money_trace_span *) malloc(sizeof(money_trace_span)* compCount);
+            memset(timeSpan->spans,0,(sizeof(money_trace_span)* compCount));
+            timeSpan->count = compCount;
+        }
+
         for(cnt1 = 0; cnt1 < compCount; cnt1++)
         {
             WalPrint("------------- Parameter group -------------\n");
@@ -101,19 +108,24 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
             {
                 ret = CCSP_ERR_WIFI_BUSY;
                 WalError("WiFi component is busy\n");
+                if(timeSpan)
+                {
+                    timeSpan->count = 0;
+                    WAL_FREE(timeSpan->spans);
+                }
                 break;
             }
             WalPrint("index: %d startIndex: %d\n",index, startIndex);
 
             if(isLargeWildCard == 1)
             {
-                ret = getParamValues(ParamGroup[cnt1].parameterName, ParamGroup[cnt1].parameterCount, ParamGroup[cnt1].comp_name, ParamGroup[cnt1].dbus_path, timeSpan, index, startIndex, paramArr,&retCount);
+                ret = getParamValues(ParamGroup[cnt1].parameterName, ParamGroup[cnt1].parameterCount, ParamGroup[cnt1].comp_name, ParamGroup[cnt1].dbus_path, timeSpan, cnt1, index, startIndex, paramArr,&retCount);
                 startIndex = startIndex + retCount;
             }
             else
             {
                 startIndex = 0;
-                ret = getParamValues(ParamGroup[cnt1].parameterName, ParamGroup[cnt1].parameterCount, ParamGroup[cnt1].comp_name, ParamGroup[cnt1].dbus_path, timeSpan, index, startIndex, paramArr,&retCount);
+                ret = getParamValues(ParamGroup[cnt1].parameterName, ParamGroup[cnt1].parameterCount, ParamGroup[cnt1].comp_name, ParamGroup[cnt1].dbus_path, timeSpan, cnt1, index, startIndex, paramArr,&retCount);
                 index = index + ParamGroup[cnt1].parameterCount;   
             }
             WalPrint("After getParamValues index = %d ,startIndex : %d retCount =  %d\n",index,startIndex,retCount);
@@ -196,7 +208,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                         
                         WalPrint("B4 getParamValues index = %d\n", index);
                         //GET values for rollback purpose
-                        ret = getParamValues(ParamGroup[i].parameterName, ParamGroup[i].parameterCount, ParamGroup[i].comp_name, ParamGroup[i].dbus_path, timeSpan, index, 0, &storeGetValue,&retCount);
+                        ret = getParamValues(ParamGroup[i].parameterName, ParamGroup[i].parameterCount, ParamGroup[i].comp_name, ParamGroup[i].dbus_path, NULL, i, index, 0, &storeGetValue,&retCount);
 		  	WalPrint("After getParamValues index = %d , retCount =  %d\n",index,retCount);
                         if(ret != CCSP_SUCCESS)
                         {
@@ -397,11 +409,14 @@ void initApplyWiFiSettings()
  * @param[out] TotalParams Number of parameters returned from stack
  */
  
-static int getParamValues(char *parameterNames[], int paramCount, char *CompName, char *dbusPath, money_trace_spans *timeSpan, int paramIndex,int startIndex, param_t ***paramArr,int *TotalParams)
+static int getParamValues(char *parameterNames[], int paramCount, char *CompName, char *dbusPath, money_trace_spans *timeSpan, int compIndex, int paramIndex,int startIndex, param_t ***paramArr,int *TotalParams)
 {
     int ret = 0, val_size = 0, cnt=0, retIndex=0, error=0;
     char **parameterNamesLocal = NULL;
     parameterValStruct_t **parameterval = NULL;
+    uint64_t startTime = 0, endTime = 0;
+	struct timespec start, end;
+	uint32_t timeDuration = 0;
     WalPrint(" ------ Start of getParamValues ----\n");
     parameterNamesLocal = (char **) malloc(sizeof(char *) * paramCount);
     memset(parameterNamesLocal,0,(sizeof(char *) * paramCount));
@@ -428,6 +443,11 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
                 WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
             }
             error = 1;
+            if(timeSpan)
+			{
+				timeSpan->count = 0;
+				WAL_FREE(timeSpan->spans);
+			}
             break;
         }
 
@@ -437,6 +457,11 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
     if(error != 1)
     {
         WalInfo("CompName = %s, dbusPath : %s, paramCount = %d\n", CompName, dbusPath, paramCount);
+        if(timeSpan)
+	    {
+		    startTime = getCurrentTimeInMicroSeconds(&start);
+		    WalPrint("component start_time : %llu\n",startTime);
+	    }
         if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
         {
             ret = getWebpaParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
@@ -445,6 +470,19 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
         {
             ret = CcspBaseIf_getParameterValues(bus_handle,CompName,dbusPath,parameterNamesLocal,paramCount, &val_size, &parameterval);
         }
+        if(timeSpan)
+	    {
+		    endTime = getCurrentTimeInMicroSeconds(&end);
+		    timeDuration = endTime - startTime;
+		    timeSpan->spans[compIndex].name = strdup(CompName);
+		    WalPrint("timeSpan->spans[%d].name : %s\n",compIndex,timeSpan->spans[compIndex].name);
+		    WalPrint("start_time : %llu\n",startTime);
+		    timeSpan->spans[compIndex].start = startTime;
+		    WalPrint("timeSpan->spans[%d].start : %llu\n",compIndex,timeSpan->spans[compIndex].start);
+		    WalPrint("timeDuration : %lu\n",timeDuration);
+		    timeSpan->spans[compIndex].duration = timeDuration;
+		    WalPrint("timeSpan->spans[%d].duration : %lu\n",compIndex,timeSpan->spans[compIndex].duration);
+	    }
         WalPrint("----- After GPV ret = %d------\n",ret);
         if (ret != CCSP_SUCCESS)
         {
