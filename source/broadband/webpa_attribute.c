@@ -247,6 +247,10 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 	char **tempCompName = NULL;
 	char **dbusPath = NULL;
 	char **tempDbusPath = NULL;
+	uint64_t startTime = 0, endTime = 0;
+	struct timespec start, end;
+	uint64_t start_time = 0;
+	uint32_t timeDuration = 0;
 	
 	parameterAttributeStruct_t *attriStruct =(parameterAttributeStruct_t*) malloc(sizeof(parameterAttributeStruct_t) * paramCount);
 	memset(attriStruct,0,(sizeof(parameterAttributeStruct_t) * paramCount));
@@ -329,12 +333,30 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 		if(notificationType == 1)
 		{
 #ifndef USE_NOTIFY_COMPONENT
+            if(timeSpan)
+			{
+				startTime = getCurrentTimeInMicroSeconds(&start);
+			}
 			ret = CcspBaseIf_Register_Event(bus_handle, compName[0], "parameterValueChangeSignal");
+			if(timeSpan)
+			{
+				endTime = getCurrentTimeInMicroSeconds(&end);
+				timeDuration += endTime - startTime;
+			}
 			if (CCSP_SUCCESS != ret)
 			{
 				WalError("WebPa: CcspBaseIf_Register_Event failed!!!\n");
 			}
+			if(timeSpan)
+			{
+				startTime = getCurrentTimeInMicroSeconds(&start);
+			}
 			CcspBaseIf_SetCallback2(bus_handle, "parameterValueChangeSignal", ccspWebPaValueChangedCB, NULL);
+			if(timeSpan)
+			{
+				endTime = getCurrentTimeInMicroSeconds(&end);
+				timeDuration += endTime - startTime;
+			}
 #endif
 		}
 		attriStruct[cnt].parameterName = malloc( sizeof(char) * MAX_PARAMETERNAME_LEN);
@@ -348,7 +370,31 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 	
 	if(error != 1)
 	{
+	    if(timeSpan)
+		{
+			timeSpan->spans = (money_trace_span *) malloc(sizeof(money_trace_span));
+			memset(timeSpan->spans,0,(sizeof(money_trace_span)));
+			timeSpan->count = 1;
+			WalPrint("timeSpan->count : %d\n",timeSpan->count);
+			startTime = getCurrentTimeInMicroSeconds(&start);
+			start_time = startTime;
+			WalPrint("component start_time: %llu\n",start_time);
+		}
 		ret = CcspBaseIf_setParameterAttributes(bus_handle,compName[0], dbusPath[0], 0, attriStruct, paramCount);
+		if(timeSpan)
+		{
+			endTime = getCurrentTimeInMicroSeconds(&end);
+			timeDuration += endTime - startTime;
+
+			timeSpan->spans[0].name = strdup(compName[0]);
+			WalPrint("timeSpan->spans[0].name : %s\n",timeSpan->spans[0].name);
+			WalPrint("start_time : %llu\n",start_time);
+			timeSpan->spans[0].start = start_time;
+			WalPrint("timeSpan->spans[0].start : %llu\n",timeSpan->spans[0].start);
+			WalPrint("timeDuration : %lu\n",timeDuration);
+			timeSpan->spans[0].duration = timeDuration;
+			WalPrint("timeSpan->spans[0].duration : %lu\n",timeSpan->spans[0].duration);
+		}
 		WalPrint("=== After SPA == ret = %d\n",ret);
 		if (CCSP_SUCCESS != ret)
 		{
