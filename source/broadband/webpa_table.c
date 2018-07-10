@@ -29,7 +29,7 @@ static void getWritableParams(char *paramName, char ***writableParams, int *para
 static int getComponentInfoFromCache(char *parameterName, char *objectName, char *compName, char *dbusPath);
 static int addRow(char *object,char *compName,char *dbusPath,int *retIndex);
 static int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath);
-static int deleteRow(char *object);
+static int deleteRow(char *object, money_trace_spans *timeSpan);
 static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *numRows,int *params,TableData ** list);
 static int addNewData(char *objectName,TableData * list,int paramcount);
 static void deleteAllTableData(char **deleteList,int rowCount);
@@ -89,7 +89,7 @@ void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS
 			{
 				ret = retUpdate;
 				WalError("Failed to update row hence deleting the added row %s\n",tempParamName);
-				retDel = deleteRow(tempParamName);
+				retDel = deleteRow(tempParamName, NULL);
 				if(retDel == CCSP_SUCCESS)
 				{
 					WalInfo("Reverted the add row changes.\n");
@@ -113,7 +113,7 @@ void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS
 	
 }
 
-void deleteRowTable(char *object,WDMP_STATUS *retStatus)
+void deleteRowTable(char *object, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
 {
         int ret = 0,status = 0;
 	char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
@@ -138,7 +138,7 @@ void deleteRowTable(char *object,WDMP_STATUS *retStatus)
 	else
 	{
 		WalPrint("paramName after mapping : %s\n",paramName);
-		ret = deleteRow(paramName);
+		ret = deleteRow(paramName, timeSpan);
 		if(ret == CCSP_SUCCESS)
 		{
 			WalPrint("%s is deleted Successfully.\n", paramName);
@@ -392,7 +392,7 @@ static int updateRow(char *objectName,TableData *list,char *compName,char *dbusP
  *
  * param[in] object table name to delete
  */
-static int deleteRow(char *object)
+static int deleteRow(char *object, money_trace_spans *timeSpan)
 {
         int ret = 0, size =0;
 	char compName[MAX_PARAMETERNAME_LEN/2] = { 0 };
@@ -400,16 +400,28 @@ static int deleteRow(char *object)
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
 	componentStruct_t ** ppComponents = NULL;
+	uint64_t startTime = 0, endTime = 0;
+	struct timespec start, end;
+	uint64_t start_time = 0;
+	uint32_t timeDuration = 0;
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
 	snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);
 	
 	WalPrint("<==========Start of deleteRow ========>\n ");
-	
+	if(timeSpan)
+	{
+	    startTime = getCurrentTimeInMicroSeconds(&start);
+	}
 	ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,
 			dst_pathname_cr, object, l_Subsystem, &ppComponents, &size);
 	WalPrint("size : %d, ret : %d\n",size,ret);
+	if(timeSpan)
+    {
+        endTime = getCurrentTimeInMicroSeconds(&end);
+        timeDuration += endTime - startTime;
+    }
 
 	if (ret == CCSP_SUCCESS && size == 1)
 	{
@@ -424,6 +436,16 @@ static int deleteRow(char *object)
 		return ret;
 	}
 	WalInfo("parameterName: %s, CompName : %s, dbusPath : %s\n", object, compName, dbusPath);
+	if(timeSpan)
+    {
+        timeSpan->spans = (money_trace_span *) malloc(sizeof(money_trace_span));
+        memset(timeSpan->spans,0,(sizeof(money_trace_span)));
+        timeSpan->count = 1;
+        WalPrint("timeSpan->count : %d\n",timeSpan->count);
+        startTime = getCurrentTimeInMicroSeconds(&start);
+        start_time = startTime;
+        WalPrint("component start_time: %llu\n",start_time);
+    }
 	ret = CcspBaseIf_DeleteTblRow(
                 bus_handle,
                 compName,
@@ -431,6 +453,20 @@ static int deleteRow(char *object)
                 0,
                 object
             );
+    if(timeSpan)
+    {
+        endTime = getCurrentTimeInMicroSeconds(&end);
+        timeDuration += endTime - startTime;
+
+        timeSpan->spans[0].name = strdup(compName);
+        WalPrint("timeSpan->spans[0].name : %s\n",timeSpan->spans[0].name);
+        WalPrint("start_time : %llu\n",start_time);
+        timeSpan->spans[0].start = start_time;
+        WalPrint("timeSpan->spans[0].start : %llu\n",timeSpan->spans[0].start);
+        WalPrint("timeDuration : %lu\n",timeDuration);
+        timeSpan->spans[0].duration = timeDuration;
+        WalPrint("timeSpan->spans[0].duration : %lu\n",timeSpan->spans[0].duration);
+    }
         WalPrint("ret = %d\n",ret);    
         if ( ret == CCSP_SUCCESS )
         {
@@ -547,7 +583,7 @@ static void deleteAllTableData(char **deleteList,int rowCount)
 	WalPrint("---------- Start of deleteAllTableData -----------\n");
 	for(cnt =0; cnt < rowCount; cnt++)
 	{	
-		delRet = deleteRow(deleteList[cnt]);
+		delRet = deleteRow(deleteList[cnt], NULL);
 		WalPrint("delRet: %d\n",delRet);
 		if(delRet != CCSP_SUCCESS)
 		{
@@ -585,7 +621,7 @@ char **retObject = NULL;
 			for(i= cnt-1; i >= 0; i--)
 			{
 				strncpy(paramName,retObject[i],sizeof(paramName));
-				deleteRowTable(paramName, &delRet);
+				deleteRowTable(paramName, NULL, &delRet);
 				WalPrint("delRet : %d\n",delRet);
 				if(delRet != WDMP_SUCCESS)
 				{

@@ -73,9 +73,9 @@ void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS
     UNUSED(objectName); UNUSED(list); UNUSED(retObject); UNUSED(retStatus);
     function_called();
 }
-void deleteRowTable(char *object,WDMP_STATUS *retStatus)
+void deleteRowTable(char *object, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
 {
-    UNUSED(object); UNUSED(retStatus);
+    UNUSED(object); UNUSED(timeSpan); UNUSED(retStatus);
     function_called();
 }
 

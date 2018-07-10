@@ -154,7 +154,7 @@ void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS
  * param[in] objectName row to delete
  * param[out] retStatus Returns status
  */
-void deleteRowTable(char *object,WDMP_STATUS *retStatus);
+void deleteRowTable(char *object, money_trace_spans *timeSpan, WDMP_STATUS *retStatus);
 
 /**
  * @brief replaceTable replaces existing data of table with provided data

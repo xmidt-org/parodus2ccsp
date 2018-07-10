@@ -421,7 +421,7 @@ void processRequest(char *reqPayload,char *transactionId, bool include_spans, ch
                                 ret = validate_table_object(reqObj->u.tableReq);
                                 if(ret == WDMP_SUCCESS)
                                 {
-                                        deleteRowTable(reqObj->u.tableReq->objectName,&ret);
+                                        deleteRowTable(reqObj->u.tableReq->objectName,resObj->timeSpan,&ret);
                                 }
                                 else
                                 {
