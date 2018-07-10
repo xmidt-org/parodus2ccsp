@@ -41,7 +41,7 @@ extern ANSC_HANDLE bus_handle;
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
 
-void processRequest(char *reqPayload,char *transactionId, char **resPayload)
+void processRequest(char *reqPayload,char *transactionId, bool include_spans, char **resPayload, money_trace_spans *timeSpan)
 {
         req_struct *reqObj = NULL;
         res_struct *resObj = NULL;
@@ -76,8 +76,15 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                 
                 resObj->reqType = reqObj->reqType;
                 WalPrint("Response:> type = %d\n", resObj->reqType);
-                resObj->timeSpan = (money_trace_spans *) malloc(sizeof(money_trace_spans));
-                memset(resObj->timeSpan,0,(sizeof(money_trace_spans)));
+                if(include_spans)
+                {
+                    resObj->timeSpan = (money_trace_spans *) malloc(sizeof(money_trace_spans));
+                    memset(resObj->timeSpan,0,(sizeof(money_trace_spans)));
+                }
+                else
+                {
+                    WalPrint("include_spans is false\n");
+                }
                 switch( reqObj->reqType ) 
                 {
                         case GET:
@@ -160,7 +167,10 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                         WalPrint("Response:> retParamCnt[%d] = %zu\n",index,resObj->u.getRes->retParamCnt[index]);
                                                         resObj->retStatus[index] = ret;
                                                         WalPrint("Response:> retStatus[%d] = %d\n",index,resObj->retStatus[index]);
-                                                        add_wildcard_timespan_to_response(resObj->timeSpan, wildcardSpan);
+                                                        if(include_spans)
+                                                        {
+                                                            add_wildcard_timespan_to_response(resObj->timeSpan, wildcardSpan);
+                                                        }
                                                         index++;
                                                 }
                                         }
@@ -471,12 +481,20 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         endTime = getCurrentTimeInMicroSeconds(&end);
         duration = endTime - startTime;
         WalPrint("WEBPA duration : %lu\n", duration);
-        add_total_webpa_client_time(startTime, duration, resObj->timeSpan);
-        if(resObj->timeSpan != NULL && resObj->timeSpan->count > 0)
+        if(include_spans)
         {
+            add_total_webpa_client_time(startTime, duration, resObj->timeSpan);
+            *timeSpan = *resObj->timeSpan;
+            (*timeSpan).count = resObj->timeSpan->count;
+            //*(struct money_trace_spans*)timeSpan.count = resObj->timeSpan->count;
+            (*timeSpan).spans = ((money_trace_span *) malloc(sizeof(money_trace_span)* resObj->timeSpan->count));
+            memset((*timeSpan).spans,0,(sizeof(money_trace_span)* resObj->timeSpan->count));
             for(i =0 ; i<resObj->timeSpan->count; i++)
             {
                 WalPrint("name[%d] : %s \t start[%d]: %lu duration[%d] : %d\n",i,resObj->timeSpan->spans[i].name, i, resObj->timeSpan->spans[i].start, i, resObj->timeSpan->spans[i].duration);
+                (*timeSpan).spans[i].name = strdup(resObj->timeSpan->spans[i].name);
+                (*timeSpan).spans[i].start = resObj->timeSpan->spans[i].start;
+                (*timeSpan).spans[i].duration = resObj->timeSpan->spans[i].duration;
             }
         }
         wdmp_form_response(resObj,&payload);

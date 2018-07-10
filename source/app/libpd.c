@@ -100,7 +100,7 @@ static void connect_parodus()
 	
 static void parodus_receive()
 {
-        int rtn;
+        int rtn, i;
         wrp_msg_t *wrp_msg;
         wrp_msg_t *res_wrp_msg ;
 
@@ -133,9 +133,8 @@ static void parodus_receive()
                     {
 						memset(res_wrp_msg, 0, sizeof(wrp_msg_t));
                         getCurrentTime(startPtr);
-                        processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))));
+                        processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, wrp_msg->u.req.include_spans, ((char **)(&(res_wrp_msg->u.req.payload))), &res_wrp_msg->u.req.spans);
 
-                        
                         if(res_wrp_msg->u.req.payload !=NULL)
                         {   
                                 WalPrint("Response payload is %s\n",(char *)(res_wrp_msg->u.req.payload));
@@ -150,6 +149,15 @@ static void parodus_receive()
 						}
 						if(wrp_msg->u.req.transaction_uuid != NULL){
 	                        res_wrp_msg->u.req.transaction_uuid = wrp_msg->u.req.transaction_uuid;
+						}
+						res_wrp_msg->u.req.include_spans = wrp_msg->u.req.include_spans;
+						if(res_wrp_msg->u.req.include_spans)
+						{
+						    WalPrint("res_wrp_msg->u.req.spans.count = %d\n",res_wrp_msg->u.req.spans.count);
+						    for(i=0; i<res_wrp_msg->u.req.spans.count; i++)
+						    {
+						        WalPrint("res_wrp_msg->u.req.spans.spans[%d].name = %s res_wrp_msg->u.req.spans.spans[%d].start = %lu res_wrp_msg->u.req.spans.spans[%d].duration = %d\n",i,res_wrp_msg->u.req.spans.spans[i].name, i, res_wrp_msg->u.req.spans.spans[i].start, i, res_wrp_msg->u.req.spans.spans[i].duration);
+						    }
 						}
                         contentType = strdup(CONTENT_TYPE_JSON);
                         if(contentType != NULL)

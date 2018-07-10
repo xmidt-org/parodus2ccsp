@@ -127,6 +127,8 @@ void test_processRequest_singleGet()
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     count = 1;
+    money_trace_spans timeSpan;
+    memset(&timeSpan, 0, sizeof(money_trace_spans));
     parameterList = (param_t **) malloc(sizeof(param_t*));
     parameterList[0] = (param_t *) malloc(sizeof(param_t));
     parameterList[0]->name = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
@@ -140,11 +142,13 @@ void test_processRequest_singleGet()
     expect_value(getValues, index, 0);
     expect_function_call(getValues);
     will_return(getCurrentTimeInMicroSeconds, 1543215679000);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
     assert_non_null(response);
+    assert_int_equal(timeSpan.count, 0);
+    assert_null(timeSpan.spans);
     paramArray = cJSON_GetObjectItem(response, "parameters");
     assert_int_equal(1, cJSON_GetArraySize(paramArray));
     resParamObj = cJSON_GetArrayItem(paramArray, 0);
@@ -169,6 +173,8 @@ void test_processRequest_WildcardsGet()
     char *values[MAX_PARAMETER_LEN] = {"32","abcd", "1"};
     parameterList = (param_t **) malloc(sizeof(param_t*));
     parameterList[0] = (param_t *) malloc(sizeof(param_t)*count);
+    money_trace_spans timeSpan;
+    memset(&timeSpan, 0, sizeof(money_trace_spans));
 
     for(i = 0; i<count; i++)
     {
@@ -184,8 +190,18 @@ void test_processRequest_WildcardsGet()
     expect_value(getValues, index, 0);
     expect_function_call(getValues);
     will_return(getCurrentTimeInMicroSeconds, 1543215678899);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
+    assert_true(timeSpan.count>0);
+    assert_non_null(timeSpan.spans);
+    WalInfo("timeSpan.count : %d\n",timeSpan.count);
+    for(i=0; i<timeSpan.count; i++)
+    {
+        WalInfo("timeSpan.spans[%d].name = %s\n",i, timeSpan.spans[i].name);
+        WalInfo("timeSpan.spans[%d].start = %lu\n",i, timeSpan.spans[i].start);
+        WalInfo("timeSpan.spans[%d].duration = %d\n",i, timeSpan.spans[i].duration);
+    }
+    
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
     assert_non_null(response);

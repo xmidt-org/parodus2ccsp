@@ -50,11 +50,13 @@ long timeValDiff(struct timespec *starttime, struct timespec *finishtime)
     return msec;
 }
 
-void processRequest(char *reqPayload, char *transactionId, char **resPayload)
+void processRequest(char *reqPayload, char *transactionId, bool include_spans, char **resPayload, money_trace_spans *timeSpan)
 {
     UNUSED(reqPayload);
     UNUSED(transactionId);
+    UNUSED(include_spans);
     UNUSED(resPayload);
+    UNUSED(timeSpan);
 }
 
 int libparodus_init (libpd_instance_t *instance, libpd_cfg_t *libpd_cfg)

@@ -36,6 +36,7 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern BOOL applySettingsFlag;
+money_trace_spans timeSpan;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -82,7 +83,7 @@ void test_set_with_single_parameter()
     expect_function_call(CcspBaseIf_setParameterValues);
     expect_value(CcspBaseIf_setParameterValues, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -132,7 +133,7 @@ void test_set_with_multiple_parameters()
     expect_function_call(CcspBaseIf_setParameterValues);
     expect_value(CcspBaseIf_setParameterValues, size, 3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -223,7 +224,7 @@ void test_set_with_multiple_parameters_different_components()
     expect_value(CcspBaseIf_setParameterValues, size, 2);
     expect_function_calls(CcspBaseIf_setParameterValues,3);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -258,7 +259,7 @@ void err_set_with_wildcard_parameter()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -275,7 +276,7 @@ void err_set_with_cid_parameter()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -292,7 +293,7 @@ void err_set_with_cmc_parameter()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -309,7 +310,7 @@ void err_set_without_value()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -332,7 +333,7 @@ void err_set_invalid_parameter()
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -361,7 +362,7 @@ void err_set_invalid_component()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -384,7 +385,7 @@ void err_set_with_wifi_busy()
     applySettingsFlag = TRUE;
 
     getCompDetails();
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -428,7 +429,7 @@ void err_set_with_invalid_type()
     will_return(CcspBaseIf_setParameterValues, CCSP_ERR_INVALID_PARAMETER_TYPE);
     expect_value(CcspBaseIf_setParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -450,7 +451,7 @@ void err_set_with_large_parameter_name()
     cJSON *response = NULL;
     applySettingsFlag = FALSE;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -468,7 +469,7 @@ void err_set_with_large_parameter_value()
     cJSON *response = NULL;
     applySettingsFlag = FALSE;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -507,7 +508,7 @@ void err_set_not_writable_parameter()
     will_return(CcspBaseIf_setParameterValues, CCSP_ERR_NOT_WRITABLE);
     expect_value(CcspBaseIf_setParameterValues, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -528,7 +529,7 @@ void err_set_with_empty_value()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -557,7 +558,7 @@ void err_set_with_multiple_parameters()
     will_return(CcspBaseIf_getParameterValues, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_value(CcspBaseIf_getParameterValues, size, 3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -652,7 +653,7 @@ void err_set_with_multiple_parameters_different_component()
     expect_value(CcspBaseIf_setParameterValues, size, 1);
     expect_function_calls(CcspBaseIf_setParameterValues,3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -726,7 +727,7 @@ void err_set_with_multiple_parameters_failure_in_get()
     will_return(CcspBaseIf_getParameterValues, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -821,7 +822,7 @@ void err_set_with_multiple_parameters_failure_in_rollback()
     expect_value(CcspBaseIf_setParameterValues, size, 1);
     expect_function_calls(CcspBaseIf_setParameterValues,3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -923,7 +924,7 @@ void err_set_with_multiple_parameters_failure_in_wifi_rollback()
     expect_value(CcspBaseIf_setParameterValues, size, 1);
     expect_function_calls(CcspBaseIf_setParameterValues,5);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);

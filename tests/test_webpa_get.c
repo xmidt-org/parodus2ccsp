@@ -36,6 +36,7 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern BOOL applySettingsFlag;
+money_trace_spans timeSpan;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -78,7 +79,7 @@ void test_singleGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -125,7 +126,7 @@ void test_singleWildcardGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -208,7 +209,7 @@ void test_largeWildcardGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -253,7 +254,7 @@ void test_wildcardGetWithNoChilds()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -299,7 +300,7 @@ void test_multipleParameterGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 2);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -363,7 +364,7 @@ void test_mixedGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -459,7 +460,7 @@ void test_multipleParameterGetWithDifferentComponents()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -510,7 +511,7 @@ void err_singleGetInvalidParam()
     will_return(CcspBaseIf_getParameterValues, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -535,7 +536,7 @@ void err_singleGetComponentErr()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -553,7 +554,7 @@ void err_singleGetLargeReq()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -572,7 +573,7 @@ void err_getWithWiFiBusy()
     cJSON *response = NULL;
 
     applySettingsFlag = TRUE;
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -591,7 +592,7 @@ void err_getWithInvalidWiFiIndex()
     cJSON *response = NULL;
 
     applySettingsFlag = FALSE;
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -610,7 +611,7 @@ void err_getWithInvalidRadioIndex()
     cJSON *response = NULL;
     applySettingsFlag = FALSE;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -636,7 +637,7 @@ void err_multipleGet()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -683,7 +684,7 @@ void err_multipleGetWildCardErr()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);

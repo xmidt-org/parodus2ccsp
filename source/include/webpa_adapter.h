@@ -90,7 +90,7 @@ long timeValDiff(struct timespec *starttime, struct timespec *finishtime);
  * @param[in] reqPayload input request to process
  * @param[in] resPayload retuns response payload
  */
-void processRequest(char *reqPayload, char *transactionId, char **resPayload);
+void processRequest(char *reqPayload, char *transactionId, bool include_spans, char **resPayload, money_trace_spans *timeSpan);
 
 /**
  * @brief getValues Returns the parameter values from stack for GET request

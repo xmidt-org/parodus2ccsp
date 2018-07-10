@@ -36,6 +36,7 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern BOOL applySettingsFlag;
+money_trace_spans timeSpan;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -74,7 +75,7 @@ void test_singleGetAttr()
     expect_value(CcspBaseIf_getParameterAttributes, size, 1);
     expect_function_call(free_parameterAttributeStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -118,7 +119,7 @@ void test_get_attr_with_same_component_multiple_parameters()
     expect_value(CcspBaseIf_getParameterAttributes, size, 4);
     expect_function_call(free_parameterAttributeStruct_t);
 
-    processRequest(reqPayload, "abcd-1234-ddfg-6gd7", &resPayload);
+    processRequest(reqPayload, "abcd-1234-ddfg-6gd7", true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -224,7 +225,7 @@ void test_get_attr_with_different_component_multiple_parameters()
     expect_value(CcspBaseIf_getParameterAttributes, size, 2);
     expect_function_call(free_parameterAttributeStruct_t);
 
-    processRequest(reqPayload, "abcd-1234-ddfg-6sff", &resPayload);
+    processRequest(reqPayload, "abcd-1234-ddfg-6sff", false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -261,7 +262,7 @@ void err_get_attr_with_invalid_param()
     will_return(CcspBaseIf_getParameterAttributes, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_value(CcspBaseIf_getParameterAttributes, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -278,7 +279,7 @@ void err_get_attr_with_wildcard_param()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, "addf-sdfw-12ed-3fea", &resPayload);
+    processRequest(reqPayload, "addf-sdfw-12ed-3fea", true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -302,7 +303,7 @@ void err_get_attr_with_invalid_component()
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -320,7 +321,7 @@ void err_get_attr_with_wifi_busy()
     cJSON *response = NULL;
     applySettingsFlag = TRUE;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -362,7 +363,7 @@ void err_get_attr_with_wifi_busy_at_end()
     expect_value(CcspBaseIf_getParameterAttributes, size, 1);
     expect_function_call(free_parameterAttributeStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -380,7 +381,7 @@ void err_get_attr_with_invalid_wifi_index()
     cJSON *response = NULL;
     applySettingsFlag = FALSE;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -410,7 +411,7 @@ void err_get_attr_with_invalid_radio_index()
     expect_value(CcspBaseIf_getParameterAttributes, size, 1);
     expect_function_call(free_parameterAttributeStruct_t);
 
-    processRequest(reqPayload, "hfsh-tdtt-56te-ehg6", &resPayload);
+    processRequest(reqPayload, "hfsh-tdtt-56te-ehg6", false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -487,7 +488,7 @@ void err_get_attr_with_multiple_parameters()
     will_return(CcspBaseIf_getParameterAttributes, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_value(CcspBaseIf_getParameterAttributes, size, 3);
 
-    processRequest(reqPayload, "qfqf-ertw-ddfg-3r13", &resPayload);
+    processRequest(reqPayload, "qfqf-ertw-ddfg-3r13", true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);

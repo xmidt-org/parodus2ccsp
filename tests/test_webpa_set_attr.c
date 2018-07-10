@@ -35,6 +35,7 @@
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
+money_trace_spans timeSpan;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -67,7 +68,7 @@ void test_setAttrWithSingleParameterNotifyOn()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_SUCCESS);
     expect_value(CcspBaseIf_setParameterAttributes, size, 1);
 
-    processRequest(reqPayload, "abcd-1234-efgh-5678", &resPayload);
+    processRequest(reqPayload, "abcd-1234-efgh-5678", true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -106,7 +107,7 @@ void test_setAttrWithSingleParameterNotifyOff()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_SUCCESS);
     expect_value(CcspBaseIf_setParameterAttributes, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -144,7 +145,7 @@ void test_setAttrWithMultipleParameters()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_SUCCESS);
     expect_value(CcspBaseIf_setParameterAttributes, size, paramCount);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -177,7 +178,7 @@ void err_SetAttrWithDifferentComponents()
     will_return(CcspBaseIf_Register_Event, CCSP_SUCCESS);
     expect_function_call(CcspBaseIf_SetCallback2);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -207,7 +208,7 @@ void err_setAttrWithInvalidParam()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_value(CcspBaseIf_setParameterAttributes, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -229,7 +230,7 @@ void err_setAttrWithWildcardParam()
     char *resPayload = NULL;
     cJSON *response = NULL;
 
-    processRequest(reqPayload, "addf-sdfw-12ed-3fea", &resPayload);
+    processRequest(reqPayload, "addf-sdfw-12ed-3fea", false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -260,7 +261,7 @@ void err_setAttrWithInvalidComponent()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -290,7 +291,7 @@ void err_setAttrWithInvalidComponentError()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -315,7 +316,7 @@ void err_setAttrWithInvalidWiFiIndex()
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -351,7 +352,7 @@ void err_setAttrWithInvalidRadioIndex()
     will_return(CcspBaseIf_Register_Event, CCSP_SUCCESS);
     expect_function_call(CcspBaseIf_SetCallback2);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -388,7 +389,7 @@ void err_SetAttrWithDifferentComponentsMultipleParameters()
     will_return(CcspBaseIf_Register_Event, CCSP_FAILURE);
     expect_function_call(CcspBaseIf_SetCallback2);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", true, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -425,7 +426,7 @@ void err_setAttrWithMultipleParametersOneInvalidParam()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_setParameterAttributes, size, paramCount);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", false, &resPayload, &timeSpan);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);

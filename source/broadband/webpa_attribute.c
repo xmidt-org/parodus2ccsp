@@ -66,7 +66,6 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
 	    {
 	        timeSpan->spans = (money_trace_span *) malloc(sizeof(money_trace_span)* compCount);
 	        memset(timeSpan->spans,0,(sizeof(money_trace_span)* compCount));
-	        timeSpan->count = compCount;
 	    }
 		for(cnt1 = 0; cnt1 < compCount; cnt1++)
 		{
@@ -96,7 +95,15 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
 				WalError("Get attributes call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",cnt1,ParamGroup[cnt1].comp_name,ret);
 				break;
 		  	}
+		  	if(timeSpan)
+		  	{
+		  	    timeSpan->count++;
+		  	}
 			index = index + ParamGroup[cnt1].parameterCount;
+		}
+		if(timeSpan)
+		{
+		    WalPrint("timeSpan->count : %d\n",timeSpan->count);
 		}
 	}
 	

@@ -211,8 +211,11 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                 ret = CCSP_ERR_WIFI_BUSY;
                                 WalError("WiFi component is busy\n");
                                 getFlag = 1;
-                                timeSpan->count = 0;
-                                WAL_FREE(timeSpan->spans);
+                                if(timeSpan)
+                                {
+                                    timeSpan->count = 0;
+                                    WAL_FREE(timeSpan->spans);
+                                }
                                 break;
                         }
                         
