@@ -146,7 +146,7 @@ void setAttributes(param_t *attArr, const unsigned int paramCount, money_trace_s
  * param[out] retObject return new row added
  * param[out] retStatus Returns status
  */
-void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS *retStatus);
+void addRowTable(char *objectName, TableData *list,char **retObject, money_trace_spans *timeSpan, WDMP_STATUS *retStatus);
 
 /**
  * @brief deleteRowTable deletes row from a dynamic table

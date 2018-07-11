@@ -68,9 +68,9 @@ void setAttributes(param_t *attArr, const unsigned int paramCount, money_trace_s
     function_called();
 }
 
-void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS *retStatus)
+void addRowTable(char *objectName, TableData *list,char **retObject, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
 {
-    UNUSED(objectName); UNUSED(list); UNUSED(retObject); UNUSED(retStatus);
+    UNUSED(objectName); UNUSED(list); UNUSED(retObject); UNUSED(timeSpan); UNUSED(retStatus);
     function_called();
 }
 void deleteRowTable(char *object, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)

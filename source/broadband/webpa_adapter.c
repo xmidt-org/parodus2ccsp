@@ -450,7 +450,7 @@ void processRequest(char *reqPayload,char *transactionId, bool include_spans, ch
                                         if(reqObj->u.tableReq->rowCnt > 0)
                                         {
                                                 resObj->u.tableRes->newObj = (char *) malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
-                                                addRowTable(reqObj->u.tableReq->objectName, reqObj->u.tableReq->rows,&resObj->u.tableRes->newObj, &ret);
+                                                addRowTable(reqObj->u.tableReq->objectName, reqObj->u.tableReq->rows,&resObj->u.tableRes->newObj, resObj->timeSpan, &ret);
                                         }
 
                                         if(resObj->u.tableRes->newObj == NULL)

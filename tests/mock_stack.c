@@ -36,7 +36,6 @@ int compSize;
 parameterValStruct_t **valueList;
 parameterAttributeStruct_t **attrList;
 int totalCount;
-int rowId;
 char *faultParam;
 
 /*----------------------------------------------------------------------------*/
@@ -98,6 +97,10 @@ parameterAttributeStruct_t ** get_global_attributes()
     return (parameterAttributeStruct_t **) mock();
 }
 
+int get_global_row_id()
+{
+    return (int) mock();
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -184,7 +187,7 @@ void free_parameterAttributeStruct_t(void* bus_handle, int size, parameterAttrib
 int CcspBaseIf_AddTblRow(void* bus_handle, const char* dst_component_id, char* dbus_path, int sessionId, char * objectName, int * instanceNumber)
 {
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(objectName); UNUSED(sessionId);
-    *instanceNumber = rowId;
+    *instanceNumber = get_global_row_id();
     function_called();
     return (int) mock();
 }
