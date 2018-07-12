@@ -49,6 +49,12 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
     UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
     return (int) mock();
 }
+
+void replaceTable(char *objectName,TableData * list,unsigned int paramcount, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
+{
+    UNUSED(objectName); UNUSED(list); UNUSED(paramcount); UNUSED(retStatus);
+    function_called();
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/

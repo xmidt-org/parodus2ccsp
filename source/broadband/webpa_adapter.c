@@ -398,7 +398,7 @@ void processRequest(char *reqPayload,char *transactionId, bool include_spans, ch
                                 ret = validate_table_object(reqObj->u.tableReq);
                                 if(ret == WDMP_SUCCESS)
                                 {
-                                        replaceTable(reqObj->u.tableReq->objectName,reqObj->u.tableReq->rows,reqObj->u.tableReq->rowCnt,&ret);
+                                        replaceTable(reqObj->u.tableReq->objectName,reqObj->u.tableReq->rows,reqObj->u.tableReq->rowCnt, resObj->timeSpan, &ret);
                                 }
                                 else
                                 {

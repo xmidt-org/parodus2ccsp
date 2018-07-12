@@ -79,7 +79,7 @@ void deleteRowTable(char *object, money_trace_spans *timeSpan, WDMP_STATUS *retS
     function_called();
 }
 
-void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP_STATUS *retStatus)
+void replaceTable(char *objectName,TableData * list,unsigned int paramcount, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
 {
     UNUSED(objectName); UNUSED(list); UNUSED(paramcount); UNUSED(retStatus);
     function_called();

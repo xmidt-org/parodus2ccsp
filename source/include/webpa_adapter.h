@@ -164,7 +164,7 @@ void deleteRowTable(char *object, money_trace_spans *timeSpan, WDMP_STATUS *retS
  * param[in] paramcount count of rows
  * param[out] retStatus Returns status
  */
-void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP_STATUS *retStatus);
+void replaceTable(char *objectName,TableData * list,unsigned int paramcount, money_trace_spans *timeSpan, WDMP_STATUS *retStatus);
 
 /*
  * @brief To initiate notification Task handling
