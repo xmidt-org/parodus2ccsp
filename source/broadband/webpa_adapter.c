@@ -84,6 +84,7 @@ void processRequest(char *reqPayload,char *transactionId, bool include_spans, ch
                 else
                 {
                     WalPrint("include_spans is false\n");
+                    resObj->timeSpan = NULL;
                 }
                 switch( reqObj->reqType ) 
                 {
@@ -486,12 +487,11 @@ void processRequest(char *reqPayload,char *transactionId, bool include_spans, ch
             add_total_webpa_client_time(startTime, duration, resObj->timeSpan);
             *timeSpan = *resObj->timeSpan;
             (*timeSpan).count = resObj->timeSpan->count;
-            //*(struct money_trace_spans*)timeSpan.count = resObj->timeSpan->count;
             (*timeSpan).spans = ((money_trace_span *) malloc(sizeof(money_trace_span)* resObj->timeSpan->count));
             memset((*timeSpan).spans,0,(sizeof(money_trace_span)* resObj->timeSpan->count));
             for(i =0 ; i<resObj->timeSpan->count; i++)
             {
-                WalPrint("name[%d] : %s \t start[%d]: %lu duration[%d] : %d\n",i,resObj->timeSpan->spans[i].name, i, resObj->timeSpan->spans[i].start, i, resObj->timeSpan->spans[i].duration);
+                WalPrint("Loop %d => name : %s \t start: %llu \t duration : %lu\n",resObj->timeSpan->spans[i].name, resObj->timeSpan->spans[i].start, resObj->timeSpan->spans[i].duration);
                 (*timeSpan).spans[i].name = strdup(resObj->timeSpan->spans[i].name);
                 (*timeSpan).spans[i].start = resObj->timeSpan->spans[i].start;
                 (*timeSpan).spans[i].duration = resObj->timeSpan->spans[i].duration;

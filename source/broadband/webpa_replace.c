@@ -24,8 +24,8 @@
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 static void getTableRows(char *objectName,parameterValStruct_t **parameterval, int paramCount, int *numRows,char ***rowObjects);
-static void contructRollbackTableData(parameterValStruct_t **parameterval,int paramCount,char ***rowList,int rowCount, int *numParam,TableData ** getList, money_trace_spans *timeSpan);
-static void getWritableParams(char *paramName, char ***writableParams, int *paramCount, money_trace_spans *timeSpan);
+static int contructRollbackTableData(parameterValStruct_t **parameterval,int paramCount,char ***rowList,int rowCount, int *numParam,TableData ** getList, money_trace_spans *timeSpan);
+static int getWritableParams(char *paramName, char ***writableParams, int *paramCount, money_trace_spans *timeSpan);
 static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *numRows,int *params,TableData ** list, money_trace_spans *timeSpan);
 static int addNewData(char *objectName,TableData * list,int paramcount, money_trace_spans *timeSpan);
 static void deleteAllTableData(char **deleteList,int rowCount, money_trace_spans *timeSpan);
@@ -74,7 +74,7 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount, mon
                 for(cnt =0; cnt < rowCount; cnt++)
                 {	
                     WalPrint("deleteList[%d] : %s\n",cnt,deleteList[cnt]);
-                    if(paramcount != 0)
+                    if(paramcount != 0  && addList != NULL)
                     {
                         WalPrint("addList[%d].paramCnt : %d\n",cnt,addList[cnt].paramCnt);
                         for (cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
@@ -96,17 +96,20 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount, mon
                     WalError("Failed to replace table, hence reverting the changes\n");
                     addCachedData(objectName,addList,rowCount, timeSpan);
                 }
-                for ( cnt = 0 ; cnt < rowCount ; cnt++)
+                if(addList != NULL)
                 {
-                    for(cnt1 = 0; cnt1 < numParams; cnt1++)
+                    for ( cnt = 0 ; cnt < rowCount ; cnt++)
                     {
-                        WAL_FREE(addList[cnt].names[cnt1]);
-                        WAL_FREE(addList[cnt].values[cnt1]);
+                        for(cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
+                        {
+                            WAL_FREE(addList[cnt].names[cnt1]);
+                            WAL_FREE(addList[cnt].values[cnt1]);
+                        }
+                        WAL_FREE(addList[cnt].names);
+                        WAL_FREE(addList[cnt].values);
                     }
-                    WAL_FREE(addList[cnt].names);
-                    WAL_FREE(addList[cnt].values);
+                    WAL_FREE(addList);
                 }
-                WAL_FREE(addList);
             }	
         }
     }
@@ -217,15 +220,22 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
             if(rowCount > 0 && paramcount > 0)
             {
                 timeDuration = 0;
-                contructRollbackTableData(parameterval,val_size,rowList,rowCount,params,&getList, timeSpan);
-                *list = getList;
-                for(cnt =0; cnt < rowCount; cnt++)
-                {	
-                    WalPrint("(*list)[%d].paramCnt : %d\n",cnt,(*list)[cnt].paramCnt);
-                    for (cnt1 = 0; cnt1 < (*list)[cnt].paramCnt; cnt1++)
-                    {
-                        WalPrint("(*list)[%d].names[%d] : %s,(*list)[%d].values[%d] : %s\n ",cnt,cnt1,(*list)[cnt].names[cnt1],cnt,cnt1,(*list)[cnt].values[cnt1]);
+                ret = contructRollbackTableData(parameterval,val_size,rowList,rowCount,params,&getList, timeSpan);
+                if(ret == CCSP_SUCCESS)
+                {
+                    *list = getList;
+                    for(cnt =0; cnt < rowCount; cnt++)
+                    {	
+                        WalPrint("(*list)[%d].paramCnt : %d\n",cnt,(*list)[cnt].paramCnt);
+                        for (cnt1 = 0; cnt1 < (*list)[cnt].paramCnt; cnt1++)
+                        {
+                            WalPrint("(*list)[%d].names[%d] : %s,(*list)[%d].values[%d] : %s\n ",cnt,cnt1,(*list)[cnt].names[cnt1],cnt,cnt1,(*list)[cnt].values[cnt1]);
+                        }
                     }
+                }
+                else
+                {
+                    WalError("Failed in constructing rollback table data. ret = %d\n",ret);
                 }
             }	
         }
@@ -308,7 +318,7 @@ static int addNewData(char *objectName,TableData * list,int paramcount, money_tr
     char **retObject = NULL;
     retObject = (char **)malloc(sizeof(char*) * paramcount);
     memset(retObject,0,(sizeof(char *) * paramcount));
-    money_trace_spans *addRowSpan = NULL;
+    money_trace_spans *addRowSpan = NULL, *deleteRowSpan = NULL;
     WalPrint("---------- Start of addNewData -----------\n");
     for(cnt =0; cnt < paramcount; cnt++)
     {				
@@ -339,7 +349,24 @@ static int addNewData(char *objectName,TableData * list,int paramcount, money_tr
             for(i= cnt-1; i >= 0; i--)
             {
                 strncpy(paramName,retObject[i],sizeof(paramName));
-                deleteRowTable(paramName, NULL, &delRet);
+                if(timeSpan)
+                {
+                    deleteRowSpan = (money_trace_spans *) malloc(sizeof(money_trace_spans));
+                    memset(deleteRowSpan,0,(sizeof(money_trace_spans)));
+                }
+                deleteRowTable(paramName, deleteRowSpan, &delRet);
+                if(timeSpan)
+                {
+                    if(deleteRowSpan->count > 0)
+                    {
+                        WalPrint("deleteRowSpan->spans[0].duration : %d\n", deleteRowSpan->spans[0].duration);
+                        timeSpan->spans[0].duration += deleteRowSpan->spans[0].duration;
+                        WalPrint("deleteRowSpan->spans[0].duration = %d\n", deleteRowSpan->spans[0].duration);
+                        WAL_FREE(deleteRowSpan->spans[0].name);
+                        WAL_FREE(deleteRowSpan->spans);
+                    }
+                    WAL_FREE(deleteRowSpan);
+                }
                 WalPrint("delRet : %d\n",delRet);
                 if(delRet != WDMP_SUCCESS)
                 {
@@ -475,46 +502,52 @@ static void getTableRows(char *objectName,parameterValStruct_t **parameterval, i
  * param[out] numParam return no.of paramters for each row
  * param[out] getList return list of table data with name and value
  */
-static void contructRollbackTableData(parameterValStruct_t **parameterval,int paramCount,char ***rowList,int rowCount, int *numParam,TableData ** getList, money_trace_spans *timeSpan)
+static int contructRollbackTableData(parameterValStruct_t **parameterval,int paramCount,char ***rowList,int rowCount, int *numParam,TableData ** getList, money_trace_spans *timeSpan)
 {
-    int writableParamCount = 0, cnt = 0, cnt1 = 0, i = 0, params = 0;
+    int writableParamCount = 0, cnt = 0, cnt1 = 0, i = 0, ret = -1;
     char **writableList = NULL;
     WalPrint("---------- Start of contructRollbackTableData -----------\n");
-    getWritableParams((*rowList[0]), &writableList, &writableParamCount, timeSpan);
-    WalInfo("writableParamCount : %d\n",writableParamCount);
-    *numParam = writableParamCount;
-    *getList = (TableData *) malloc(sizeof(TableData) * rowCount);
-    params = paramCount / rowCount;
-    for(cnt = 0; cnt < rowCount; cnt++)
+    ret = getWritableParams((*rowList[0]), &writableList, &writableParamCount, timeSpan);
+    if(ret == CCSP_SUCCESS && writableParamCount > 0)
     {
-        (*getList)[cnt].paramCnt = writableParamCount;
-        (*getList)[cnt].names = (char **)malloc(sizeof(char *) * writableParamCount);
-        (*getList)[cnt].values = (char **)malloc(sizeof(char *) * writableParamCount);
-        i = 0;
-        cnt1 = cnt * params;
-        for(; cnt1 < paramCount; cnt1++)
+        WalInfo("writableParamCount : %d\n",writableParamCount);
+        *numParam = writableParamCount;
+        *getList = (TableData *) malloc(sizeof(TableData) * rowCount);
+        for(cnt = 0; cnt < rowCount; cnt++)
         {
-            if(strstr(parameterval[cnt1]->parameterName,(*rowList)[cnt]) != NULL &&
-                strstr(parameterval[cnt1]->parameterName,writableList[i]) != NULL)
+            (*getList)[cnt].paramCnt = writableParamCount;
+            (*getList)[cnt].names = (char **)malloc(sizeof(char *) * writableParamCount);
+            (*getList)[cnt].values = (char **)malloc(sizeof(char *) * writableParamCount);
+            i = 0;
+            cnt1 = cnt * writableParamCount;
+            for(; cnt1 < paramCount; cnt1++)
             {
-                WalPrint("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt1,parameterval[cnt1]->parameterName,cnt1,parameterval[cnt1]->parameterValue);
-                (*getList)[cnt].names[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
-                (*getList)[cnt].values[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
-                strcpy((*getList)[cnt].names[i],writableList[i]);
-                WalPrint("(*getList)[%d].names[%d] : %s\n",cnt, i, (*getList)[cnt].names[i]);
-                strcpy((*getList)[cnt].values[i],parameterval[cnt1]->parameterValue);
-                WalPrint("(*getList)[%d].values[%d] : %s\n",cnt, i, (*getList)[cnt].values[i]);
-                i++;
+                if(strstr(parameterval[cnt1]->parameterName,(*rowList)[cnt]) != NULL &&
+                    strstr(parameterval[cnt1]->parameterName,writableList[i]) != NULL)
+                {
+                    WalPrint("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt1,parameterval[cnt1]->parameterName,cnt1,parameterval[cnt1]->parameterValue);
+                    (*getList)[cnt].names[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
+                    (*getList)[cnt].values[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
+                    strcpy((*getList)[cnt].names[i],writableList[i]);
+                    WalPrint("(*getList)[%d].names[%d] : %s\n",cnt, i, (*getList)[cnt].names[i]);
+                    strcpy((*getList)[cnt].values[i],parameterval[cnt1]->parameterValue);
+                    WalPrint("(*getList)[%d].values[%d] : %s\n",cnt, i, (*getList)[cnt].values[i]);
+                    i++;
+                }
             }
         }
+        for(cnt = 0; cnt < writableParamCount; cnt++)
+        {
+            WAL_FREE(writableList[cnt]);
+        }
+        WAL_FREE(writableList);
     }
-
-    for(cnt = 0; cnt < writableParamCount; cnt++)
+    else
     {
-        WAL_FREE(writableList[cnt]);
+        WalError("Failed in get of writable parameters. ret = %d\n",ret);
     }
-    WAL_FREE(writableList);	
     WalPrint("---------- End of contructRollbackTableData -----------\n");
+    return ret;
 }
 
 /**
@@ -523,13 +556,14 @@ static void contructRollbackTableData(parameterValStruct_t **parameterval,int pa
  * param[out] writableParams return list of writable params
  * param[out] paramCount count of writable params
  */
-static void getWritableParams(char *paramName, char ***writableParams, int *paramCount, money_trace_spans *timeSpan)
+static int getWritableParams(char *paramName, char ***writableParams, int *paramCount, money_trace_spans *timeSpan)
 {
     int cnt =0,val_size = 0,ret = 0, size = 0, cnt1 = 0, writableCount = 0, len = 0;
     char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
     char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
     componentStruct_t ** ppComponents = NULL;
     char *tempStr = NULL;
+    char *paramList[MAX_PARAMETERNAME_LEN] = { 0 };
     char temp[MAX_PARAMETERNAME_LEN] = { 0 };
     uint64_t startTime = 0, endTime = 0;
     struct timespec start, end;
@@ -573,7 +607,6 @@ static void getWritableParams(char *paramName, char ***writableParams, int *para
         WalPrint("val_size : %d, ret : %d\n",val_size,ret);
         if(ret == CCSP_SUCCESS && val_size > 0)
         {
-            *writableParams = (char **)malloc(sizeof(char *) * val_size);
             cnt1 = 0;
             for(cnt = 0; cnt < val_size; cnt++)
             {
@@ -581,7 +614,7 @@ static void getWritableParams(char *paramName, char ***writableParams, int *para
                 if(parameterInfo[cnt]->writable == 1)
                 {
                     strcpy(temp, parameterInfo[cnt]->parameterName);
-                    tempStr =temp + len;
+                    tempStr = temp + len;
                     WalPrint("tempStr : %s\n",tempStr);
                     if(strcmp(tempStr ,ALIAS_PARAM) == 0)
                     {
@@ -589,14 +622,20 @@ static void getWritableParams(char *paramName, char ***writableParams, int *para
                     }
                     else
                     {
-                        (*writableParams)[cnt1] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
-                        strcpy((*writableParams)[cnt1],tempStr);	
+                        paramList[cnt1] = strdup(tempStr);
                         cnt1++;
                     }	
                 }
             }
             *paramCount = writableCount = cnt1;
             WalPrint("writableCount %d\n",writableCount);
+            *writableParams = (char **)malloc(sizeof(char *) * writableCount);
+            for(cnt = 0; cnt < writableCount; cnt++)
+            {
+                (*writableParams)[cnt] = strdup(paramList[cnt]);
+                WalPrint("(*writableParams)[%d] = %s\n",cnt, (*writableParams)[cnt]);
+                WAL_FREE(paramList[cnt]);
+            }
         }
         else
         {
@@ -616,5 +655,6 @@ static void getWritableParams(char *paramName, char ***writableParams, int *para
         free_componentStruct_t(bus_handle, size, ppComponents);
     }
     WalPrint("==================== End of getWritableParams ==================\n");
+    return ret;
 }
 

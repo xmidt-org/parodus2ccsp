@@ -156,7 +156,7 @@ static void parodus_receive()
 						    WalPrint("res_wrp_msg->u.req.spans.count = %d\n",res_wrp_msg->u.req.spans.count);
 						    for(i=0; i<res_wrp_msg->u.req.spans.count; i++)
 						    {
-						        WalPrint("res_wrp_msg->u.req.spans.spans[%d].name = %s res_wrp_msg->u.req.spans.spans[%d].start = %lu res_wrp_msg->u.req.spans.spans[%d].duration = %d\n",i,res_wrp_msg->u.req.spans.spans[i].name, i, res_wrp_msg->u.req.spans.spans[i].start, i, res_wrp_msg->u.req.spans.spans[i].duration);
+						        WalPrint("res_wrp_msg->u.req.spans.spans[i].name = %s res_wrp_msg->u.req.spans.spans[i].start = %llu res_wrp_msg->u.req.spans.spans[i].duration = %lu\n",res_wrp_msg->u.req.spans.spans[i].name, res_wrp_msg->u.req.spans.spans[i].start, res_wrp_msg->u.req.spans.spans[i].duration);
 						    }
 						}
                         contentType = strdup(CONTENT_TYPE_JSON);

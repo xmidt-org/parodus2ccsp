@@ -296,8 +296,8 @@ void test_replaceRow_failure_in_delete_tableData()
         valueList[i][0].type = ccsp_string;
     }
 
-    parameterInfoStruct_t **info = (parameterInfoStruct_t **)malloc(sizeof(parameterInfoStruct_t *)*paramCount);
-    for(i = 0; i<paramCount; i++)
+    parameterInfoStruct_t **info = (parameterInfoStruct_t **)malloc(sizeof(parameterInfoStruct_t *)*2);
+    for(i = 0; i<2; i++)
     {
         info[i] = (parameterInfoStruct_t *) malloc(sizeof(parameterInfoStruct_t));
         info[i][0].parameterName = strdup(names[i]);
@@ -319,7 +319,7 @@ void test_replaceRow_failure_in_delete_tableData()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
     expect_function_call(CcspBaseIf_getParameterNames);
     will_return(CcspBaseIf_getParameterNames, CCSP_SUCCESS);
-    will_return(get_global_parameters_count, paramCount);
+    will_return(get_global_parameters_count, 2);
     will_return(get_global_parameterInfo, info);
     expect_function_call(free_componentStruct_t);
     expect_function_call(free_parameterInfoStruct_t);
