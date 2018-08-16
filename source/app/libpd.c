@@ -14,12 +14,17 @@
 #define MAX_PARALLEL_THREADS    2
 #define PARODUS_URL_DEFAULT      "tcp://127.0.0.1:6666"
 #define CLIENT_URL_DEFAULT       "tcp://127.0.0.1:6667"
+#define CLOUD_STATUS_ONLINE      "online"
+#define MAX_STR_LENGTH      	100
 
 static void connect_parodus();
 static void get_parodus_url(char **parodus_url, char **client_url);
 static void parodus_receive();
 static void initParallelProcess();
 libpd_instance_t current_instance;
+static char *cloud_status = "offline";
+pthread_mutex_t cloud_mut=PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cloud_con=PTHREAD_COND_INITIALIZER;
 
 static void connect_parodus()
 {
@@ -108,6 +113,8 @@ static void parodus_receive()
         startPtr = &start;
         endPtr = &end;
         char *contentType = NULL;
+        char *sourceService, *sourceApplication =NULL;
+        char *status=NULL;
 
         rtn = libparodus_receive (current_instance, &wrp_msg, 2000);
         if (rtn == 1)
@@ -171,6 +178,33 @@ static void parodus_receive()
                         wrp_free_struct (res_wrp_msg);
                     }
             }
+
+            //handle cloud-status retrieve response received from parodus
+            if (wrp_msg->msg_type == WRP_MSG_TYPE__RETREIVE)
+            {
+				sourceService = wrp_get_msg_element(WRP_ID_ELEMENT__SERVICE, wrp_msg, SOURCE);
+				sourceApplication = wrp_get_msg_element(WRP_ID_ELEMENT__APPLICATION, wrp_msg, SOURCE);
+
+				if(sourceService != NULL && sourceApplication != NULL && strcmp(sourceService,"parodus")== 0 && strcmp(sourceApplication,"cloud-status")== 0)
+				{
+					WalInfo("cloud-status Retrieve response received from parodus : %s len %lu\n",(char *)wrp_msg->u.crud.payload, strlen(wrp_msg->u.crud.payload) );
+
+					parsePayloadForStatus(wrp_msg->u.crud.payload, &status);
+					if(status !=NULL)
+					{
+						//set this as global conn status. adding lock before update it.
+						pthread_mutex_lock (&cloud_mut);
+						WalPrint("mutex lock in producer thread\n");
+
+						set_global_cloud_status(status);
+						WalInfo("set cloud-status value as %s\n", status);
+
+						pthread_cond_signal(&cloud_con);
+						pthread_mutex_unlock (&cloud_mut);
+						WalPrint("mutex unlock in producer thread\n");
+					}
+				}
+            }
             free(wrp_msg);
         }
 }
@@ -214,6 +248,111 @@ void parodus_receive_wait()
         parallelProcessTask();
         libparodus_shutdown(&current_instance);
         WalPrint ("End of parodus_upstream\n");
+}
+
+char *get_global_cloud_status()
+{
+    return cloud_status;
+}
+
+void set_global_cloud_status(char *status)
+{
+    cloud_status = status;
+}
+
+//send cloud-status upstream RETRIEVE request to parodus to check connectivity
+int getConnCloudStatus(char *device_mac)
+{
+	char *source = NULL, *dest = NULL;
+	wrp_msg_t *req_wrp_msg = NULL;
+	char *contentType = NULL;
+	int rv = -1;
+	int sendStatus = -1;
+    int backoffRetryTime = 0;
+    int c=2;
+
+	if(device_mac == NULL)
+	{
+		WalError("device_mac is NULL, unable to get cloud_status\n");
+		return rv;
+	}
+	else
+	{
+		req_wrp_msg = (wrp_msg_t *)malloc(sizeof(wrp_msg_t));
+		if(req_wrp_msg != NULL)
+		{
+			memset(req_wrp_msg, 0, sizeof(wrp_msg_t));
+			req_wrp_msg->msg_type = WRP_MSG_TYPE__RETREIVE;
+
+			source = (char *) malloc(sizeof(char)*MAX_STR_LENGTH);
+			dest   = (char *) malloc(sizeof(char)*MAX_STR_LENGTH);
+
+			if(source !=NULL)
+			{
+				snprintf(source, MAX_STR_LENGTH, "mac:%s/config", device_mac);
+				req_wrp_msg->u.crud.source = source;
+				WalPrint("req_wrp_msg->u.crud.source is %s\n", req_wrp_msg->u.crud.source);
+			}
+
+			if(dest !=NULL)
+			{
+				snprintf(dest, MAX_STR_LENGTH, "mac:%s/parodus/cloud-status", device_mac);
+				req_wrp_msg->u.crud.dest = dest;
+				WalPrint("req_wrp_msg->u.crud.dest is %s\n", req_wrp_msg->u.crud.dest);
+			}
+
+			req_wrp_msg->u.crud.transaction_uuid = strdup("bd4ad2d1-5c9c-486f-8e25-52c242b38");
+
+			contentType = strdup(CONTENT_TYPE_JSON);
+			if(contentType != NULL)
+			{
+				req_wrp_msg->u.crud.content_type = contentType;
+				WalPrint("retrieve content_type is %s\n",req_wrp_msg->u.crud.content_type);
+			}
+
+			while(1)
+			{
+				backoffRetryTime = (int) pow(2, c) -1;
+				WalPrint("Backoff calculated is %d\n", backoffRetryTime);
+
+				sendStatus = libparodus_send(current_instance, req_wrp_msg);
+				WalPrint("sendStatus is %d\n",sendStatus);
+				if(sendStatus == 0)
+				{
+					WalInfo("Sent retrieve request successfully to parodus\n");
+				}
+				else
+				{
+					WalError("Failed to send retrieve req: '%s'\n",libparodus_strerror(sendStatus));
+					break;
+				}
+
+				//waiting to get response from parodus. add lock here while reading
+				WalPrint("Before pthread cond wait in consumer thread\n");
+				pthread_cond_wait(&cloud_con, &cloud_mut);
+				pthread_mutex_unlock (&cloud_mut);
+				WalPrint("mutex unlock in consumer thread after cond wait\n");
+
+				if ((get_global_cloud_status() !=NULL) && (strcmp(get_global_cloud_status(), CLOUD_STATUS_ONLINE) == 0))
+				{
+					WalInfo("Received cloud_status as online, returning ..\n");
+					rv = 1;
+					free(get_global_cloud_status());
+					break;
+				}
+				else
+				{
+					WalError("cloud_status is not online, sending RETRIEVE request again and retrying\n" );
+					WalInfo("cloud status retry backoffRetryTime '%d' seconds\n", backoffRetryTime);
+					sleep(backoffRetryTime);
+					c++;
+					free(get_global_cloud_status());
+				}
+			}
+			wrp_free_struct (req_wrp_msg);
+		}
+	}
+	return rv;
 }
 
 void sendNotification(char *payload, char *source, char *destination)
