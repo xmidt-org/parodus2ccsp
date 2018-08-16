@@ -173,4 +173,6 @@ void initNotifyTask(int status);
 
 void sendNotification(char *payload, char *source, char *destination);
 
+void parsePayloadForStatus(char *payload, char** cloudStatus);
+
 #endif /* _WEBPA_ADAPTER_H_ */
