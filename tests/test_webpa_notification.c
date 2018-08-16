@@ -41,6 +41,9 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern char deviceMAC[32];
+int numLoops = 1;
+extern pthread_mutex_t cloud_mut;
+extern pthread_cond_t cloud_con;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -52,6 +55,18 @@ int libparodus_send (libpd_instance_t instance, wrp_msg_t *msg)
     return (int) mock();
 }
 
+int pthread_cond_signal(pthread_cond_t *cloud_con)
+{
+    function_called();
+    return (int) mock();
+}
+
+int pthread_cond_wait(pthread_cond_t *cloud_con, pthread_mutex_t *cloud_mut)
+{
+    pthread_cond_signal(&cloud_con);
+    function_called();
+    return (int) mock();
+}
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
 {
     UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
@@ -228,6 +243,106 @@ void test_transaction_status_notification()
     expect_function_call(libparodus_send);
     processNotification(notifyData);
 }
+
+void test_FR_cloud_sync_notification()
+{
+    numLoops = 2;
+    pthread_t threadId;
+    getCompDetails();
+    strcpy(deviceMAC, "14cfe2142112");
+    set_global_cloud_status(strdup("online"));
+
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);;
+    cidList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cid2List = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cid2List[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cid2List[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cid2List[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);;
+    cid2List[0]->type = ccsp_string;
+
+    parameterValStruct_t **cloudUIEnableList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cloudUIEnableList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cloudUIEnableList[0]->parameterName = strndup(PARAM_CLOUD_UI_ENABLE,MAX_PARAMETER_LEN);
+    cloudUIEnableList[0]->parameterValue = strndup("true",MAX_PARAMETER_LEN);;
+    cloudUIEnableList[0]->type = ccsp_string;
+
+    parameterValStruct_t **rebootReasonList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    rebootReasonList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    rebootReasonList[0]->parameterName = strndup(PARAM_REBOOT_REASON,MAX_PARAMETER_LEN);
+    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);;
+    rebootReasonList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);;
+    cmcList[0]->type = ccsp_int;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, cloudUIEnableList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
+    will_return(pthread_cond_wait, (intptr_t)0);
+    expect_function_call(pthread_cond_wait);
+
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cid2List);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, rebootReasonList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    FactoryResetCloudSync();
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -237,6 +352,7 @@ int main(void)
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_device_status_notification),
         cmocka_unit_test(test_factory_reset_notification),
+	    cmocka_unit_test(test_FR_cloud_sync_notification),
         cmocka_unit_test(test_firmware_upgrade_notification),
         cmocka_unit_test(test_transaction_status_notification)
     };

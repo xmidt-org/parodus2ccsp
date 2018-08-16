@@ -106,7 +106,7 @@ static void getDeviceMac();
 static int writeToJson(char *data);
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
 static void *notifyTask(void *status);
-static void *FactoryResetCloudSync();
+void *FactoryResetCloudSync();
 static void notifyCallback(NotifyData *notifyData);
 static void addNotifyMsgToQueue(NotifyData *notifyData);
 static void handleNotificationEvents();
@@ -164,7 +164,7 @@ void FactoryResetCloudSyncTask()
 	}
 }
 
-static void *FactoryResetCloudSync()
+void *FactoryResetCloudSync()
 {
 	pthread_detach(pthread_self());
 	char *dbCID = NULL;
@@ -183,30 +183,31 @@ static void *FactoryResetCloudSync()
 
 	if (strcmp(CloudUIEnable, "true") !=0)
 	{
-		WalPrint("CloudUI is NOT Enabled, hence not sending Factory Reset notification.\n");
+		WalPrint("CloudUI is NOT Enabled, hence not sending Factory Reset notification\n");
 		WAL_FREE(CloudUIEnable);
 		return NULL;
 	}
 	else
 	{
-		WalInfo("CloudUI is Enabled, sending Factory Reset Notification for cloud sync.\n");
+		WalInfo("CloudUI is Enabled, sending Factory Reset Notification for cloud CPE sync\n");
 		WAL_FREE(CloudUIEnable);
 
-		while(1)
+		while(FOREVER())
 		{
 			if(retryCount < FACTORY_RESET_NOTIFY_MAX_RETRY_COUNT)
 			{
 				backoffRetryTime = (int) pow(2, c) -1;
 				//wait for backoff delay for retransmission
+				WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
 				sleep(backoffRetryTime);
 				//check cloud-status
-				WalInfo("check cloud-status\n");
+				WalPrint("check cloud-status\n");
 				status = getConnCloudStatus(deviceMAC);
 				WalPrint("getConnCloudStatus : status returned is %d\n", status);
-				if(status)
+				if(status==1)
 				{
 					//check CID
-					WalInfo("check CID \n");
+					WalPrint("check CID \n");
 					dbCID = getParameterValue(PARAM_CID);
 					if(dbCID == NULL)
 					{
@@ -236,7 +237,7 @@ static void *FactoryResetCloudSync()
 					}
 					WAL_FREE(dbCID);
 				}
-				WalPrint("Factory reset notify retryCount is %d\n", retryCount);
+				WalInfo("Factory reset notify retryCount is %d\n", retryCount);
 			}
 			else
 			{
@@ -1372,37 +1373,3 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	}
 }
 
-void parsePayloadForStatus(char *payload, char **cloudStatus)
-{
-	cJSON *json = NULL;
-	cJSON *cloudStatusObj = NULL;
-	char *cloud_status_str = NULL;
-
-	json = cJSON_Parse( payload );
-	if( !json )
-	{
-		WalError( "json parse error: [%s]\n", cJSON_GetErrorPtr() );
-	}
-	else
-	{
-		cloudStatusObj = cJSON_GetObjectItem( json, CLOUD_STATUS );
-		if( cloudStatusObj != NULL)
-		{
-			cloud_status_str = cJSON_GetObjectItem( json, CLOUD_STATUS )->valuestring;
-			if ((cloud_status_str != NULL) && strlen(cloud_status_str) > 0)
-			{
-				*cloudStatus = strdup(cloud_status_str);
-				WalInfo(" cloudStatus value parsed from payload is %s\n", *cloudStatus);
-			}
-			else
-			{
-				WalError("cloud status string is empty\n");
-			}
-		}
-		else
-		{
-			WalError("Failed to get cloudStatus from payload\n");
-		}
-		cJSON_Delete(json);
-	}
-}

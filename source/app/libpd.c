@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <pthread.h>
-
+#include <cJSON.h>
 #include "libpd.h"
 #include "webpa_adapter.h"
 
@@ -14,6 +14,7 @@
 #define MAX_PARALLEL_THREADS    2
 #define PARODUS_URL_DEFAULT      "tcp://127.0.0.1:6666"
 #define CLIENT_URL_DEFAULT       "tcp://127.0.0.1:6667"
+#define CLOUD_STATUS 		"cloud-status"
 #define CLOUD_STATUS_ONLINE      "online"
 #define MAX_STR_LENGTH      	100
 
@@ -212,7 +213,7 @@ static void parodus_receive()
 void *parallelProcessTask()
 {
         pthread_detach(pthread_self());
-        while(1)
+        while( FOREVER() )
         {
                 parodus_receive();
         }
@@ -310,7 +311,7 @@ int getConnCloudStatus(char *device_mac)
 				WalPrint("retrieve content_type is %s\n",req_wrp_msg->u.crud.content_type);
 			}
 
-			while(1)
+			while( FOREVER() )
 			{
 				backoffRetryTime = (int) pow(2, c) -1;
 				WalPrint("Backoff calculated is %d\n", backoffRetryTime);
@@ -328,16 +329,18 @@ int getConnCloudStatus(char *device_mac)
 				}
 
 				//waiting to get response from parodus. add lock here while reading
+				pthread_mutex_lock (&cloud_mut);
+				WalPrint("mutex lock in consumer thread\n");
 				WalPrint("Before pthread cond wait in consumer thread\n");
 				pthread_cond_wait(&cloud_con, &cloud_mut);
-				pthread_mutex_unlock (&cloud_mut);
-				WalPrint("mutex unlock in consumer thread after cond wait\n");
 
 				if ((get_global_cloud_status() !=NULL) && (strcmp(get_global_cloud_status(), CLOUD_STATUS_ONLINE) == 0))
 				{
-					WalInfo("Received cloud_status as online, returning ..\n");
+					WalPrint("Received cloud_status as online, returning ..\n");
 					rv = 1;
 					free(get_global_cloud_status());
+					pthread_mutex_unlock (&cloud_mut);
+					WalPrint("mutex unlock in consumer thread after cond wait\n");
 					break;
 				}
 				else
@@ -346,7 +349,12 @@ int getConnCloudStatus(char *device_mac)
 					WalInfo("cloud status retry backoffRetryTime '%d' seconds\n", backoffRetryTime);
 					sleep(backoffRetryTime);
 					c++;
-					free(get_global_cloud_status());
+					if(get_global_cloud_status() !=NULL)
+					{
+						free(get_global_cloud_status());
+					}
+					pthread_mutex_unlock (&cloud_mut);
+					WalPrint("mutex unlock in consumer thread after cond wait\n");
 				}
 			}
 			wrp_free_struct (req_wrp_msg);
@@ -481,6 +489,41 @@ static void get_parodus_url(char **parodus_url, char **client_url)
 	{
 		WalPrint("client_url formed is %s\n", *client_url);
     	}
+}
+
+void parsePayloadForStatus(char *payload, char **cloudStatus)
+{
+	cJSON *json = NULL;
+	cJSON *cloudStatusObj = NULL;
+	char *cloud_status_str = NULL;
+
+	json = cJSON_Parse( payload );
+	if( !json )
+	{
+		WalError( "json parse error: [%s]\n", cJSON_GetErrorPtr() );
+	}
+	else
+	{
+		cloudStatusObj = cJSON_GetObjectItem( json, CLOUD_STATUS );
+		if( cloudStatusObj != NULL)
+		{
+			cloud_status_str = cJSON_GetObjectItem( json, CLOUD_STATUS )->valuestring;
+			if ((cloud_status_str != NULL) && strlen(cloud_status_str) > 0)
+			{
+				*cloudStatus = strdup(cloud_status_str);
+				WalPrint(" cloudStatus value parsed from payload is %s\n", *cloudStatus);
+			}
+			else
+			{
+				WalError("cloud status string is empty\n");
+			}
+		}
+		else
+		{
+			WalError("Failed to get cloudStatus from payload\n");
+		}
+		cJSON_Delete(json);
+	}
 }
 
 const char *rdk_logger_module_fetch(void)
