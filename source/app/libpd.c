@@ -22,6 +22,7 @@ static void connect_parodus();
 static void get_parodus_url(char **parodus_url, char **client_url);
 static void parodus_receive();
 static void initParallelProcess();
+static void generate_trans_uuid(char **transID);
 libpd_instance_t current_instance;
 static char *cloud_status = "offline";
 pthread_mutex_t cloud_mut=PTHREAD_MUTEX_INITIALIZER;
@@ -276,6 +277,7 @@ int getConnCloudStatus(char *device_mac)
 	int sendStatus = -1;
     int backoffRetryTime = 0;
     int c=2;
+    char *transaction_uuid = NULL;
 
 	if(device_mac == NULL)
 	{
@@ -307,7 +309,12 @@ int getConnCloudStatus(char *device_mac)
 				WalPrint("req_wrp_msg->u.crud.dest is %s\n", req_wrp_msg->u.crud.dest);
 			}
 
-			req_wrp_msg->u.crud.transaction_uuid = strdup("bd4ad2d1-5c9c-486f-8e25-52c242b38");
+			generate_trans_uuid(&transaction_uuid);
+			if(transaction_uuid !=NULL)
+			{
+				req_wrp_msg->u.crud.transaction_uuid = transaction_uuid;
+				WalInfo("transaction_uuid generated is %s\n", req_wrp_msg->u.crud.transaction_uuid);
+			}
 
 			contentType = strdup(CONTENT_TYPE_JSON);
 			if(contentType != NULL)
@@ -526,6 +533,31 @@ void parsePayloadForStatus(char *payload, char **cloudStatus)
 			WalError("Failed to get cloudStatus from payload\n");
 		}
 		cJSON_Delete(json);
+	}
+}
+
+static void generate_trans_uuid(char **transID)
+{
+	FILE *file = NULL;
+	char buffer [ 64 ] = { 0 };
+	char *command = NULL;
+
+	command = strdup("uuidgen -r");
+	if(command !=NULL)
+	{
+		file = popen ( command, "r" );
+		if(file)
+		{
+		   fgets ( buffer, 64, file );
+		   pclose ( file );
+		   file = NULL;
+		   *transID = strdup(buffer);
+		}
+		else
+		{
+			WalError("Error in opening File to generate transaction uuid\n");
+		}
+		free(command);
 	}
 }
 
