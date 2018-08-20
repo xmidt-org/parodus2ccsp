@@ -193,13 +193,12 @@ static void parodus_receive()
 					parsePayloadForStatus(wrp_msg->u.crud.payload, &status);
 					if(status !=NULL)
 					{
-						//set this as global conn status. adding lock before update it.
-						pthread_mutex_lock (&cloud_mut);
-						WalPrint("mutex lock in producer thread\n");
-
+						//set this as global conn status. add lock before update it.
 						set_global_cloud_status(status);
 						WalInfo("set cloud-status value as %s\n", status);
 
+						pthread_mutex_lock (&cloud_mut);
+						WalPrint("mutex lock in producer thread\n");
 						pthread_cond_signal(&cloud_con);
 						pthread_mutex_unlock (&cloud_mut);
 						WalPrint("mutex unlock in producer thread\n");
@@ -253,12 +252,18 @@ void parodus_receive_wait()
 
 char *get_global_cloud_status()
 {
-    return cloud_status;
+	char *temp = NULL;
+	pthread_mutex_lock (&cloud_mut);
+	temp = cloud_status;
+	pthread_mutex_unlock (&cloud_mut);
+    return temp;
 }
 
 void set_global_cloud_status(char *status)
 {
+	pthread_mutex_lock (&cloud_mut);
     cloud_status = status;
+    pthread_mutex_unlock (&cloud_mut);
 }
 
 //send cloud-status upstream RETRIEVE request to parodus to check connectivity
@@ -333,14 +338,14 @@ int getConnCloudStatus(char *device_mac)
 				WalPrint("mutex lock in consumer thread\n");
 				WalPrint("Before pthread cond wait in consumer thread\n");
 				pthread_cond_wait(&cloud_con, &cloud_mut);
+				pthread_mutex_unlock (&cloud_mut);
+				WalPrint("mutex unlock in consumer thread after cond wait\n");
 
 				if ((get_global_cloud_status() !=NULL) && (strcmp(get_global_cloud_status(), CLOUD_STATUS_ONLINE) == 0))
 				{
 					WalPrint("Received cloud_status as online, returning ..\n");
 					rv = 1;
 					free(get_global_cloud_status());
-					pthread_mutex_unlock (&cloud_mut);
-					WalPrint("mutex unlock in consumer thread after cond wait\n");
 					break;
 				}
 				else
@@ -353,8 +358,6 @@ int getConnCloudStatus(char *device_mac)
 					{
 						free(get_global_cloud_status());
 					}
-					pthread_mutex_unlock (&cloud_mut);
-					WalPrint("mutex unlock in consumer thread after cond wait\n");
 				}
 			}
 			wrp_free_struct (req_wrp_msg);
