@@ -250,6 +250,9 @@ void test_FR_cloud_sync_notification()
     pthread_t threadId;
     getCompDetails();
     strcpy(deviceMAC, "14cfe2142112");
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
     set_global_cloud_status(strdup("online"));
 
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));

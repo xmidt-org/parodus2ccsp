@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <cJSON.h>
+#include <uuid/uuid.h>
 #include "libpd.h"
 #include "webpa_adapter.h"
 
@@ -197,12 +198,6 @@ static void parodus_receive()
 						//set this as global conn status. add lock before update it.
 						set_global_cloud_status(status);
 						WalInfo("set cloud-status value as %s\n", status);
-
-						pthread_mutex_lock (&cloud_mut);
-						WalPrint("mutex lock in producer thread\n");
-						pthread_cond_signal(&cloud_con);
-						pthread_mutex_unlock (&cloud_mut);
-						WalPrint("mutex unlock in producer thread\n");
 					}
 				}
             }
@@ -255,16 +250,26 @@ char *get_global_cloud_status()
 {
 	char *temp = NULL;
 	pthread_mutex_lock (&cloud_mut);
+	WalPrint("mutex lock in consumer thread\n");
+	WalPrint("Before pthread cond wait in consumer thread\n");
+
+	pthread_cond_wait(&cloud_con, &cloud_mut);
+	WalPrint("After pthread_cond_wait\n");
 	temp = cloud_status;
+
 	pthread_mutex_unlock (&cloud_mut);
-    return temp;
+	WalPrint("mutex unlock in consumer thread after cond wait\n");
+	return temp;
 }
 
 void set_global_cloud_status(char *status)
 {
 	pthread_mutex_lock (&cloud_mut);
-    cloud_status = status;
-    pthread_mutex_unlock (&cloud_mut);
+	WalPrint("mutex lock in producer thread\n");
+	cloud_status = status;
+	pthread_cond_signal(&cloud_con);
+	pthread_mutex_unlock (&cloud_mut);
+	WalPrint("mutex unlock in producer thread\n");
 }
 
 //send cloud-status upstream RETRIEVE request to parodus to check connectivity
@@ -276,7 +281,10 @@ int getConnCloudStatus(char *device_mac)
 	int rv = -1;
 	int sendStatus = -1;
     int backoffRetryTime = 0;
+    int max_retry_sleep = 0;
+    int backoff_max_time = 9;
     int c=2;
+    char *cloud_status_val = NULL;
     char *transaction_uuid = NULL;
 
 	if(device_mac == NULL)
@@ -309,13 +317,6 @@ int getConnCloudStatus(char *device_mac)
 				WalPrint("req_wrp_msg->u.crud.dest is %s\n", req_wrp_msg->u.crud.dest);
 			}
 
-			generate_trans_uuid(&transaction_uuid);
-			if(transaction_uuid !=NULL)
-			{
-				req_wrp_msg->u.crud.transaction_uuid = transaction_uuid;
-				WalInfo("transaction_uuid generated is %s\n", req_wrp_msg->u.crud.transaction_uuid);
-			}
-
 			contentType = strdup(CONTENT_TYPE_JSON);
 			if(contentType != NULL)
 			{
@@ -323,10 +324,23 @@ int getConnCloudStatus(char *device_mac)
 				WalPrint("retrieve content_type is %s\n",req_wrp_msg->u.crud.content_type);
 			}
 
+			max_retry_sleep = (int) pow(2, backoff_max_time) -1;
+			WalInfo("cloud-status max_retry_sleep is %d\n", max_retry_sleep );
+
 			while( FOREVER() )
 			{
-				backoffRetryTime = (int) pow(2, c) -1;
+				if(backoffRetryTime < max_retry_sleep)
+	            {
+	                  backoffRetryTime = (int) pow(2, c) -1;
+	            }
 				WalPrint("Backoff calculated is %d\n", backoffRetryTime);
+
+				generate_trans_uuid(&transaction_uuid);
+				if(transaction_uuid !=NULL)
+				{
+					req_wrp_msg->u.crud.transaction_uuid = transaction_uuid;
+					WalInfo("transaction_uuid generated is %s\n", req_wrp_msg->u.crud.transaction_uuid);
+				}
 
 				sendStatus = libparodus_send(current_instance, req_wrp_msg);
 				WalPrint("sendStatus is %d\n",sendStatus);
@@ -341,18 +355,13 @@ int getConnCloudStatus(char *device_mac)
 				}
 
 				//waiting to get response from parodus. add lock here while reading
-				pthread_mutex_lock (&cloud_mut);
-				WalPrint("mutex lock in consumer thread\n");
-				WalPrint("Before pthread cond wait in consumer thread\n");
-				pthread_cond_wait(&cloud_con, &cloud_mut);
-				pthread_mutex_unlock (&cloud_mut);
-				WalPrint("mutex unlock in consumer thread after cond wait\n");
-
-				if ((get_global_cloud_status() !=NULL) && (strcmp(get_global_cloud_status(), CLOUD_STATUS_ONLINE) == 0))
+				cloud_status_val = get_global_cloud_status();
+				if ((cloud_status_val !=NULL) && (strcmp(cloud_status_val, CLOUD_STATUS_ONLINE) == 0))
 				{
 					WalPrint("Received cloud_status as online, returning ..\n");
 					rv = 1;
-					free(get_global_cloud_status());
+					free(cloud_status_val);
+					cloud_status_val = NULL;
 					break;
 				}
 				else
@@ -361,10 +370,16 @@ int getConnCloudStatus(char *device_mac)
 					WalInfo("cloud status retry backoffRetryTime '%d' seconds\n", backoffRetryTime);
 					sleep(backoffRetryTime);
 					c++;
-					if(get_global_cloud_status() !=NULL)
+					if(cloud_status_val !=NULL)
 					{
-						free(get_global_cloud_status());
+						free(cloud_status_val);
+						cloud_status_val = NULL;
 					}
+					if(req_wrp_msg->u.crud.transaction_uuid !=NULL)
+                    {
+						free(req_wrp_msg->u.crud.transaction_uuid);
+						req_wrp_msg->u.crud.transaction_uuid = NULL;
+                    }
 				}
 			}
 			wrp_free_struct (req_wrp_msg);
@@ -538,27 +553,12 @@ void parsePayloadForStatus(char *payload, char **cloudStatus)
 
 static void generate_trans_uuid(char **transID)
 {
-	FILE *file = NULL;
-	char buffer [ 64 ] = { 0 };
-	char *command = NULL;
-
-	command = strdup("uuidgen -r");
-	if(command !=NULL)
-	{
-		file = popen ( command, "r" );
-		if(file)
-		{
-		   fgets ( buffer, 64, file );
-		   pclose ( file );
-		   file = NULL;
-		   *transID = strdup(buffer);
-		}
-		else
-		{
-			WalError("Error in opening File to generate transaction uuid\n");
-		}
-		free(command);
-	}
+	uuid_t transaction_Id;
+	char *trans_id = NULL;
+	trans_id = (char *)malloc(37);
+	uuid_generate_random(transaction_Id);
+	uuid_unparse(transaction_Id, trans_id);
+	*transID = trans_id;
 }
 
 const char *rdk_logger_module_fetch(void)
