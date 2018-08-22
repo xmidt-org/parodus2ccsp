@@ -192,12 +192,12 @@ static void parodus_receive()
 				{
 					WalInfo("cloud-status Retrieve response received from parodus : %s len %lu\n",(char *)wrp_msg->u.crud.payload, strlen(wrp_msg->u.crud.payload) );
 
-					parsePayloadForStatus(wrp_msg->u.crud.payload, &status);
+					status = parsePayloadForStatus(wrp_msg->u.crud.payload);
 					if(status !=NULL)
 					{
 						//set this as global conn status. add lock before update it.
 						set_global_cloud_status(status);
-						WalInfo("set cloud-status value as %s\n", status);
+						WalPrint("set cloud-status value as %s\n", status);
 					}
 				}
             }
@@ -360,7 +360,7 @@ int getConnCloudStatus(char *device_mac)
 				cloud_status_val = get_global_cloud_status();
 				if ((cloud_status_val !=NULL) && (strcmp(cloud_status_val, CLOUD_STATUS_ONLINE) == 0))
 				{
-					WalPrint("Received cloud_status as online, returning ..\n");
+					WalInfo("Received cloud_status as %s\n", cloud_status_val);
 					rv = 1;
 					free(cloud_status_val);
 					cloud_status_val = NULL;
@@ -368,8 +368,7 @@ int getConnCloudStatus(char *device_mac)
 				}
 				else
 				{
-					WalError("cloud_status is not online, sending RETRIEVE request again and retrying\n" );
-					WalInfo("cloud status retry backoffRetryTime '%d' seconds\n", backoffRetryTime);
+					WalError("Received cloud_status as %s, Retrying after backoffRetryTime %d seconds\n", cloud_status_val, backoffRetryTime );
 					sleep(backoffRetryTime);
 					c++;
 					if(cloud_status_val !=NULL)
@@ -518,11 +517,12 @@ static void get_parodus_url(char **parodus_url, char **client_url)
     	}
 }
 
-void parsePayloadForStatus(char *payload, char **cloudStatus)
+char* parsePayloadForStatus(char *payload)
 {
 	cJSON *json = NULL;
 	cJSON *cloudStatusObj = NULL;
 	char *cloud_status_str = NULL;
+	char *cloudStatus = NULL;
 
 	json = cJSON_Parse( payload );
 	if( !json )
@@ -537,8 +537,8 @@ void parsePayloadForStatus(char *payload, char **cloudStatus)
 			cloud_status_str = cJSON_GetObjectItem( json, CLOUD_STATUS )->valuestring;
 			if ((cloud_status_str != NULL) && strlen(cloud_status_str) > 0)
 			{
-				*cloudStatus = strdup(cloud_status_str);
-				WalPrint(" cloudStatus value parsed from payload is %s\n", *cloudStatus);
+				cloudStatus = strdup(cloud_status_str);
+				WalPrint(" cloudStatus value parsed from payload is %s\n", cloudStatus);
 			}
 			else
 			{
@@ -551,6 +551,7 @@ void parsePayloadForStatus(char *payload, char **cloudStatus)
 		}
 		cJSON_Delete(json);
 	}
+	return cloudStatus;
 }
 
 static char* generate_trans_uuid()
