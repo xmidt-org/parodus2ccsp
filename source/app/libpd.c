@@ -23,7 +23,7 @@ static void connect_parodus();
 static void get_parodus_url(char **parodus_url, char **client_url);
 static void parodus_receive();
 static void initParallelProcess();
-static void generate_trans_uuid(char **transID);
+static char* generate_trans_uuid();
 libpd_instance_t current_instance;
 static char *cloud_status = "offline";
 pthread_mutex_t cloud_mut=PTHREAD_MUTEX_INITIALIZER;
@@ -246,6 +246,7 @@ void parodus_receive_wait()
         WalPrint ("End of parodus_upstream\n");
 }
 
+//Combining getter func with pthread wait.
 char *get_global_cloud_status()
 {
 	char *temp = NULL;
@@ -262,6 +263,7 @@ char *get_global_cloud_status()
 	return temp;
 }
 
+//set global conn status and to awake waiting getter threads
 void set_global_cloud_status(char *status)
 {
 	pthread_mutex_lock (&cloud_mut);
@@ -335,7 +337,7 @@ int getConnCloudStatus(char *device_mac)
 	            }
 				WalPrint("Backoff calculated is %d\n", backoffRetryTime);
 
-				generate_trans_uuid(&transaction_uuid);
+				transaction_uuid = generate_trans_uuid();
 				if(transaction_uuid !=NULL)
 				{
 					req_wrp_msg->u.crud.transaction_uuid = transaction_uuid;
@@ -551,14 +553,20 @@ void parsePayloadForStatus(char *payload, char **cloudStatus)
 	}
 }
 
-static void generate_trans_uuid(char **transID)
+static char* generate_trans_uuid()
 {
+	char *transID = NULL;
 	uuid_t transaction_Id;
 	char *trans_id = NULL;
 	trans_id = (char *)malloc(37);
 	uuid_generate_random(transaction_Id);
 	uuid_unparse(transaction_Id, trans_id);
-	*transID = trans_id;
+
+	if(trans_id !=NULL)
+	{
+		transID = trans_id;
+	}
+	return transID;
 }
 
 const char *rdk_logger_module_fetch(void)
