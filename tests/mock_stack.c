@@ -36,7 +36,6 @@ int compSize;
 parameterValStruct_t **valueList;
 parameterAttributeStruct_t **attrList;
 int totalCount;
-int rowId;
 char *faultParam;
 
 /*----------------------------------------------------------------------------*/
@@ -98,6 +97,15 @@ parameterAttributeStruct_t ** get_global_attributes()
     return (parameterAttributeStruct_t **) mock();
 }
 
+int get_global_row_id()
+{
+    return (int) mock();
+}
+
+parameterInfoStruct_t **get_global_parameterInfo()
+{
+    return (parameterInfoStruct_t **) mock();
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -184,7 +192,7 @@ void free_parameterAttributeStruct_t(void* bus_handle, int size, parameterAttrib
 int CcspBaseIf_AddTblRow(void* bus_handle, const char* dst_component_id, char* dbus_path, int sessionId, char * objectName, int * instanceNumber)
 {
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(objectName); UNUSED(sessionId);
-    *instanceNumber = rowId;
+    *instanceNumber = get_global_row_id();
     function_called();
     return (int) mock();
 }
@@ -196,6 +204,14 @@ int CcspBaseIf_DeleteTblRow(void* bus_handle, const char* dst_component_id, char
     return (int) mock();
 }
 
+int CcspBaseIf_getParameterNames(void* bus_handle, const char* dst_component_id, char* dbus_path, char * parameterName, dbus_bool nextLevel, int *size, parameterInfoStruct_t ***val)
+{
+    UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(parameterName); UNUSED(nextLevel);
+    *size = get_global_parameters_count();
+    *val = get_global_parameterInfo();
+    function_called();
+    return (int) mock();
+}
 void free_parameterInfoStruct_t (void* bus_handle, int size, parameterInfoStruct_t **val)
 {
     UNUSED(bus_handle); UNUSED(size); UNUSED(val);
