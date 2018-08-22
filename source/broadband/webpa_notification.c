@@ -30,6 +30,7 @@
 #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
 #define WEBPA_CFG_FIRMWARE_VER		"oldFirmwareVersion"
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
+#define CLOUD_STATUS 				"cloud-status"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -105,6 +106,7 @@ static void getDeviceMac();
 static int writeToJson(char *data);
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
 static void *notifyTask(void *status);
+void *FactoryResetCloudSync();
 static void notifyCallback(NotifyData *notifyData);
 static void addNotifyMsgToQueue(NotifyData *notifyData);
 static void handleNotificationEvents();
@@ -116,7 +118,7 @@ void sendNotificationForFirmwareUpgrade();
 static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value);
 static WDMP_STATUS processParamNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
 static void processConnectedClientNotification(NodeData *connectedNotify, char *deviceId, char **version, char ** nodeMacId, char **timeStamp, char **destination);
-static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
+static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid, char **reason);
 static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
 void processDeviceStatusNotification(int status);
 static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason);
@@ -144,6 +146,109 @@ void initNotifyTask(int status)
 		WalPrint("notifyTask Thread created Successfully\n");
 	}
 }
+
+
+void FactoryResetCloudSyncTask()
+{
+	int err = 0;
+	pthread_t threadId;
+
+	err = pthread_create(&threadId, NULL, FactoryResetCloudSync, NULL);
+	if (err != 0)
+	{
+		WalError("Error creating FactoryResetCloudSync thread :[%s]\n", strerror(err));
+	}
+	else
+	{
+		WalInfo("FactoryResetCloudSync Thread created Successfully\n");
+	}
+}
+
+void *FactoryResetCloudSync()
+{
+	pthread_detach(pthread_self());
+	char *dbCID = NULL;
+	int retryCount = 0;
+	int status = -1;
+	int backoffRetryTime = 0;
+	int c=2;
+	char * CloudUIEnable = NULL;
+
+	CloudUIEnable = getParameterValue(PARAM_CLOUD_UI_ENABLE);
+	if (NULL == CloudUIEnable)
+	{
+		WalError("Unable to get CloudUIEnable value\n");
+		return NULL;
+	}
+
+	if (strcmp(CloudUIEnable, "true") !=0)
+	{
+		WalPrint("CloudUI is NOT Enabled, hence not sending Factory Reset notification\n");
+		WAL_FREE(CloudUIEnable);
+		return NULL;
+	}
+	else
+	{
+		WalInfo("CloudUI is Enabled, sending Factory Reset Notification for cloud CPE sync\n");
+		WAL_FREE(CloudUIEnable);
+
+		while(FOREVER())
+		{
+			if(retryCount < FACTORY_RESET_NOTIFY_MAX_RETRY_COUNT)
+			{
+				backoffRetryTime = (int) pow(2, c) -1;
+				//wait for backoff delay for retransmission
+				WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
+				sleep(backoffRetryTime);
+				//check cloud-status
+				WalPrint("check cloud-status\n");
+				status = getConnCloudStatus(deviceMAC);
+				WalPrint("getConnCloudStatus : status returned is %d\n", status);
+				if(status==1)
+				{
+					//check CID
+					WalPrint("check CID \n");
+					dbCID = getParameterValue(PARAM_CID);
+					if(dbCID == NULL)
+					{
+						WalError("Unable to get dbCID value\n");
+						return NULL;
+					}
+
+					if (dbCID != NULL && strcmp(dbCID, "0") == 0)
+					{
+						WalInfo("dbCID value is %s\n", dbCID);
+						//sendFactoryreset notification for cloud CPE sync
+						WalPrint("sendNotificationForFactoryReset\n");
+						NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+						memset(notifyData,0,sizeof(NotifyData));
+
+						notifyData->type = FACTORY_RESET;
+						processNotification(notifyData);
+						c++;
+						retryCount++;
+					}
+					else
+					{
+						WalInfo("dbCID has non-zero value\n");
+						retryCount = 0;
+						WAL_FREE(dbCID);
+						break;
+					}
+					WAL_FREE(dbCID);
+				}
+				WalInfo("Factory reset notify retryCount is %d\n", retryCount);
+			}
+			else
+			{
+				WalError("Max Retransmission limit reached for Factory Reset Notification\n");
+				break;
+			}
+		}
+	}
+	return NULL;
+}
+
 
 void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size, void* user_data)
 {
@@ -476,6 +581,7 @@ static void *notifyTask(void *status)
 	processDeviceStatusNotification(*(int *)status);
 	RegisterNotifyCB(&notifyCallback);
 	sendNotificationForFactoryReset();
+	FactoryResetCloudSyncTask();
 	sendNotificationForFirmwareUpgrade();
 	setInitialNotify();
 	handleNotificationEvents();
@@ -771,7 +877,7 @@ void processNotification(NotifyData *notifyData)
 	WDMP_STATUS ret = WDMP_FAILURE;
 	char device_id[32] = { '\0' };
 	char *cid = NULL, *dest = NULL, *version = NULL, *timeStamp =
-			NULL, *nodeMacId = NULL, *source = NULL;
+			NULL, *nodeMacId = NULL, *source = NULL, *reboot_reason = NULL;
 	cJSON * notifyPayload;
 	cJSON * nodes, *one_node;
 	char *stringifiedNotifyPayload = NULL;
@@ -815,7 +921,7 @@ void processNotification(NotifyData *notifyData)
 
 	        		strcpy(dest, "event:SYNC_NOTIFICATION");
 
-	        		ret = processFactoryResetNotification(notifyData->u.notify, &cmc, &cid);
+					ret = processFactoryResetNotification(notifyData->u.notify, &cmc, &cid, &reboot_reason);
 
 	        		if (ret != WDMP_SUCCESS)
 	        		{
@@ -825,6 +931,7 @@ void processNotification(NotifyData *notifyData)
 	        		WalPrint("Framing notifyPayload for Factory reset\n");
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
+					cJSON_AddStringToObject(notifyPayload, "reboot_reason", reboot_reason);
 	        	}
 	        		break;
 
@@ -1027,7 +1134,7 @@ void processDeviceStatusNotification(int status)
 /*
  * @brief To process notification during factory reset
  */
-static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid)
+static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid, char **reason)
 {
 	char *dbCID = NULL;
 	char newCMC[32]={'\0'};
@@ -1044,9 +1151,9 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 	reboot_reason = getParameterValue(PARAM_REBOOT_REASON);
 	WalInfo("Received reboot_reason as:%s\n", reboot_reason ? reboot_reason : "reboot_reason is NULL");
 
-	if((NULL != dbCID) && (NULL != reboot_reason) && (strcmp(reboot_reason,"factory-reset")==0) )
+	if( ((NULL != reboot_reason) && (strcmp(reboot_reason,"factory-reset")==0)) || ((NULL != dbCID) && (strcmp(dbCID, "0") ==0)) )
 	{
-		WalInfo("Send notification to server as reboot reason indicates factory reset\n");
+		WalInfo("Send factory reset notification to server, reboot reason is %s\n", reboot_reason);
 		// set CMC to the new value
 		status = setParameterValue(PARAM_CMC,newCMC, WDMP_UINT);
 		if(status == WDMP_SUCCESS)
@@ -1054,8 +1161,8 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 			WalInfo("Successfully Set CMC to %d\n", atoi(newCMC));
 			(*cid) = dbCID;
 			(*cmc) = atoi(newCMC);
+			(*reason) = reboot_reason;
 			WalPrint("Returning success status from processFactoryResetNotification..\n");
-			WAL_FREE(reboot_reason);
 			return WDMP_SUCCESS;
 			
 		}
@@ -1265,3 +1372,4 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	        walStrncpy(reason, "Failed",MAX_REASON_LENGTH);
 	}
 }
+

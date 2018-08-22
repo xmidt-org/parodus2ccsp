@@ -34,7 +34,7 @@ extern ComponentVal ComponentValArray[RDKB_TR181_OBJECT_LEVEL1_COUNT];
 extern ComponentVal SubComponentValArray[RDKB_TR181_OBJECT_LEVEL2_COUNT];
 extern int compCacheSuccessCnt;
 extern int subCompCacheSuccessCnt;
-
+int numLoops;
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/

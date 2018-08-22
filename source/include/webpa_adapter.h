@@ -17,6 +17,13 @@
 
 #define WAL_FREE(__x__) if(__x__ != NULL) { free((void*)(__x__)); __x__ = NULL;} else {printf("Trying to free null pointer\n");}
 
+#ifndef TEST
+#define FOREVER()   1
+#else
+extern int numLoops;
+#define FOREVER()   numLoops--
+#endif
+
 #define WEBPA_COMPONENT_NAME               "com.cisco.spvtg.ccsp.webpaagent"
 #define LOGGING_MODULE                     "WEBPA"
 /**
@@ -172,5 +179,7 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
 void initNotifyTask(int status);
 
 void sendNotification(char *payload, char *source, char *destination);
+
+void parsePayloadForStatus(char *payload, char** cloudStatus);
 
 #endif /* _WEBPA_ADAPTER_H_ */
