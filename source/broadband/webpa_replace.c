@@ -386,6 +386,7 @@ static void getTableRows(char *objectName,parameterValStruct_t **parameterval, i
  * param[in] rowCount no.of rows 
  * param[out] numParam return no.of paramters for each row
  * param[out] getList return list of table data with name and value
+ * @retrun CCSP error codes on failure else CCSP_SUCCESS
  */
 static int contructRollbackTableData(parameterValStruct_t **parameterval,int paramCount,char ***rowList,int rowCount, int *numParam,TableData ** getList)
 {
@@ -441,6 +442,7 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
  * param[in] paramName row object
  * param[out] writableParams return list of writable params
  * param[out] paramCount count of writable params
+ * @returns CCSP error codes on failure else CCSP_SUCCESS
  */
 static int getWritableParams(char *paramName, char ***writableParams, int *paramCount)
 {
@@ -487,7 +489,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
                 }
             }
             *paramCount = writableCount = cnt1;
-            WalPrint("writableCount %d\n",writableCount);
+            WalInfo("writableCount %d\n",writableCount);
             *writableParams = (char **)malloc(sizeof(char *) * writableCount);
             for(cnt = 0; cnt < writableCount; cnt++)
             {
