@@ -172,78 +172,56 @@ void *FactoryResetCloudSync()
 	int status = -1;
 	int backoffRetryTime = 0;
 	int c=2;
-	char * CloudUIEnable = NULL;
 
-	CloudUIEnable = getParameterValue(PARAM_CLOUD_UI_ENABLE);
-	if (NULL == CloudUIEnable)
+	while(FOREVER())
 	{
-		WalError("Unable to get CloudUIEnable value\n");
-		return NULL;
-	}
-
-	if (strcmp(CloudUIEnable, "true") !=0)
-	{
-		WalPrint("CloudUI is NOT Enabled, hence not sending Factory Reset notification\n");
-		WAL_FREE(CloudUIEnable);
-		return NULL;
-	}
-	else
-	{
-		WalInfo("CloudUI is Enabled, sending Factory Reset Notification for cloud CPE sync\n");
-		WAL_FREE(CloudUIEnable);
-
-		while(FOREVER())
+		if(retryCount < FACTORY_RESET_NOTIFY_MAX_RETRY_COUNT)
 		{
-			if(retryCount < FACTORY_RESET_NOTIFY_MAX_RETRY_COUNT)
+			backoffRetryTime = (int) pow(2, c) -1;
+			//wait for backoff delay for retransmission
+			WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
+			sleep(backoffRetryTime);
+			//check cloud-status
+			WalPrint("check cloud-status\n");
+			status = getConnCloudStatus(deviceMAC);
+			WalPrint("getConnCloudStatus : status returned is %d\n", status);
+			if(status==1)
 			{
-				backoffRetryTime = (int) pow(2, c) -1;
-				//wait for backoff delay for retransmission
-				WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
-				sleep(backoffRetryTime);
-				//check cloud-status
-				WalPrint("check cloud-status\n");
-				status = getConnCloudStatus(deviceMAC);
-				WalPrint("getConnCloudStatus : status returned is %d\n", status);
-				if(status==1)
+				//check CID
+				WalPrint("check CID \n");
+				dbCID = getParameterValue(PARAM_CID);
+				if(dbCID == NULL)
 				{
-					//check CID
-					WalPrint("check CID \n");
-					dbCID = getParameterValue(PARAM_CID);
-					if(dbCID == NULL)
-					{
-						WalError("Unable to get dbCID value\n");
-						return NULL;
-					}
-
-					if (dbCID != NULL && strcmp(dbCID, "0") == 0)
-					{
-						WalInfo("dbCID value is %s\n", dbCID);
-						//sendFactoryreset notification for cloud CPE sync
-						WalPrint("sendNotificationForFactoryReset\n");
-						NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
-						memset(notifyData,0,sizeof(NotifyData));
-
-						notifyData->type = FACTORY_RESET;
-						processNotification(notifyData);
-						c++;
-						retryCount++;
-					}
-					else
-					{
-						WalInfo("dbCID has non-zero value\n");
-						retryCount = 0;
-						WAL_FREE(dbCID);
-						break;
-					}
-					WAL_FREE(dbCID);
+					WalError("Unable to get dbCID value\n");
+					return NULL;
 				}
-				WalInfo("Factory reset notify retryCount is %d\n", retryCount);
+				if (dbCID != NULL && strcmp(dbCID, "0") == 0)
+				{
+					WalInfo("dbCID value is %s\n", dbCID);
+					//sendFactoryreset notification for cloud CPE sync
+					WalPrint("sendNotificationForFactoryReset\n");
+					NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+					memset(notifyData,0,sizeof(NotifyData));
+						notifyData->type = FACTORY_RESET;
+					processNotification(notifyData);
+					c++;
+					retryCount++;
+				}
+				else
+				{
+					WalInfo("dbCID has non-zero value\n");
+					retryCount = 0;
+					WAL_FREE(dbCID);
+					break;
+				}
+				WAL_FREE(dbCID);
 			}
-			else
-			{
-				WalError("Max Retransmission limit reached for Factory Reset Notification\n");
-				break;
-			}
+			WalInfo("Factory reset notify retryCount is %d\n", retryCount);
+		}
+		else
+		{
+			WalError("Max Retransmission limit reached for Factory Reset Notification\n");
+			break;
 		}
 	}
 	return NULL;

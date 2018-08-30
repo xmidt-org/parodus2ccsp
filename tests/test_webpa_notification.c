@@ -267,12 +267,6 @@ void test_FR_cloud_sync_notification()
     cid2List[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);;
     cid2List[0]->type = ccsp_string;
 
-    parameterValStruct_t **cloudUIEnableList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
-    cloudUIEnableList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
-    cloudUIEnableList[0]->parameterName = strndup(PARAM_CLOUD_UI_ENABLE,MAX_PARAMETER_LEN);
-    cloudUIEnableList[0]->parameterValue = strndup("true",MAX_PARAMETER_LEN);;
-    cloudUIEnableList[0]->type = ccsp_string;
-
     parameterValStruct_t **rebootReasonList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     rebootReasonList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     rebootReasonList[0]->parameterName = strndup(PARAM_REBOOT_REASON,MAX_PARAMETER_LEN);
@@ -290,12 +284,6 @@ void test_FR_cloud_sync_notification()
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
     expect_function_call(free_componentStruct_t);
-
-    will_return(get_global_values, cloudUIEnableList);
-    will_return(get_global_parameters_count, 1);
-    expect_function_call(CcspBaseIf_getParameterValues);
-    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
-    expect_value(CcspBaseIf_getParameterValues, size, 1);
 
     will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
