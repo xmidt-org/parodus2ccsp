@@ -279,12 +279,6 @@ void test_FR_cloud_sync_notification()
     cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);;
     cmcList[0]->type = ccsp_int;
 
-    will_return(get_global_components, getDeviceInfoCompDetails());
-    will_return(get_global_component_size, 1);
-    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
-    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
-    expect_function_call(free_componentStruct_t);
-
     will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
 
