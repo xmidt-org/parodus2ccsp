@@ -56,7 +56,6 @@
 #define DEVICE_MAC                   "Device.X_CISCO_COM_CableModem.MACAddress"
 #endif
 #define PARAM_REBOOT_REASON		     "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason"
-#define PARAM_CLOUD_UI_ENABLE		 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable"
 #define ALIAS_PARAM				"Alias"
 #define PARAM_RADIO_OBJECT            "Device.WiFi.Radio."
 #define WEBPA_PROTOCOL                "WEBPA-2.0"
