@@ -1115,14 +1115,13 @@ void processDeviceStatusNotification(int status)
 static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid, char **reason)
 {
 	char *dbCID = NULL;
-	char newCMC[32]={'\0'};
+	char strnewCMC[32]={'\0'};
 	char *reboot_reason = NULL;
+	char *strCMC = NULL;
+	unsigned int oldCMC,newCMC;
 	WDMP_STATUS status = WDMP_FAILURE;
-	
-	WalPrint("Inside processFactoryResetNotification ..\n");
-	snprintf(newCMC, sizeof(newCMC), "%d", CHANGED_BY_FACTORY_DEFAULT);
-	WalPrint("newCMC value is %s\n", newCMC);
 
+	WalPrint("Inside processFactoryResetNotification ..\n");
 	dbCID = getParameterValue(PARAM_CID);
 	WalPrint("dbCID value is %s\n", dbCID);
 
@@ -1132,21 +1131,38 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 	if( ((NULL != reboot_reason) && (strcmp(reboot_reason,"factory-reset")==0)) || ((NULL != dbCID) && (strcmp(dbCID, "0") ==0)) )
 	{
 		WalInfo("Send factory reset notification to server, reboot reason is %s\n", reboot_reason);
-		// set CMC to the new value
-		status = setParameterValue(PARAM_CMC,newCMC, WDMP_UINT);
-		if(status == WDMP_SUCCESS)
+		strCMC = getParameterValue(PARAM_CMC);
+		if (strCMC != NULL)
 		{
-			WalInfo("Successfully Set CMC to %d\n", atoi(newCMC));
-			(*cid) = dbCID;
-			(*cmc) = atoi(newCMC);
-			(*reason) = reboot_reason;
-			WalPrint("Returning success status from processFactoryResetNotification..\n");
-			return WDMP_SUCCESS;
+			oldCMC = atoi(strCMC);
+			newCMC = oldCMC | CHANGED_BY_FACTORY_DEFAULT;
+			WalInfo("oldCMC is %d and newCMC value is %d\n", oldCMC,newCMC);
+			WAL_FREE(strCMC);
+			if (newCMC != oldCMC)
+			{
+				WalPrint("NewCMC and OldCMC are not equal.\n");
+				// set CMC to the new value
+				snprintf(strnewCMC, sizeof(strnewCMC), "%d", newCMC);
+				status = setParameterValue(PARAM_CMC,strnewCMC, WDMP_UINT);
+				if(status == WDMP_SUCCESS)
+				{
+					WalInfo("Successfully Set CMC to %d\n", newCMC);
+					(*cid) = dbCID;
+					(*cmc) = newCMC;
+					(*reason) = reboot_reason;
+					WalPrint("Returning success status from processFactoryResetNotification..\n");
+					return WDMP_SUCCESS;
 			
+				}
+				else
+				{
+					WalError("Error setting CMC value for factory reset\n");
+				}
+			}
 		}
 		else
 		{
-			WalError("Error setting CMC value for factory reset\n");
+			WalError("Failed to Get CMC Value, hence ignoring the Set for new CMC value for Factory reset notification\n");
 		}
 	}
 
