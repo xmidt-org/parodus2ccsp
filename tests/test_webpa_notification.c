@@ -150,7 +150,7 @@ void test_factory_reset_notification()
 
     will_return(get_global_values, cmcList);
     will_return(get_global_parameters_count, 1);
-    expect_function_call(CcspBaseIf_getParameterValues);
+    expect_function_call(CcspBaseIf_getParameterValues, 2);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
@@ -276,7 +276,7 @@ void test_FR_cloud_sync_notification()
     parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);;
+    cmcList[0]->parameterValue = strndup("33",MAX_PARAMETER_LEN);;
     cmcList[0]->type = ccsp_int;
 
     will_return(libparodus_send, (intptr_t)0);
@@ -317,11 +317,6 @@ void test_FR_cloud_sync_notification()
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
-
-    will_return(get_global_faultParam, NULL);
-    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
-    expect_function_call(CcspBaseIf_setParameterValues);
-    expect_value(CcspBaseIf_setParameterValues, size, 1);
 
     will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
