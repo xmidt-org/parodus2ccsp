@@ -1159,6 +1159,12 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 					WalError("Error setting CMC value for factory reset\n");
 				}
 			}
+			else
+			{
+				// Returning success status as CMC need not be SET since no change in CMC value (oldCMC == newCMC)
+				// But notification for factory reset needs to be sent
+				return WDMP_SUCCESS;
+			}
 		}
 		else
 		{
