@@ -87,7 +87,7 @@ void test_device_status_notification()
     parameterValStruct_t **bootTime = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     bootTime[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     bootTime[0]->parameterName = strndup(DEVICE_BOOT_TIME,MAX_PARAMETER_LEN);
-    bootTime[0]->parameterValue = strndup("157579132",MAX_PARAMETER_LEN);;
+    bootTime[0]->parameterValue = strndup("157579132",MAX_PARAMETER_LEN);
     bootTime[0]->type = ccsp_string;
 
     will_return(get_global_components, getDeviceInfoCompDetails());
@@ -121,20 +121,20 @@ void test_factory_reset_notification()
     parameterValStruct_t **rebootReasonList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     rebootReasonList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     rebootReasonList[0]->parameterName = strndup(PARAM_REBOOT_REASON,MAX_PARAMETER_LEN);
-    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);;
+    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);
     rebootReasonList[0]->type = ccsp_string;
 
     parameterValStruct_t **cmcList1 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
-    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
-    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
-    cmcList[0]->type = ccsp_int;
+    cmcList1[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList1[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList1[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cmcList1[0]->type = ccsp_int;
 
     parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
-    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
-    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
-    cmcList[0]->type = ccsp_int;
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
 
     will_return(get_global_values, cidList);
     will_return(get_global_parameters_count, 1);
@@ -184,25 +184,25 @@ void test_firmware_upgrade_notification()
     parameterValStruct_t **firmwareList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     firmwareList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     firmwareList[0]->parameterName = strndup(PARAM_FIRMWARE_VERSION,MAX_PARAMETER_LEN);
-    firmwareList[0]->parameterValue = strndup("TG1459_20170901Syd",MAX_PARAMETER_LEN);;
+    firmwareList[0]->parameterValue = strndup("TG1459_20170901Syd",MAX_PARAMETER_LEN);
     firmwareList[0]->type = ccsp_string;
 
     parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList[0]->parameterValue = strndup("12",MAX_PARAMETER_LEN);;
+    cmcList[0]->parameterValue = strndup("12",MAX_PARAMETER_LEN);
     cmcList[0]->type = ccsp_int;
 
     parameterValStruct_t **cmcList1 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cmcList1[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cmcList1[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList1[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);;
+    cmcList1[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
     cmcList1[0]->type = ccsp_int;
 
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
-    cidList[0]->parameterValue = strndup("abcd",MAX_PARAMETER_LEN);;
+    cidList[0]->parameterValue = strndup("abcd",MAX_PARAMETER_LEN);
     cidList[0]->type = ccsp_string;
 
     will_return(get_global_components, getDeviceInfoCompDetails());
@@ -250,7 +250,7 @@ void test_transaction_status_notification()
     NotifyData *notifyData = (NotifyData *) malloc(sizeof(NotifyData));
     notifyData->type= TRANS_STATUS;
     notifyData->u.status= (TransData *)malloc(sizeof(TransData));
-    notifyData->u.status->transId = strndup("qwkgfg75sgqwdgfhasfg", MAX_PARAMETER_LEN);;
+    notifyData->u.status->transId = strndup("qwkgfg75sgqwdgfhasfg", MAX_PARAMETER_LEN);
     will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
     processNotification(notifyData);
@@ -270,32 +270,32 @@ void test_FR_cloud_sync_notification()
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
-    cidList[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);;
+    cidList[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
     cidList[0]->type = ccsp_string;
 
     parameterValStruct_t **cid2List = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cid2List[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cid2List[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
-    cid2List[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);;
+    cid2List[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
     cid2List[0]->type = ccsp_string;
 
     parameterValStruct_t **rebootReasonList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     rebootReasonList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     rebootReasonList[0]->parameterName = strndup(PARAM_REBOOT_REASON,MAX_PARAMETER_LEN);
-    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);;
+    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);
     rebootReasonList[0]->type = ccsp_string;
 
     parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList[0]->parameterValue = strndup("33",MAX_PARAMETER_LEN);;
+    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
     cmcList[0]->type = ccsp_int;
 
     parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
-    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
-    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList[0]->parameterValue = strndup("33",MAX_PARAMETER_LEN);;
-    cmcList[0]->type = ccsp_int;
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
 
     will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
@@ -342,8 +342,96 @@ void test_FR_cloud_sync_notification()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
     will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
+
+    FactoryResetCloudSync();
+}
+
+void test_FR_cloud_sync_notification_retry()
+{
+    numLoops = 2;
+    pthread_t threadId;
+    getCompDetails();
+    strcpy(deviceMAC, "14cfe2142112");
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
+    set_global_cloud_status(strdup("online"));
+
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cid2List = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cid2List[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cid2List[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cid2List[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cid2List[0]->type = ccsp_string;
+
+    parameterValStruct_t **rebootReasonList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    rebootReasonList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    rebootReasonList[0]->parameterName = strndup(PARAM_REBOOT_REASON,MAX_PARAMETER_LEN);
+    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);
+    rebootReasonList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+
+    parameterValStruct_t **oldCmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    oldCmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    oldCmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    oldCmcList[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    oldCmcList[0]->type = ccsp_int;
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
+    will_return(pthread_cond_wait, (intptr_t)0);
+    expect_function_call(pthread_cond_wait);
+
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cid2List);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, rebootReasonList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, oldCmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
 
     FactoryResetCloudSync();
 }
@@ -358,7 +446,8 @@ int main(void)
         cmocka_unit_test(test_factory_reset_notification),
 	    cmocka_unit_test(test_FR_cloud_sync_notification),
         cmocka_unit_test(test_firmware_upgrade_notification),
-        cmocka_unit_test(test_transaction_status_notification)
+        cmocka_unit_test(test_transaction_status_notification),
+        cmocka_unit_test(test_FR_cloud_sync_notification_retry)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
