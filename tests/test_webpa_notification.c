@@ -427,6 +427,12 @@ void test_FR_cloud_sync_notification_retry()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(get_global_values, oldCmcList);
     will_return(get_global_parameters_count, 1);
     expect_function_call(CcspBaseIf_getParameterValues);
