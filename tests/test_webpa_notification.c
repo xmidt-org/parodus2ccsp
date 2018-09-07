@@ -382,12 +382,6 @@ void test_FR_cloud_sync_notification_retry()
     rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);
     rebootReasonList[0]->type = ccsp_string;
 
-    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
-    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
-    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
-    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
-    cmcList[0]->type = ccsp_int;
-
     parameterValStruct_t **oldCmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     oldCmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     oldCmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
@@ -432,6 +426,9 @@ void test_FR_cloud_sync_notification_retry()
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
 
     FactoryResetCloudSync();
 }
