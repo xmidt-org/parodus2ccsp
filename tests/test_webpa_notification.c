@@ -22,6 +22,7 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "../source/include/webpa_adapter.h"
 #include "../source/broadband/include/webpa_internal.h"
@@ -41,9 +42,11 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern char deviceMAC[32];
+extern wakeUpFlag;
 int numLoops = 1;
 extern pthread_mutex_t cloud_mut;
 extern pthread_cond_t cloud_con;
+extern cloud_status;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -61,12 +64,23 @@ int pthread_cond_signal(pthread_cond_t *cloud_con)
     return (int) mock();
 }
 
-int pthread_cond_wait(pthread_cond_t *cloud_con, pthread_mutex_t *cloud_mut)
+int pthread_cond_timedwait(pthread_cond_t *cloud_con, pthread_mutex_t *cloud_mut, const struct timespec *ts )
 {
     pthread_cond_signal(&cloud_con);
+    wakeUpFlag=1;
+    if(numLoops==1)
+    {
+		wakeUpFlag = 0;
+    }
+    if(strcmp(cloud_status, "offline")==0 && (numLoops ==0))
+    {
+		wakeUpFlag = 0;
+		cloud_status = strdup("online");
+    }
     function_called();
     return (int) mock();
 }
+
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
 {
     UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
@@ -266,7 +280,7 @@ void test_FR_cloud_sync_notification()
     expect_function_call(pthread_cond_signal);
 
     set_global_cloud_status(strdup("online"));
-
+    wakeUpFlag = 0;
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
@@ -303,8 +317,8 @@ void test_FR_cloud_sync_notification()
     will_return(pthread_cond_signal, (intptr_t)0);
     expect_function_call(pthread_cond_signal);
 
-    will_return(pthread_cond_wait, (intptr_t)0);
-    expect_function_call(pthread_cond_wait);
+    will_return(pthread_cond_timedwait, (intptr_t)0);
+    expect_function_call(pthread_cond_timedwait);
 
     will_return(get_global_values, cidList);
     will_return(get_global_parameters_count, 1);
@@ -363,7 +377,7 @@ void test_FR_cloud_sync_notification_retry()
     expect_function_call(pthread_cond_signal);
 
     set_global_cloud_status(strdup("online"));
-
+    wakeUpFlag = 0;
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
@@ -394,8 +408,8 @@ void test_FR_cloud_sync_notification_retry()
     will_return(pthread_cond_signal, (intptr_t)0);
     expect_function_call(pthread_cond_signal);
 
-    will_return(pthread_cond_wait, (intptr_t)0);
-    expect_function_call(pthread_cond_wait);
+    will_return(pthread_cond_timedwait, (intptr_t)0);
+    expect_function_call(pthread_cond_timedwait);
 
     will_return(get_global_values, cidList);
     will_return(get_global_parameters_count, 1);
@@ -432,6 +446,115 @@ void test_FR_cloud_sync_notification_retry()
 
     FactoryResetCloudSync();
 }
+
+void test_FR_notify_cloud_status_retry()
+{
+    numLoops = 3;
+    pthread_t threadId;
+    getCompDetails();
+    strcpy(deviceMAC, "14cfe2142112");
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
+    set_global_cloud_status(strdup("offline"));
+    wakeUpFlag = 0;
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cid2List = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cid2List[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cid2List[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cid2List[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cid2List[0]->type = ccsp_string;
+
+    parameterValStruct_t **rebootReasonList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    rebootReasonList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    rebootReasonList[0]->parameterName = strndup(PARAM_REBOOT_REASON,MAX_PARAMETER_LEN);
+    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);
+    rebootReasonList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
+    will_return(pthread_cond_timedwait, (intptr_t)ETIMEDOUT);
+    expect_function_call(pthread_cond_timedwait);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
+    will_return(pthread_cond_timedwait, (intptr_t)0);
+    expect_function_call(pthread_cond_timedwait);
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+
+    will_return(pthread_cond_timedwait, (intptr_t)0);
+    expect_function_call(pthread_cond_timedwait);
+
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cid2List);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, rebootReasonList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+    FactoryResetCloudSync();
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -444,7 +567,8 @@ int main(void)
 	    cmocka_unit_test(test_FR_cloud_sync_notification),
         cmocka_unit_test(test_firmware_upgrade_notification),
         cmocka_unit_test(test_transaction_status_notification),
-        cmocka_unit_test(test_FR_cloud_sync_notification_retry)
+        cmocka_unit_test(test_FR_cloud_sync_notification_retry),
+	    cmocka_unit_test(test_FR_notify_cloud_status_retry)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
