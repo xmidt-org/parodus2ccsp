@@ -20,6 +20,7 @@
 #define WEBPA_SET_INITIAL_NOTIFY_RETRY_COUNT            5
 #define WEBPA_SET_INITIAL_NOTIFY_RETRY_SEC              15
 #define WEBPA_NOTIFY_EVENT_HANDLE_INTERVAL_MSEC         250
+#define BACKOFF_MAX_RETRY_SEC							512
 #define WEBPA_NOTIFY_EVENT_MAX_LENGTH                   256
 #define MAX_REASON_LENGTH                               64
 #define WEBPA_PARAM_HOSTS_NAME		        "Device.Hosts.Host."
@@ -169,7 +170,7 @@ void *FactoryResetCloudSync()
 	pthread_detach(pthread_self());
 	char *dbCID = NULL;
 	int retryCount = 0;
-	int status = -1;
+	int status = 0;
 	int backoffRetryTime = 0;
 	int c=2;
 
@@ -177,10 +178,18 @@ void *FactoryResetCloudSync()
 	{
 		if(retryCount < FACTORY_RESET_NOTIFY_MAX_RETRY_COUNT)
 		{
-			backoffRetryTime = (int) pow(2, c) -1;
-			//wait for backoff delay for retransmission
-			WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
-			sleep(backoffRetryTime);
+			if(status < 0)
+			{
+				WalError("Failed to get cloud-status from parodus. Retrying after %d seconds\n", BACKOFF_MAX_RETRY_SEC);
+				sleep(BACKOFF_MAX_RETRY_SEC);
+			}
+			else
+			{
+				backoffRetryTime = (int) pow(2, c) -1;
+				//wait for backoff delay for retransmission
+				WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
+				sleep(backoffRetryTime);
+			}
 			//check cloud-status
 			WalPrint("check cloud-status\n");
 			status = getConnCloudStatus(deviceMAC);
@@ -215,8 +224,8 @@ void *FactoryResetCloudSync()
 					break;
 				}
 				WAL_FREE(dbCID);
+				WalInfo("Factory reset notify retryCount is %d\n", retryCount);
 			}
-			WalInfo("Factory reset notify retryCount is %d\n", retryCount);
 		}
 		else
 		{
