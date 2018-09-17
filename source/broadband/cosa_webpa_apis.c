@@ -111,7 +111,7 @@ CosaDmlWEBPA_GetValueFromDB( char* ParamName, char* pString )
 	}
 	else
 	{
-		WalError("psm_get failed\n");
+		WalError("psm_get failed ret %d for parameter %s\n", retPsmGet, ParamName);
 		return FALSE;
 	}
 #endif /* WEBPA_PARAMS_VIA_SYSCFG */
@@ -145,9 +145,11 @@ CosaDmlWEBPA_StoreValueIntoDB( char*  	ParamName,
 	retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, tmpbuf, ccsp_string, pString);
 	if (retPsmSet != CCSP_SUCCESS) 
 	{
-		WalError("psmset failed\n");
+		WalError("psm_set failed ret %d for parameter %s and value %s\n", retPsmSet, ParamName, pString);
 		return FALSE;
 	}
+	else
+		WalInfo("psm_set success ret %d for parameter %s and value %s\n", retPsmSet, ParamName, pString);
 #endif /* WEBPA_PARAMS_VIA_SYSCFG */
 
 	return TRUE;
