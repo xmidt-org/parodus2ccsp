@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <cJSON.h>
 #include <uuid/uuid.h>
+#include <sys/time.h>
 #include "libpd.h"
 #include "webpa_adapter.h"
 
@@ -18,6 +19,7 @@
 #define CLOUD_STATUS 		"cloud-status"
 #define CLOUD_STATUS_ONLINE      "online"
 #define MAX_STR_LENGTH      	100
+#define WAIT_TIME_IN_SECONDS    300
 
 static void connect_parodus();
 static void get_parodus_url(char **parodus_url, char **client_url);
@@ -25,7 +27,8 @@ static void parodus_receive();
 static void initParallelProcess();
 static char* generate_trans_uuid();
 libpd_instance_t current_instance;
-static char *cloud_status = "offline";
+char *cloud_status = "offline";
+int wakeUpFlag = 0;
 pthread_mutex_t cloud_mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cloud_con=PTHREAD_COND_INITIALIZER;
 
@@ -190,7 +193,7 @@ static void parodus_receive()
 
 				if(sourceService != NULL && sourceApplication != NULL && strcmp(sourceService,"parodus")== 0 && strcmp(sourceApplication,"cloud-status")== 0)
 				{
-					WalInfo("cloud-status Retrieve response received from parodus : %s len %lu\n",(char *)wrp_msg->u.crud.payload, strlen(wrp_msg->u.crud.payload) );
+					WalInfo("cloud-status Retrieve response received from parodus : %s len %lu transaction_uuid %s\n",(char *)wrp_msg->u.crud.payload, strlen(wrp_msg->u.crud.payload), wrp_msg->u.crud.transaction_uuid );
 
 					status = parsePayloadForStatus(wrp_msg->u.crud.payload);
 					if(status !=NULL)
@@ -250,14 +253,28 @@ void parodus_receive_wait()
 char *get_global_cloud_status()
 {
 	char *temp = NULL;
+	int  rv;
+    struct timeval ts;
 	pthread_mutex_lock (&cloud_mut);
 	WalPrint("mutex lock in consumer thread\n");
 	WalPrint("Before pthread cond wait in consumer thread\n");
 
-	pthread_cond_wait(&cloud_con, &cloud_mut);
-	WalPrint("After pthread_cond_wait\n");
-	temp = cloud_status;
+	gettimeofday(&ts, NULL);
+    ts.tv_sec += WAIT_TIME_IN_SECONDS;
 
+	while (!wakeUpFlag)
+	{
+		rv = pthread_cond_timedwait(&cloud_con, &cloud_mut, &ts);
+		WalPrint("After pthread_cond_timedwait\n");
+		if (rv == ETIMEDOUT)
+		{
+			WalError("Timeout Error. Unable to get cloud_status even after %d minutes\n", (WAIT_TIME_IN_SECONDS/60));
+			pthread_mutex_unlock(&cloud_mut);
+			return NULL;
+		}
+	}
+	temp = cloud_status;
+	wakeUpFlag = 0;
 	pthread_mutex_unlock (&cloud_mut);
 	WalPrint("mutex unlock in consumer thread after cond wait\n");
 	return temp;
@@ -268,6 +285,7 @@ void set_global_cloud_status(char *status)
 {
 	pthread_mutex_lock (&cloud_mut);
 	WalPrint("mutex lock in producer thread\n");
+	wakeUpFlag = 1;
 	cloud_status = status;
 	pthread_cond_signal(&cloud_con);
 	pthread_mutex_unlock (&cloud_mut);
