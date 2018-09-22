@@ -13,7 +13,7 @@
 
 #define CONTENT_TYPE_JSON       "application/json"
 #define DEVICE_PROPS_FILE   "/etc/device.properties"
-#define MAX_PARALLEL_THREADS    2
+#define MAX_PARALLEL_THREADS    1
 #define PARODUS_URL_DEFAULT      "tcp://127.0.0.1:6666"
 #define CLIENT_URL_DEFAULT       "tcp://127.0.0.1:6667"
 #define CLOUD_STATUS 		"cloud-status"
