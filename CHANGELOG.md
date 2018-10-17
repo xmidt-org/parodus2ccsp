@@ -6,18 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 - CMC, CID values are logged during SET
-- Tests are added for factory-reset
 - CMC set logic for factory-reset notification is changed
-- Tests are added for replace table
 - ReplaceTable crashes are fixed
-- Removed CM agent dependency
-- config json override issue in field is prevented
+- Removed CM agent dependency in ETHWAN case
+- Fixed config json override issue observed in field
 - Integrated WebPA Client Support in RDKB RPI and EMU 
-- Updated README.md with pre-requisite 
-- Added NULL checks in libpd.c
-- abort from configure if thread support isn't found 
-- Build errors while yocto integration are fixed
-- Code is synced with CcspWebpaAdapter
+- Code optimization, added NULL checks in libpd.c
+- Added abort in configure if thread support isn't found 
+- Fixed yocto integration related build errors
+- Synced with latest code from CcspWebpaAdapter repository
 - Integration tests for get values, set values, get attributes and set attributes are added
 - Fixed set values crash for large parameter name/value
 - Added setter functions for extern variables
