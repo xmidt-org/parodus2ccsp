@@ -127,23 +127,21 @@ add_dependencies(libwdmp-c wdmp-c)
 
 # nanoMsg external dependency
 #-------------------------------------------------------------------------------
-ExternalProject_Add(nng
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/nng
-    GIT_REPOSITORY https://github.com/nanomsg/nng.git
-    GIT_TAG "v1.0.1"
+ExternalProject_Add(nanomsg
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/nanomsg
+    GIT_REPOSITORY https://github.com/nanomsg/nanomsg.git
+    GIT_TAG "0c1aa2b288f6b167dbafe7e29c20e6fc7e71c000"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
-add_library(libnng STATIC SHARED IMPORTED)
-add_dependencies(libnng nng)
-
+add_library(libnanomsg STATIC SHARED IMPORTED)
+add_dependencies(libnanomsg nanomsg)
 
 # msgpack-c external dependency
 #-------------------------------------------------------------------------------
 ExternalProject_Add(msgpack
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/msgpack
     GIT_REPOSITORY https://github.com/msgpack/msgpack-c.git
-    #GIT_TAG "c6e6dbc608366090c12b142b3832604e6aa12f54"
-    GIT_TAG "7a98138f27f27290e680bf8fbf1f8d1b089bf138"
+    GIT_TAG "c6e6dbc608366090c12b142b3832604e6aa12f54"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
                   -DMSGPACK_ENABLE_CXX=OFF
                   -DMSGPACK_BUILD_EXAMPLES=OFF
@@ -172,10 +170,10 @@ add_dependencies(libwrp-c wrp-c)
 # libparodus external dependency
 #-------------------------------------------------------------------------------
 ExternalProject_Add(libparodus
-    DEPENDS trower-base64 msgpack nng wrp-c
+    DEPENDS trower-base64 msgpack nanomsg wrp-c
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/libparodus
     GIT_REPOSITORY https://github.com/Comcast/libparodus.git
-    GIT_TAG "c1c0fad84004d10caab28f9810e8ad40e6b2451b"
+    GIT_TAG "a7615d69bd5859e337f467fb7e33182da970a5de"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
                   -DMAIN_PROJ_BUILD=ON
                   -DMAIN_PROJ_LIB_PATH=${LIBRARY_DIR}
