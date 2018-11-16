@@ -208,9 +208,13 @@ static void parodus_receive()
         }
 }
 
-void *parallelProcessTask()
+void *parallelProcessTask(void *id)
 {
-        pthread_detach(pthread_self());
+	if(id != NULL)
+	{
+		WalPrint("Detaching parallelProcess thread\n");
+        	pthread_detach(pthread_self());
+	}
         while( FOREVER() )
         {
                 parodus_receive();
@@ -225,7 +229,7 @@ static void initParallelProcess()
         WalPrint("============ initParallelProcess ==============\n");
         for(i=0; i<MAX_PARALLEL_THREADS-1; i++)
         {
-                err = pthread_create(&threadId[i], NULL, parallelProcessTask, NULL);
+                err = pthread_create(&threadId[i], NULL, parallelProcessTask, (void *)threadId[i]);
                 if (err != 0)
                 {
                         WalError("Error creating parallelProcessTask thread %d :[%s]\n", i, strerror(err));
@@ -244,7 +248,7 @@ void parodus_receive_wait()
                 WalInfo("Parallel request processing is enabled\n");
         }
         initParallelProcess();
-        parallelProcessTask();
+        parallelProcessTask(NULL);
         libparodus_shutdown(&current_instance);
         WalPrint ("End of parodus_upstream\n");
 }
