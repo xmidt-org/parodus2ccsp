@@ -318,94 +318,102 @@ int getConnCloudStatus(char *device_mac)
 	}
 	else
 	{
-		req_wrp_msg = (wrp_msg_t *)malloc(sizeof(wrp_msg_t));
-		if(req_wrp_msg != NULL)
+		if(strlen(device_mac) == 0)
 		{
-			memset(req_wrp_msg, 0, sizeof(wrp_msg_t));
-			req_wrp_msg->msg_type = WRP_MSG_TYPE__RETREIVE;
-
-			source = (char *) malloc(sizeof(char)*MAX_STR_LENGTH);
-			dest   = (char *) malloc(sizeof(char)*MAX_STR_LENGTH);
-
-			if(source !=NULL)
+			WalError("device_mac is empty, unable to get cloud_status\n");
+			return rv;
+		}
+		else
+		{
+			req_wrp_msg = (wrp_msg_t *)malloc(sizeof(wrp_msg_t));
+			if(req_wrp_msg != NULL)
 			{
-				snprintf(source, MAX_STR_LENGTH, "mac:%s/config", device_mac);
-				req_wrp_msg->u.crud.source = source;
-				WalPrint("req_wrp_msg->u.crud.source is %s\n", req_wrp_msg->u.crud.source);
-			}
+				memset(req_wrp_msg, 0, sizeof(wrp_msg_t));
+				req_wrp_msg->msg_type = WRP_MSG_TYPE__RETREIVE;
 
-			if(dest !=NULL)
-			{
-				snprintf(dest, MAX_STR_LENGTH, "mac:%s/parodus/cloud-status", device_mac);
-				req_wrp_msg->u.crud.dest = dest;
-				WalPrint("req_wrp_msg->u.crud.dest is %s\n", req_wrp_msg->u.crud.dest);
-			}
+				source = (char *) malloc(sizeof(char)*MAX_STR_LENGTH);
+				dest   = (char *) malloc(sizeof(char)*MAX_STR_LENGTH);
 
-			contentType = strdup(CONTENT_TYPE_JSON);
-			if(contentType != NULL)
-			{
-				req_wrp_msg->u.crud.content_type = contentType;
-				WalPrint("retrieve content_type is %s\n",req_wrp_msg->u.crud.content_type);
-			}
-
-			max_retry_sleep = (int) pow(2, backoff_max_time) -1;
-			WalInfo("cloud-status max_retry_sleep is %d\n", max_retry_sleep );
-
-			while( FOREVER() )
-			{
-				if(backoffRetryTime < max_retry_sleep)
-	            {
-	                  backoffRetryTime = (int) pow(2, c) -1;
-	            }
-				WalPrint("Backoff calculated is %d\n", backoffRetryTime);
-
-				transaction_uuid = generate_trans_uuid();
-				if(transaction_uuid !=NULL)
+				if(source !=NULL)
 				{
-					req_wrp_msg->u.crud.transaction_uuid = transaction_uuid;
-					WalInfo("transaction_uuid generated is %s\n", req_wrp_msg->u.crud.transaction_uuid);
+					snprintf(source, MAX_STR_LENGTH, "mac:%s/config", device_mac);
+					req_wrp_msg->u.crud.source = source;
+					WalPrint("req_wrp_msg->u.crud.source is %s\n", req_wrp_msg->u.crud.source);
 				}
 
-				sendStatus = libparodus_send(current_instance, req_wrp_msg);
-				WalPrint("sendStatus is %d\n",sendStatus);
-				if(sendStatus == 0)
+				if(dest !=NULL)
 				{
-					WalInfo("Sent retrieve request successfully to parodus\n");
-				}
-				else
-				{
-					WalError("Failed to send retrieve req: '%s'\n",libparodus_strerror(sendStatus));
-					break;
+					snprintf(dest, MAX_STR_LENGTH, "mac:%s/parodus/cloud-status", device_mac);
+					req_wrp_msg->u.crud.dest = dest;
+					WalPrint("req_wrp_msg->u.crud.dest is %s\n", req_wrp_msg->u.crud.dest);
 				}
 
-				//waiting to get response from parodus. add lock here while reading
-				cloud_status_val = get_global_cloud_status();
-				if ((cloud_status_val !=NULL) && (strcmp(cloud_status_val, CLOUD_STATUS_ONLINE) == 0))
+				contentType = strdup(CONTENT_TYPE_JSON);
+				if(contentType != NULL)
 				{
-					WalInfo("Received cloud_status as %s\n", cloud_status_val);
-					rv = 1;
-					free(cloud_status_val);
-					cloud_status_val = NULL;
-					break;
+					req_wrp_msg->u.crud.content_type = contentType;
+					WalPrint("retrieve content_type is %s\n",req_wrp_msg->u.crud.content_type);
 				}
-				else
+
+				max_retry_sleep = (int) pow(2, backoff_max_time) -1;
+				WalInfo("cloud-status max_retry_sleep is %d\n", max_retry_sleep );
+
+				while( FOREVER() )
 				{
-					WalError("Received cloud_status as %s, Retrying after backoffRetryTime %d seconds\n", cloud_status_val, backoffRetryTime );
-					sleep(backoffRetryTime);
-					c++;
-					if(cloud_status_val !=NULL)
+					if(backoffRetryTime < max_retry_sleep)
+			        {
+			              backoffRetryTime = (int) pow(2, c) -1;
+			        }
+					WalPrint("Backoff calculated is %d\n", backoffRetryTime);
+
+					transaction_uuid = generate_trans_uuid();
+					if(transaction_uuid !=NULL)
 					{
+						req_wrp_msg->u.crud.transaction_uuid = transaction_uuid;
+						WalInfo("transaction_uuid generated is %s\n", req_wrp_msg->u.crud.transaction_uuid);
+					}
+
+					sendStatus = libparodus_send(current_instance, req_wrp_msg);
+					WalPrint("sendStatus is %d\n",sendStatus);
+					if(sendStatus == 0)
+					{
+						WalInfo("Sent retrieve request successfully to parodus\n");
+					}
+					else
+					{
+						WalError("Failed to send retrieve req: '%s'\n",libparodus_strerror(sendStatus));
+						break;
+					}
+
+					//waiting to get response from parodus. add lock here while reading
+					cloud_status_val = get_global_cloud_status();
+					if ((cloud_status_val !=NULL) && (strcmp(cloud_status_val, CLOUD_STATUS_ONLINE) == 0))
+					{
+						WalInfo("Received cloud_status as %s\n", cloud_status_val);
+						rv = 1;
 						free(cloud_status_val);
 						cloud_status_val = NULL;
+						break;
 					}
-					if(req_wrp_msg->u.crud.transaction_uuid !=NULL)
-                    {
-						free(req_wrp_msg->u.crud.transaction_uuid);
-						req_wrp_msg->u.crud.transaction_uuid = NULL;
-                    }
+					else
+					{
+						WalError("Received cloud_status as %s, Retrying after backoffRetryTime %d seconds\n", cloud_status_val, backoffRetryTime );
+						sleep(backoffRetryTime);
+						c++;
+						if(cloud_status_val !=NULL)
+						{
+							free(cloud_status_val);
+							cloud_status_val = NULL;
+						}
+						if(req_wrp_msg->u.crud.transaction_uuid !=NULL)
+		                {
+							free(req_wrp_msg->u.crud.transaction_uuid);
+							req_wrp_msg->u.crud.transaction_uuid = NULL;
+		                }
+					}
 				}
+				wrp_free_struct (req_wrp_msg);
 			}
-			wrp_free_struct (req_wrp_msg);
 		}
 	}
 	return rv;
