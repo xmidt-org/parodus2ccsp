@@ -556,6 +556,7 @@ void test_FR_notify_cloud_status_retry()
     FactoryResetCloudSync();
 }
 
+// Test to verify that no parodus retrieve request is sent when mac is empty 
 void test_FR_notify_cloud_status_empty_mac()
 {
 	numLoops = 1;
