@@ -555,6 +555,14 @@ void test_FR_notify_cloud_status_retry()
     expect_function_call(libparodus_send);
     FactoryResetCloudSync();
 }
+
+// Test to verify that no parodus retrieve request is sent when mac is empty 
+void test_FR_notify_cloud_status_empty_mac()
+{
+	numLoops = 1;
+	strcpy(deviceMAC, "");
+	FactoryResetCloudSync();
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -568,7 +576,8 @@ int main(void)
         cmocka_unit_test(test_firmware_upgrade_notification),
         cmocka_unit_test(test_transaction_status_notification),
         cmocka_unit_test(test_FR_cloud_sync_notification_retry),
-	    cmocka_unit_test(test_FR_notify_cloud_status_retry)
+	    cmocka_unit_test(test_FR_notify_cloud_status_retry),
+	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
