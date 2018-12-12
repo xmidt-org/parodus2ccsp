@@ -563,6 +563,84 @@ void test_FR_notify_cloud_status_empty_mac()
 	strcpy(deviceMAC, "");
 	FactoryResetCloudSync();
 }
+
+void test_manageable_notification_ON()
+{
+    parameterValStruct_t **status = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    status[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    status[0]->parameterName = strndup(RDKB_MANAGEABLE_NOTIFICATION,MAX_PARAMETER_LEN);
+    status[0]->parameterValue = strndup("true",MAX_PARAMETER_LEN);
+    status[0]->type = ccsp_boolean;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, status);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    parameterValStruct_t **notification = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    notification[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    notification[0]->parameterName = strndup("Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification",MAX_PARAMETER_LEN);
+    notification[0]->parameterValue = strndup("12345",MAX_PARAMETER_LEN);
+    notification[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, notification);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+    processDeviceManageableNotification();
+}
+
+void test_manageable_notification_OFF()
+{
+    parameterValStruct_t **status = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    status[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    status[0]->parameterName = strndup(RDKB_MANAGEABLE_NOTIFICATION,MAX_PARAMETER_LEN);
+    status[0]->parameterValue = strndup("false",MAX_PARAMETER_LEN);
+    status[0]->type = ccsp_boolean;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, status);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    processDeviceManageableNotification();
+}
+
+void err_manageable_notification()
+{
+    will_return(get_global_components, NULL);
+    will_return(get_global_component_size, 0);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
+    expect_function_call(free_componentStruct_t);
+
+    processDeviceManageableNotification();
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -577,7 +655,10 @@ int main(void)
         cmocka_unit_test(test_transaction_status_notification),
         cmocka_unit_test(test_FR_cloud_sync_notification_retry),
 	    cmocka_unit_test(test_FR_notify_cloud_status_retry),
-	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac)
+	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
+	    cmocka_unit_test(test_manageable_notification_ON),
+	    cmocka_unit_test(test_manageable_notification_OFF),
+	    cmocka_unit_test(err_manageable_notification)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
