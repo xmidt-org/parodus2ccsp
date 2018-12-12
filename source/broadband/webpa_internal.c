@@ -965,6 +965,7 @@ static void waitUntilSystemReady()
 			{
 				WalInfo("Checked CR - System is ready, proceed with component caching\n");
 				system("touch /var/tmp/cacheready");
+				processDeviceManageableNotification();
 				break;
 				//Break out, System ready signal already delivered
 			}
@@ -1001,6 +1002,7 @@ static void ccspSystemReadySignalCB(void* user_data)
 	// component caching.
 	system("touch /var/tmp/cacheready");
 	WalInfo("Received system ready signal, created /var/tmp/cacheready file\n");
+	processDeviceManageableNotification();
 }
 
 /**

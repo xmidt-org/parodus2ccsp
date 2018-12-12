@@ -66,6 +66,7 @@
 #define ETH_WAN_STATUS_PARAM "Device.Ethernet.X_RDKCENTRAL-COM_WAN.Enabled"
 #define RDKB_ETHAGENT_COMPONENT_NAME                  "com.cisco.spvtg.ccsp.ethagent"
 #define RDKB_ETHAGENT_DBUS_PATH                       "/com/cisco/spvtg/ccsp/ethagent"
+#define RDKB_MANAGEABLE_NOTIFICATION "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.ManageableNotification.Enable"
 
 /* RDKB Logger defines */
 #define LOG_FATAL       0
@@ -226,3 +227,5 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
 BOOL get_eth_wan_status();
 
 WDMP_STATUS check_ethernet_wan_status();
+
+void processDeviceManageableNotification();
