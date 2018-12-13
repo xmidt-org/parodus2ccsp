@@ -338,28 +338,16 @@ void processDeviceManageableNotification()
 {
     struct timespec cTime;
     char systemReadyTime[32];
-    char *status = NULL;
     int ret = -1;
     memset(systemReadyTime, 0, sizeof(systemReadyTime));
     getCurrentTime(&cTime);
     snprintf(systemReadyTime,sizeof(systemReadyTime),"%d",(int)cTime.tv_sec);
     WalInfo("systemReadyTime is %s\n",systemReadyTime);
 
-    status = getParameterValue(RDKB_MANAGEABLE_NOTIFICATION);
-    if(status != NULL)
+    ret = setParameterValue("Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification", systemReadyTime, WDMP_STRING);
+    if(ret == WDMP_SUCCESS)
     {
-        if(strncmp(status, "true", strlen("true")) == 0)
-        {
-            ret = setParameterValue("Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification", systemReadyTime, WDMP_STRING);
-            if(ret == WDMP_SUCCESS)
-            {
-                WalInfo("Device manageable notification processed\n");
-            }
-        }
-        else
-        {
-            WalInfo("Device manageable notification is OFF\n");
-        }
+        WalInfo("Device manageable notification processed\n");
     }
 }
 /*----------------------------------------------------------------------------*/
