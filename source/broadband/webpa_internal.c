@@ -939,56 +939,66 @@ static void getObjectName(char *str, char *objectName, int objectLevel)
 
 static void waitUntilSystemReady()
 {
-	CcspBaseIf_Register_Event(bus_handle, NULL, "systemReadySignal");
-
-        CcspBaseIf_SetCallback2
-	(
-		bus_handle,
-		"systemReadySignal",
-		ccspSystemReadySignalCB,
-		NULL
-	);
-
-	FILE *file;
-	int wait_time = 0;
-	int total_wait_time = 0;
-
-	// Wait till Call back touches the indicator to proceed further
-	while((file = fopen("/var/tmp/cacheready", "r")) == NULL)
+    if(checkIfSystemReady())
 	{
-		WalInfo("Waiting for system ready signal\n");
-		// After waiting for 24 * 5 = 120s (2mins) send dbus message to CR to query for system ready
-		if(wait_time == 24)
-		{
-			wait_time = 0;
-			if(checkIfSystemReady())
-			{
-				WalInfo("Checked CR - System is ready, proceed with component caching\n");
-				system("touch /var/tmp/cacheready");
-				break;
-				//Break out, System ready signal already delivered
-			}
-			else
-			{
-				WalInfo("Queried CR for system ready after waiting for 2 mins, it is still not ready\n");
-				if(total_wait_time >= 84)
-				{
-					WalInfo("Queried CR for system ready after waiting for 7 mins, it is still not ready. Proceeding ...\n");
-					break;
-				}
-			}
-		}
-		sleep(5);
-		wait_time++;
-		total_wait_time++;
-	};
-	// In case of Web PA restart, we should be having cacheready already touched.
-	// In normal boot up we will reach here only when system ready is received.
-	if(file != NULL)
-	{
-		WalInfo("/var/tmp/cacheready file exists, hence can proceed with component caching\n");
-		fclose(file);
+		WalInfo("Checked CR - System is ready, proceed with component caching\n");
+		system("touch /var/tmp/cacheready");
+		processDeviceManageableNotification();
 	}
+	else
+	{
+	    CcspBaseIf_Register_Event(bus_handle, NULL, "systemReadySignal");
+
+            CcspBaseIf_SetCallback2
+	    (
+		    bus_handle,
+		    "systemReadySignal",
+		    ccspSystemReadySignalCB,
+		    NULL
+	    );
+
+	    FILE *file;
+	    int wait_time = 0;
+	    int total_wait_time = 0;
+
+	    // Wait till Call back touches the indicator to proceed further
+	    while((file = fopen("/var/tmp/cacheready", "r")) == NULL)
+	    {
+		    WalInfo("Waiting for system ready signal\n");
+		    // After waiting for 24 * 5 = 120s (2mins) send dbus message to CR to query for system ready
+		    if(wait_time == 24)
+		    {
+			    wait_time = 0;
+			    if(checkIfSystemReady())
+			    {
+				    WalInfo("Checked CR - System is ready, proceed with component caching\n");
+				    system("touch /var/tmp/cacheready");
+				    processDeviceManageableNotification();
+				    break;
+				    //Break out, System ready signal already delivered
+			    }
+			    else
+			    {
+				    WalInfo("Queried CR for system ready after waiting for 2 mins, it is still not ready\n");
+				    if(total_wait_time >= 84)
+				    {
+					    WalInfo("Queried CR for system ready after waiting for 7 mins, it is still not ready. Proceeding ...\n");
+					    break;
+				    }
+			    }
+		    }
+		    sleep(5);
+		    wait_time++;
+		    total_wait_time++;
+	    };
+	    // In case of Web PA restart, we should be having cacheready already touched.
+	    // In normal boot up we will reach here only when system ready is received.
+	    if(file != NULL)
+	    {
+		    WalInfo("/var/tmp/cacheready file exists, hence can proceed with component caching\n");
+		    fclose(file);
+	    }
+    }
 }
 
 /**
@@ -1001,6 +1011,7 @@ static void ccspSystemReadySignalCB(void* user_data)
 	// component caching.
 	system("touch /var/tmp/cacheready");
 	WalInfo("Received system ready signal, created /var/tmp/cacheready file\n");
+	processDeviceManageableNotification();
 }
 
 /**

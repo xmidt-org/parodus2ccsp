@@ -226,3 +226,5 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
 BOOL get_eth_wan_status();
 
 WDMP_STATUS check_ethernet_wan_status();
+
+void processDeviceManageableNotification();
