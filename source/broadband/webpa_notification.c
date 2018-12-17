@@ -31,6 +31,8 @@
 #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
 #define WEBPA_CFG_FIRMWARE_VER		"oldFirmwareVersion"
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
+#define MESH_PARAM                "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable"
+#define FP_PARAM                  "Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable"
 #define CLOUD_STATUS 				"cloud-status"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
@@ -423,9 +425,40 @@ static void loadCfgFile()
  */
 static void getNotifyParamList(const char ***paramList, int *size)
 {
-	*size = sizeof(notifyparameters)/sizeof(notifyparameters[0]);
+    char *meshEnable = NULL;
+    char *fpEnable = NULL;
+    int removeFlag = 0, count = 0, i = 0;
+    count = sizeof(notifyparameters)/sizeof(notifyparameters[0]);
+    meshEnable = getParameterValue(MESH_PARAM);
+    if(meshEnable != NULL && strncmp(meshEnable, "true", strlen("true")) == 0)
+    {
+        WalInfo("Mesh/plume is enabled\n");
+        removeFlag = 1;
+    }
+    else
+    {
+        fpEnable = getParameterValue(FP_PARAM);
+        if(fpEnable != NULL && strncmp(fpEnable, "true", strlen("true")) == 0)
+        {
+            WalInfo("Device figerprint/cujo is enabled\n");
+            removeFlag = 1;
+        }
+        WAL_FREE(fpEnable);
+    }
+
+    if(removeFlag == 1)
+    {
+        WalInfo("Removing %s from notification list\n", notifyparameters[0]);
+        for(i = 1; i<count; i++, i++)
+        {
+            notifyparameters[i-1] = notifyparameters[i];
+        }
+        count = count-1;
+    }
+    *size = count;
 	WalPrint("Notify param list size :%d\n", *size);
 	*paramList = notifyparameters;
+	WAL_FREE(meshEnable);
 }
 
 /**
