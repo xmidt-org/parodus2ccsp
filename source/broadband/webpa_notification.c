@@ -31,7 +31,6 @@
 #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
 #define WEBPA_CFG_FIRMWARE_VER		"oldFirmwareVersion"
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
-#define MESH_PARAM                "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable"
 #define FP_PARAM                  "Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable"
 #define CLOUD_STATUS 				"cloud-status"
 /*----------------------------------------------------------------------------*/
@@ -425,18 +424,27 @@ static void loadCfgFile()
  */
 static void getNotifyParamList(const char ***paramList, int *size)
 {
-    char *meshEnable = NULL;
-    char *fpEnable = NULL;
     int removeFlag = 0, count = 0, i = 0;
     count = sizeof(notifyparameters)/sizeof(notifyparameters[0]);
-    meshEnable = getParameterValue(MESH_PARAM);
-    if(meshEnable != NULL && strncmp(meshEnable, "true", strlen("true")) == 0)
+#ifdef RDKB_BUILD
+    char meshEnable[64];
+    memset(meshEnable, 0, sizeof(meshEnable));
+    if(0 == syscfg_init())
+    {
+        syscfg_get( NULL, "mesh_enable", meshEnable, sizeof(meshEnable));
+    }
+    else
+    {
+        WalError("syscfg_init failed\n");
+    }
+    if(meshEnable[0] != '\0' && strncmp(meshEnable, "true", strlen("true")) == 0)
     {
         WalInfo("Mesh/plume is enabled\n");
         removeFlag = 1;
     }
     else
     {
+        char *fpEnable = NULL;
         fpEnable = getParameterValue(FP_PARAM);
         if(fpEnable != NULL && strncmp(fpEnable, "true", strlen("true")) == 0)
         {
@@ -445,11 +453,11 @@ static void getNotifyParamList(const char ***paramList, int *size)
         }
         WAL_FREE(fpEnable);
     }
-
+#endif
     if(removeFlag == 1)
     {
         WalInfo("Removing %s from notification list\n", notifyparameters[0]);
-        for(i = 1; i<count; i++, i++)
+        for(i = 1; i<count; i++)
         {
             notifyparameters[i-1] = notifyparameters[i];
         }
@@ -458,7 +466,6 @@ static void getNotifyParamList(const char ***paramList, int *size)
     *size = count;
 	WalPrint("Notify param list size :%d\n", *size);
 	*paramList = notifyparameters;
-	WAL_FREE(meshEnable);
 }
 
 /**
