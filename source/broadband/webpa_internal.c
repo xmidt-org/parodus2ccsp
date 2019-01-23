@@ -68,7 +68,6 @@ char *objectList[] ={
 "Device.IoT.",
 "Device.NotifyComponent.",
 "Device.LogAgent.",
-"Device.TR069Notify.",
 "Device.X_RDKCENTRAL-COM_Webpa.",
 "Device.Webpa."
 };
