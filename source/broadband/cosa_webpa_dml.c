@@ -366,6 +366,7 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
                     case 2:
                     {
                         WalError("%s parameter GET is not supported through webpa\n",parameterNames[i]);
+                        OnboardLog("%s parameter GET is not supported through webpa\n",parameterNames[i]);
                         *val = NULL;
                         *val_size = 0;
                         for(k=k-1;k>=0;k--)
@@ -385,6 +386,7 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
         if(matchFound == 0)
         {
             WalError("%s is invalid parameter\n",parameterNames[i]);
+            OnboardLog("%s is invalid parameter\n",parameterNames[i]);
             *val = NULL;
             *val_size = 0;
             for(k=k-1;k>=0;k--)
@@ -464,6 +466,7 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
             else
             {
                 WalError("%s parameter SET is not supported through webpa\n",val[i].parameterName);
+                OnboardLog("%s parameter SET is not supported through webpa\n",val[i].parameterName);
                 *faultParam = strdup(val[i].parameterName);
                 return CCSP_ERR_METHOD_NOT_SUPPORTED;
             }
@@ -471,6 +474,7 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
         else
         {
             WalError("%s is not writable\n",val[i].parameterName);
+            OnboardLog("%s is not writable\n",val[i].parameterName);
             *faultParam = strdup(val[i].parameterName);
             return CCSP_ERR_NOT_WRITABLE;
         }

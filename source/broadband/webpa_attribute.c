@@ -75,6 +75,7 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
 			{
 				ret = CCSP_ERR_WIFI_BUSY;
 				WalError("Wifi busy\n");
+				OnboardLog("Wifi busy\n");
 				break;
 			}
 		  	// GET atomic value call
@@ -83,6 +84,7 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
 		  	if(ret != CCSP_SUCCESS)
 		  	{
 				WalError("Get attributes call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",cnt1,ParamGroup[cnt1].comp_name,ret);
+				OnboardLog("Get attributes call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",cnt1,ParamGroup[cnt1].comp_name,ret);
 				break;
 		  	}
 			index = index + ParamGroup[cnt1].parameterCount;
@@ -140,12 +142,14 @@ static int getParamAttributes(char *parameterNames[], int paramCount, char *Comp
 		 	if(strstr(parameterNamesLocal[cnt], PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret); 
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret); 
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
 		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
 		 	}
 			error = 1;
 			break;
@@ -162,6 +166,7 @@ static int getParamAttributes(char *parameterNames[], int paramCount, char *Comp
 		if (ret != CCSP_SUCCESS)
 		{
 			WalError("Error:Failed to GetAttributes for parameters ret: %d\n", ret);
+			OnboardLog("Error:Failed to GetAttributes for parameters ret: %d\n", ret);
 		}
 		else
 		{
@@ -222,6 +227,7 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 	if(error == 1)
 	{
 		WalError("Component name is not supported ret : %d\n", ret);
+		OnboardLog("Component name is not supported ret : %d\n", ret);
 		WAL_FREE(attriStruct);
 		return ret;
 	}
@@ -233,6 +239,7 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
         {
             ret = CCSP_ERR_WIFI_BUSY;
             WalError("WiFi component is busy\n");
+            OnboardLog("WiFi component is busy\n");
             free_componentDetails(compName, dbusPath, count);
             WAL_FREE(attriStruct);
             return ret;
@@ -248,6 +255,7 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 		if(error == 1)
 		{
 			WalError("Component name is not supported ret : %d\n", ret);
+			OnboardLog("Component name is not supported ret : %d\n", ret);
                         free_componentDetails(compName, dbusPath, count);
 			WAL_FREE(attriStruct);
 			return ret;
@@ -260,6 +268,7 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 		if (strcmp(compName[0], tempCompName[0]) != 0)
 		{
 			WalError("Error: Parameters does not belong to the same component\n");
+			OnboardLog("Error: Parameters does not belong to the same component\n");
                         free_componentDetails(compName, dbusPath, count);
                         free_componentDetails(tempCompName,tempDbusPath,count1);
 			WAL_FREE(attriStruct);
@@ -271,12 +280,14 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 			if(strstr(paramName, PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret); 
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
 		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
 		 	}
                         free_componentDetails(compName, dbusPath, count);
                         free_componentDetails(tempCompName,tempDbusPath,count1);
@@ -316,6 +327,7 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 		if (CCSP_SUCCESS != ret)
 		{
 			WalError("Failed to set attributes for SetParamAttr ret : %d \n", ret);
+			OnboardLog("Failed to set attributes for SetParamAttr ret : %d \n", ret);
 		}
 		for (cnt = 0; cnt < paramCount; cnt++) 
 		{

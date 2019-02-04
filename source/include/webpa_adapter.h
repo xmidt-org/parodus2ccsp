@@ -33,6 +33,8 @@ extern int numLoops;
 #define WalInfo(...)                    cimplog_info(LOGGING_MODULE, __VA_ARGS__)
 #define WalPrint(...)                   cimplog_debug(LOGGING_MODULE, __VA_ARGS__)
 
+#define OnboardLog(...)                 onboarding_log(LOGGING_MODULE, __VA_ARGS__)
+
 /**
  * @brief Set operations supported by WebPA.
  */

@@ -104,6 +104,7 @@ static void sig_handler(int sig)
 	else 
 	{
 		WalInfo("Signal %d received!\n", sig);
+		OnboardLog("Signal %d received!\n", sig);
 		exit(0);
 	}
 	
