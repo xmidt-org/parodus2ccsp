@@ -357,8 +357,16 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 }
                                 else
                                 {
+					if( dbCMC!= NULL)
+					  {
                                         strcpy(resObj->u.paramRes->syncCMC, dbCMC);
                                         strcpy(resObj->u.paramRes->syncCID, dbCID);
+				 	  }
+					else
+					  {
+						WalError("Failed to Copy CMC, CID value\n");
+					  }
+				
                                 }
                                 
                                 WalPrint("Response:> CMC = %s\n",resObj->u.paramRes->syncCMC);
