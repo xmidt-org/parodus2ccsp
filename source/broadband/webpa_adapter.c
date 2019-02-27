@@ -284,6 +284,8 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 resObj->u.paramRes->params = NULL;
                                 
                                 WalInfo("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
+				if(dbCMC != NULL && dbCID != NULL)
+				{
                                 // Get CMC from device database
 	                        dbCMC = getParameterValue(PARAM_CMC);
 	                        WalInfo("dbCMC : %s\n",dbCMC);
@@ -292,6 +294,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
 	                        WalInfo("dbCID : %s\n",dbCID);
                                 snprintf(newCMC, sizeof(newCMC),"%d", CHANGED_BY_XPC);
                                 WalInfo("newCMC : %s\n",newCMC);
+				}
                                 
                                 for (i = 0; i < paramCount; i++) 
                                 {
@@ -357,7 +360,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 }
                                 else
                                 {
-					if( dbCMC!= NULL)
+					if( dbCMC!= NULL && dbCID!= NULL)
 					  {
                                         strcpy(resObj->u.paramRes->syncCMC, dbCMC);
                                         strcpy(resObj->u.paramRes->syncCID, dbCID);
