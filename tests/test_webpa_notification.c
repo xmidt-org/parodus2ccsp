@@ -81,6 +81,12 @@ int pthread_cond_timedwait(pthread_cond_t *cloud_con, pthread_mutex_t *cloud_mut
     return (int) mock();
 }
 
+FILE* fopen(const char* pathname, const char* mode)
+{
+    UNUSED(pathname); UNUSED(mode);
+    function_called();
+    return (FILE*) mock();
+}
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
 {
     UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
@@ -233,6 +239,8 @@ void test_firmware_upgrade_notification()
 
     will_return(get_global_values, cmcList);
     will_return(get_global_parameters_count, 1);
+    will_return(fopen, NULL);
+    expect_function_call(fopen);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
@@ -564,6 +572,15 @@ void test_FR_notify_cloud_status_empty_mac()
 	FactoryResetCloudSync();
 }
 
+void err_loadCfgFile()
+{
+    will_return(fopen, NULL);
+    expect_function_call(fopen);
+    will_return(fopen, NULL);
+    expect_function_call(fopen);
+    loadCfgFile();
+}
+
 void test_manageable_notification()
 {
     parameterValStruct_t **notification = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
@@ -600,6 +617,7 @@ void err_manageable_notification()
 
     processDeviceManageableNotification();
 }
+
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -611,6 +629,7 @@ int main(void)
         cmocka_unit_test(test_factory_reset_notification),
 	    cmocka_unit_test(test_FR_cloud_sync_notification),
         cmocka_unit_test(test_firmware_upgrade_notification),
+	cmocka_unit_test(err_loadCfgFile),
         cmocka_unit_test(test_transaction_status_notification),
         cmocka_unit_test(test_FR_cloud_sync_notification_retry),
 	    cmocka_unit_test(test_FR_notify_cloud_status_retry),
