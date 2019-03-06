@@ -103,7 +103,7 @@ const char * notifyparameters[]={
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
-static void loadCfgFile();
+void loadCfgFile();
 static void getDeviceMac();
 static int writeToJson(char *data);
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
@@ -358,7 +358,7 @@ void processDeviceManageableNotification()
 /*
  * @brief loadCfgFile To load the config file.
  */
-static void loadCfgFile()
+void loadCfgFile()
 {
 	FILE *fp;
 	cJSON *webpa_cfg = NULL;
@@ -409,7 +409,12 @@ static void loadCfgFile()
 		}
 		else
 		{
-			WalError("Error parsing WebPA config file\n");
+			WalError("Error parsing WebPA config file. Replace it with empty json\n");
+			/* replace corrupted config file with empty json of content {}. This file will get added/updated from addOrUpdateFirmwareVerToConfigFile to send firmware upgrade notification */
+
+			fp = fopen(WEBPA_CFG_FILE, "w");
+			fprintf(fp, "{}");
+			fclose(fp);
 		}
 	}
 	free(cfg_file_content);
