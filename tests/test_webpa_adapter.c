@@ -146,6 +146,10 @@ void test_processRequest_singleGet()
     assert_int_equal(WDMP_BOOLEAN, cJSON_GetObjectItem(resParamObj, "dataType")->valueint);
     assert_string_equal("Success",cJSON_GetObjectItem(resParamObj, "message")->valuestring );
     assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
+    if(resPayload !=NULL)
+    {
+	free(resPayload);
+    }
     cJSON_Delete(response);
 }
 
@@ -198,6 +202,10 @@ void test_processRequest_WildcardsGet()
     assert_int_equal(WDMP_NONE, cJSON_GetObjectItem(resParamObj, "dataType")->valueint);
     assert_string_equal("Success",cJSON_GetObjectItem(resParamObj, "message")->valuestring );
     assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
+    if(resPayload !=NULL)
+    {
+	free(resPayload);
+    }
     cJSON_Delete(response);
 }
 

@@ -155,15 +155,18 @@ static void parodus_receive()
                                 res_wrp_msg->u.req.payload_size = strlen(res_wrp_msg->u.req.payload);
                         }
                         res_wrp_msg->msg_type = wrp_msg->msg_type;
-						if(wrp_msg->u.req.dest != NULL){
-                        	res_wrp_msg->u.req.source = wrp_msg->u.req.dest;
-						}	
-						if(wrp_msg->u.req.source != NULL){
-                        	res_wrp_msg->u.req.dest = wrp_msg->u.req.source;
-						}
-						if(wrp_msg->u.req.transaction_uuid != NULL){
-	                        res_wrp_msg->u.req.transaction_uuid = wrp_msg->u.req.transaction_uuid;
-						}
+			if(wrp_msg->u.req.dest != NULL)
+			{
+				res_wrp_msg->u.req.source = strdup(wrp_msg->u.req.dest);
+			}
+			if(wrp_msg->u.req.source != NULL)
+			{
+				res_wrp_msg->u.req.dest = strdup(wrp_msg->u.req.source);
+			}
+			if(wrp_msg->u.req.transaction_uuid != NULL)
+			{
+				res_wrp_msg->u.req.transaction_uuid = strdup(wrp_msg->u.req.transaction_uuid);
+			}
                         contentType = strdup(CONTENT_TYPE_JSON);
                         if(contentType != NULL)
                         {
@@ -183,6 +186,7 @@ static void parodus_receive()
                         WalInfo("Elapsed time : %ld ms\n", timeValDiff(startPtr, endPtr));
                         wrp_free_struct (res_wrp_msg);
                     }
+		    wrp_free_struct (wrp_msg);
             }
 
             //handle cloud-status retrieve response received from parodus
@@ -203,8 +207,8 @@ static void parodus_receive()
 						WalPrint("set cloud-status value as %s\n", status);
 					}
 				}
+				wrp_free_struct (wrp_msg);
             }
-            free(wrp_msg);
         }
 }
 
