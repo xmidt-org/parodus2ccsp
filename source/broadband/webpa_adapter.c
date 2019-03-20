@@ -286,9 +286,11 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 WalInfo("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
                                 // Get CMC from device database
 	                        dbCMC = getParameterValue(PARAM_CMC);
+				if(dbCMC !=NULL)
 	                        WalInfo("dbCMC : %s\n",dbCMC);
 	                        // Get CID from device database
 	                        dbCID = getParameterValue(PARAM_CID);
+				if(dbCID !=NULL)
 	                        WalInfo("dbCID : %s\n",dbCID);
                                 snprintf(newCMC, sizeof(newCMC),"%d", CHANGED_BY_XPC);
                                 WalInfo("newCMC : %s\n",newCMC);
@@ -357,8 +359,15 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 }
                                 else
                                 {
+				    if( dbCMC!= NULL && dbCID!= NULL)
+					{
                                         strcpy(resObj->u.paramRes->syncCMC, dbCMC);
                                         strcpy(resObj->u.paramRes->syncCID, dbCID);
+					}
+				    else
+					{
+						WalError("Failed to Copy CMC, CID value\n");
+					}
                                 }
                                 
                                 WalPrint("Response:> CMC = %s\n",resObj->u.paramRes->syncCMC);
@@ -497,11 +506,18 @@ static WDMP_STATUS validate_cmc_and_cid(test_set_req_t *testSetReq, char *dbCMC,
 	WalPrint("------------ validate_cmc_and_cid ----------\n");
         if(testSetReq->syncCmc != NULL)
         {
+	  if(dbCMC != NULL)
+		{
                 if(strcmp(testSetReq->syncCmc, dbCMC) != 0) // Error WEBPA_STATUS CMC_TEST_FAILED
                 {
                         WalError("CMC check failed in Test And Set request as CMC (%s) did not match device CMC (%s) \n",testSetReq->syncCmc,dbCMC);
                         return WDMP_ERR_CMC_TEST_FAILED;
                 }
+		}
+		else
+		{
+			WalError("Failed to compare CMC\n");
+		}
         }
         
         if (testSetReq->newCid == NULL)
