@@ -98,7 +98,15 @@ const char * notifyparameters[]={
 "Device.NAT.X_CISCO_COM_DMZ.Enable",
 "Device.NAT.X_CISCO_COM_DMZ.InternalIP",
 "Device.NAT.X_CISCO_COM_DMZ.IPv6Host",
-"Device.NAT.X_Comcast_com_EnablePortMapping"
+"Device.NAT.X_Comcast_com_EnablePortMapping",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
+"Device.MoCA.Interface.1.Enable",
+/* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
+"Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"
 };
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
