@@ -286,10 +286,10 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 WalInfo("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
                                 // Get CMC from device database
 	                        dbCMC = getParameterValue(PARAM_CMC);
-	                        WalInfo("dbCMC : %s\n",dbCMC);
+				WalInfo("dbCMC : %s\n",(NULL != dbCMC) ? dbCMC: "NULL" );
 	                        // Get CID from device database
 	                        dbCID = getParameterValue(PARAM_CID);
-	                        WalInfo("dbCID : %s\n",dbCID);
+				WalInfo("dbCID : %s\n",(NULL != dbCID) ? dbCID : "NULL" );
                                 snprintf(newCMC, sizeof(newCMC),"%d", CHANGED_BY_XPC);
                                 WalInfo("newCMC : %s\n",newCMC);
                                 
@@ -357,9 +357,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 }
                                 else
                                 {
-                                        strcpy(resObj->u.paramRes->syncCMC, dbCMC);
-                                        strcpy(resObj->u.paramRes->syncCID, dbCID);
-                                }
+				    strcpy(resObj->u.paramRes->syncCMC, (NULL != dbCMC) ? dbCMC: "NULL");
+                                    strcpy(resObj->u.paramRes->syncCID, (NULL != dbCID) ? dbCID: "NULL");    
+				}
                                 
                                 WalPrint("Response:> CMC = %s\n",resObj->u.paramRes->syncCMC);
                                 WalPrint("Response:> CID = %s\n",resObj->u.paramRes->syncCID);
@@ -495,6 +495,13 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
 static WDMP_STATUS validate_cmc_and_cid(test_set_req_t *testSetReq, char *dbCMC, char *dbCID)
 {
 	WalPrint("------------ validate_cmc_and_cid ----------\n");
+	
+	if((NULL == dbCMC) || (NULL == dbCID))
+	{
+		WalError("dbCMC OR dbCID is NULL");
+		return WDMP_FAILURE;
+	}
+	
         if(testSetReq->syncCmc != NULL)
         {
                 if(strcmp(testSetReq->syncCmc, dbCMC) != 0) // Error WEBPA_STATUS CMC_TEST_FAILED
@@ -532,6 +539,13 @@ static WDMP_STATUS set_cmc_and_cid(char *dbCMC, char *cid, int isNew)
 {
         char newCMC[32]={'\0'};
         WalPrint("------------ set_cmc_and_cid ----------\n");
+	
+	if((NULL == dbCMC) || (NULL == cid))
+	{
+		WalError("dbCMC OR CID is NULL");
+		return WDMP_FAILURE;
+	}
+	
         WDMP_STATUS setCmcStatus = WDMP_SUCCESS, setCidStatus = WDMP_SUCCESS;
         snprintf(newCMC, sizeof(newCMC),"%d", CHANGED_BY_XPC);
         WalPrint("newCMC : %s\n",newCMC);
