@@ -618,6 +618,56 @@ void err_manageable_notification()
     processDeviceManageableNotification();
 }
 
+void test_factory_reset_notification_with_cmc_512()
+{
+    getCompDetails();
+    strcpy(deviceMAC, "14cfe2142112");
+
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("abcd",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+
+    parameterValStruct_t **rebootReasonList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    rebootReasonList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    rebootReasonList[0]->parameterName = strndup(PARAM_REBOOT_REASON,MAX_PARAMETER_LEN);
+    rebootReasonList[0]->parameterValue = strndup("factory-reset",MAX_PARAMETER_LEN);
+    rebootReasonList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList1 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList1[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList1[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList1[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList1[0]->type = ccsp_int;
+
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, rebootReasonList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList1);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    sendNotificationForFactoryReset();
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -635,7 +685,8 @@ int main(void)
 	    cmocka_unit_test(test_FR_notify_cloud_status_retry),
 	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
 	    cmocka_unit_test(test_manageable_notification),
-	    cmocka_unit_test(err_manageable_notification)
+	    cmocka_unit_test(err_manageable_notification),
+	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
