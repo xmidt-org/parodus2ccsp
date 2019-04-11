@@ -1205,7 +1205,7 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 		if (strCMC != NULL)
 		{
 			oldCMC = atoi(strCMC);
-			if(oldCMC != 512)
+			if(oldCMC != CHANGED_BY_XPC)
 			{
 				newCMC = oldCMC | CHANGED_BY_FACTORY_DEFAULT;
 				WalInfo("oldCMC is %d and newCMC value is %d\n", oldCMC,newCMC);
@@ -1243,7 +1243,7 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 			}
 			else
 			{
-				WalInfo("CMC is 512, hence ignoring the Factory reset notification\n");
+				WalInfo("CMC is %d, hence ignoring the Factory reset notification\n",CHANGED_BY_XPC);
 				WAL_FREE(strCMC);
 			}
 		}
