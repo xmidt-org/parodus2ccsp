@@ -447,13 +447,13 @@ static void getNotifyParamList(const char ***paramList, int *size)
         WalInfo("Device fingerprint/cujo is enabled\n");
         removeFlag = 1;
     }
-    else if(fpEnable != NULL && strncmp(fpEnable, "false", strlen("false")) == 0)
-    {
-        WalInfo("Device fingerprint/cujo is disabled\n");
-        fpRemoveFlag = 1;
-    }
     else
     {
+	    if(fpEnable != NULL && strncmp(fpEnable, "false", strlen("false")) == 0)
+    	    {
+        	WalInfo("Device fingerprint/cujo is disabled\n");
+        	fpRemoveFlag = 1;
+    	    }
 	    char meshEnable[64];
 	    memset(meshEnable, 0, sizeof(meshEnable));
 	    if(0 == syscfg_init())
