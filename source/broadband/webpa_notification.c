@@ -98,7 +98,15 @@ const char * notifyparameters[]={
 "Device.NAT.X_CISCO_COM_DMZ.Enable",
 "Device.NAT.X_CISCO_COM_DMZ.InternalIP",
 "Device.NAT.X_CISCO_COM_DMZ.IPv6Host",
-"Device.NAT.X_Comcast_com_EnablePortMapping"
+"Device.NAT.X_Comcast_com_EnablePortMapping",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
+"Device.MoCA.Interface.1.Enable",
+/* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
+"Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"
 };
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
@@ -429,36 +437,41 @@ void loadCfgFile()
  */
 static void getNotifyParamList(const char ***paramList, int *size)
 {
-    int removeFlag = 0, count = 0, i = 0;
+    int removeFlag = 0, count = 0, i = 0, fpRemoveFlag = 0;
     count = sizeof(notifyparameters)/sizeof(notifyparameters[0]);
 #ifdef RDKB_BUILD
-    char meshEnable[64];
-    memset(meshEnable, 0, sizeof(meshEnable));
-    if(0 == syscfg_init())
+    char *fpEnable = NULL;
+    fpEnable = getParameterValue(FP_PARAM);
+    if(fpEnable != NULL && strncmp(fpEnable, "true", strlen("true")) == 0)
     {
-        syscfg_get( NULL, "mesh_enable", meshEnable, sizeof(meshEnable));
-    }
-    else
-    {
-        WalError("syscfg_init failed\n");
-    }
-    if(meshEnable[0] != '\0' && strncmp(meshEnable, "true", strlen("true")) == 0)
-    {
-        WalInfo("Mesh/plume is enabled\n");
+        WalInfo("Device fingerprint/cujo is enabled\n");
         removeFlag = 1;
     }
     else
     {
-        char *fpEnable = NULL;
-        fpEnable = getParameterValue(FP_PARAM);
-        if(fpEnable != NULL && strncmp(fpEnable, "true", strlen("true")) == 0)
-        {
-            WalInfo("Device figerprint/cujo is enabled\n");
-            removeFlag = 1;
-        }
-        WAL_FREE(fpEnable);
+	    if(fpEnable != NULL && strncmp(fpEnable, "false", strlen("false")) == 0)
+    	    {
+        	WalInfo("Device fingerprint/cujo is disabled\n");
+        	fpRemoveFlag = 1;
+    	    }
+	    char meshEnable[64];
+	    memset(meshEnable, 0, sizeof(meshEnable));
+	    if(0 == syscfg_init())
+	    {
+		    syscfg_get( NULL, "mesh_enable", meshEnable, sizeof(meshEnable));
+	    }
+	    else
+	    {
+		    WalError("syscfg_init failed\n");
+	    }
+	    if(meshEnable[0] != '\0' && strncmp(meshEnable, "true", strlen("true")) == 0)
+	    {
+		    WalInfo("Mesh/plume is enabled\n");
+		    removeFlag = 1;
+	    }
     }
-#endif
+    WAL_FREE(fpEnable);
+
     if(removeFlag == 1)
     {
         WalInfo("Removing %s from notification list\n", notifyparameters[0]);
@@ -468,6 +481,14 @@ static void getNotifyParamList(const char ***paramList, int *size)
         }
         count = count-1;
     }
+
+    // Remove Advanced Security params from NotifyList when cujo/fp is not enabled.
+    if(fpRemoveFlag == 1)
+    {
+            WalInfo("Fingerprint/cujo is disabled. Removing Advanced Security parameters from notification list\n");
+            count = count-2;
+    }
+#endif
     *size = count;
 	WalPrint("Notify param list size :%d\n", *size);
 	*paramList = notifyparameters;
