@@ -1205,38 +1205,46 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 		if (strCMC != NULL)
 		{
 			oldCMC = atoi(strCMC);
-			newCMC = oldCMC | CHANGED_BY_FACTORY_DEFAULT;
-			WalInfo("oldCMC is %d and newCMC value is %d\n", oldCMC,newCMC);
-			WAL_FREE(strCMC);
-			if (newCMC != oldCMC)
+			if(oldCMC != CHANGED_BY_XPC)
 			{
-				WalPrint("NewCMC and OldCMC are not equal.\n");
-				// set CMC to the new value
-				snprintf(strnewCMC, sizeof(strnewCMC), "%d", newCMC);
-				status = setParameterValue(PARAM_CMC,strnewCMC, WDMP_UINT);
-				if(status == WDMP_SUCCESS)
+				newCMC = oldCMC | CHANGED_BY_FACTORY_DEFAULT;
+				WalInfo("oldCMC is %d and newCMC value is %d\n", oldCMC,newCMC);
+				WAL_FREE(strCMC);
+				if (newCMC != oldCMC)
 				{
-					WalInfo("Successfully Set CMC to %d\n", newCMC);
-					(*cid) = dbCID;
-					(*cmc) = newCMC;
-					(*reason) = reboot_reason;
-					WalPrint("Returning success status from processFactoryResetNotification..\n");
-					return WDMP_SUCCESS;
+					WalPrint("NewCMC and OldCMC are not equal.\n");
+					// set CMC to the new value
+					snprintf(strnewCMC, sizeof(strnewCMC), "%d", newCMC);
+					status = setParameterValue(PARAM_CMC,strnewCMC, WDMP_UINT);
+					if(status == WDMP_SUCCESS)
+					{
+						WalInfo("Successfully Set CMC to %d\n", newCMC);
+						(*cid) = dbCID;
+						(*cmc) = newCMC;
+						(*reason) = reboot_reason;
+						WalPrint("Returning success status from processFactoryResetNotification..\n");
+						return WDMP_SUCCESS;
 			
+					}
+					else
+					{
+						WalError("Error setting CMC value for factory reset\n");
+					}
 				}
 				else
 				{
-					WalError("Error setting CMC value for factory reset\n");
+					// Returning success status as CMC need not be SET since no change in CMC value (oldCMC == newCMC)
+					// But notification for factory reset needs to be sent
+					(*cid) = dbCID;
+					(*cmc) = newCMC;
+					(*reason) = reboot_reason;
+					return WDMP_SUCCESS;
 				}
 			}
 			else
 			{
-				// Returning success status as CMC need not be SET since no change in CMC value (oldCMC == newCMC)
-				// But notification for factory reset needs to be sent
-				(*cid) = dbCID;
-				(*cmc) = newCMC;
-				(*reason) = reboot_reason;
-				return WDMP_SUCCESS;
+				WalInfo("CMC is %d, hence ignoring the Factory reset notification\n",CHANGED_BY_XPC);
+				WAL_FREE(strCMC);
 			}
 		}
 		else
