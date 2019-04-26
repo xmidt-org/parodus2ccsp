@@ -506,7 +506,7 @@ static void setInitialNotify()
 	int notifyListSize = 0;
 
 	int backoffRetryTime = 0;
-	int backoff_max_time = 5;
+	int backoff_max_time = 7;
         int max_retry_sleep;
 	//Retry Backoff count will start at c=2 & calculate 2^c - 1.
 	int c = 2;
