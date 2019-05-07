@@ -7,54 +7,8 @@
  */
 #include "webpa_adapter.h"
 #include "cosa_webpa_internal.h"
-
-/* Global Pointer for WEBPA backend manager */
-PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
-
-/**********************************************************************
-
-    caller:     owner of the object
-
-    prototype:
-
-        VOID
-        CosaWebpaBEManagerCreate
-            (
-            		VOID
-            );
-
-    description:
-
-        This function constructs cosa webpa object and return handle.
-
-    argument:  
-
-    return:     nothing.
-
-**********************************************************************/
-
-VOID
-CosaWebpaBEManagerCreate
-    (
-        VOID
-    )
-{
-
-	/*
-	  * Need to create memory for WEBPA BACKEND manager pointer
-	  */
-	g_pCosaBEManager = (PCOSA_BACKEND_MANAGER_OBJECT)malloc(sizeof(COSA_BACKEND_MANAGER_OBJECT));
-	
-	if ( !g_pCosaBEManager )
-	{
-	   return;
-	}
-
-  /*
-     * Initialize the common variables and functions for a container object.
-     */
-	g_pCosaBEManager->hWebpa = CosaWebpaCreate( );
-}
+#include "plugin_main_apis.h"
+#include "plugin_main.h"
 
 /**********************************************************************
 

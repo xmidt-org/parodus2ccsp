@@ -30,27 +30,8 @@ _COSA_DATAMODEL_WEBPA
 COSA_DATAMODEL_WEBPA,  *PCOSA_DATAMODEL_WEBPA;
 
 /*
- * This is the cosa datamodel backend manager which is used to manager all backend object
- */
-#define  COSA_BACKEND_MANAGER_CLASS_CONTENT                                                 \
-    /* start of webpa object class content */      	                                           \
-    ANSC_HANDLE                  	hWebpa;                                                 \
-
-typedef  struct
-_COSA_BACKEND_MANAGER_OBJECT
-{
-    COSA_BACKEND_MANAGER_CLASS_CONTENT
-}
-COSA_BACKEND_MANAGER_OBJECT,  *PCOSA_BACKEND_MANAGER_OBJECT;
-
-/*
     Standard function declaration 
 */
-VOID
-CosaWebpaBEManagerCreate
-	(
-		VOID
-	);
 
 ANSC_HANDLE
 CosaWebpaCreate

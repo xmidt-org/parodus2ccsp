@@ -30,8 +30,10 @@
 #include "cosa_plugin_api.h"
 #include "plugin_main.h"
 #include "cosa_webpa_dml.h"
+#include "plugin_main_apis.h"
 
 #define THIS_PLUGIN_VERSION                         1
+PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
 int ANSC_EXPORT_API
 COSA_Init
@@ -54,6 +56,17 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_GetParamStringValue", Webpa_GetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_GetParamUlongValue",  Webpa_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_SetParamUlongValue",  Webpa_SetParamUlongValue);
+
+    /* Create backend framework */
+    g_pCosaBEManager = (PCOSA_BACKEND_MANAGER_OBJECT)CosaBackEndManagerCreate();
+
+    if ( g_pCosaBEManager && g_pCosaBEManager->Initialize )
+    {
+        g_pCosaBEManager->hCosaPluginInfo = pPlugInfo;
+
+        g_pCosaBEManager->Initialize   ((ANSC_HANDLE)g_pCosaBEManager);
+    }
+
     return  0;
 }
 
@@ -63,7 +76,6 @@ COSA_IsObjectSupported
         char*                        pObjName
     )
 {
-    
     return TRUE;
 }
 
@@ -73,5 +85,19 @@ COSA_Unload
         void
     )
 {
+    ANSC_STATUS                     returnStatus            = ANSC_STATUS_SUCCESS;
+
     /* unload the memory here */
+
+    returnStatus  =  CosaBackEndManagerRemove(g_pCosaBEManager);
+
+    if ( returnStatus == ANSC_STATUS_SUCCESS )
+    {
+        g_pCosaBEManager = NULL;
+    }
+    else
+    {
+        /* print error trace*/
+        g_pCosaBEManager = NULL;
+    }
 }

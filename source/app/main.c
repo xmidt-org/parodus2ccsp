@@ -46,8 +46,8 @@ int main()
 #endif
 	const char *pComponentName = WEBPA_COMPONENT_NAME;
 	WalInfo("********** Starting component: %s **********\n ", pComponentName); 
-	/* Backend Manager for Webpa Creation and Initilization */
-        CosaWebpaBEManagerCreate( );
+	/* Backend Manager for Webpa Creation and Initilization 
+    CosaWebpaBEManagerCreate( );*/
 	msgBusInit(pComponentName);
 	ret = waitForOperationalReadyCondition();
 	libpd_client_mgr();
