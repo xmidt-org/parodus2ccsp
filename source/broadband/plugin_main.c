@@ -30,7 +30,11 @@
 #include "cosa_plugin_api.h"
 #include "plugin_main.h"
 #include "cosa_webpa_dml.h"
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#include "cosa_webconfig_dml.h"
+#endif
 #include "plugin_main_apis.h"
+#include "webpa_adapter.h"
 
 #define THIS_PLUGIN_VERSION                         1
 PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
@@ -42,6 +46,7 @@ COSA_Init
         void*                       hCosaPlugInfo         /* PCOSA_PLUGIN_INFO passed in by the caller */
     )
 {
+	WalInfo("------------------- %s ---------------\n",__FUNCTION__);
     PCOSA_PLUGIN_INFO               pPlugInfo  = (PCOSA_PLUGIN_INFO)hCosaPlugInfo;
 
     if ( uMaxVersionSupported < THIS_PLUGIN_VERSION )
@@ -57,6 +62,25 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_GetParamUlongValue",  Webpa_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_SetParamUlongValue",  Webpa_SetParamUlongValue);
 
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamBoolValue",  X_RDK_WebConfig_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamBoolValue",  X_RDK_WebConfig_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamUlongValue",  X_RDK_WebConfig_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamIntValue",  X_RDK_WebConfig_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamIntValue",  X_RDK_WebConfig_SetParamIntValue);
+
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntryCount", ConfigFile_GetEntryCount);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntry",ConfigFile_GetEntry);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_AddEntry", ConfigFile_AddEntry);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_DelEntry", ConfigFile_DelEntry);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_IsUpdated", ConfigFile_IsUpdated);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Synchronize" , ConfigFile_Synchronize);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetParamBoolValue", ConfigFile_GetParamBoolValue);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetParamStringValue", ConfigFile_GetParamStringValue);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_SetParamStringValue", ConfigFile_SetParamStringValue);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Commit", ConfigFile_Commit);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Validate", ConfigFile_Validate);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Rollback", ConfigFile_Rollback);
+
     /* Create backend framework */
     g_pCosaBEManager = (PCOSA_BACKEND_MANAGER_OBJECT)CosaBackEndManagerCreate();
 
@@ -67,6 +91,7 @@ COSA_Init
         g_pCosaBEManager->Initialize   ((ANSC_HANDLE)g_pCosaBEManager);
     }
 
+	WalInfo("------------------- %s ---------------\n",__FUNCTION__);
     return  0;
 }
 

@@ -40,6 +40,7 @@ static void daemonize(void);
  */
 int  cmd_dispatch(int  command)
 {
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     switch ( command )
     {
         case    'e' :
@@ -94,7 +95,7 @@ int  cmd_dispatch(int  command)
         default:
             break;
     }
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     return 0;
 }
 
@@ -110,6 +111,7 @@ WDMP_STATUS msgBusInit(const char *pComponentName)
     extern ANSC_HANDLE bus_handle;
     char *subSys            = NULL;  
     DmErr_t    err;
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
 #if !defined(RDKB_EMU)
     AnscCopyString(g_Subsystem, "eRT.");
 #else
@@ -127,6 +129,7 @@ WDMP_STATUS msgBusInit(const char *pComponentName)
     if (err != CCSP_SUCCESS)
     {
         fprintf(stderr, "Cdm_Init: %s\n", Cdm_StrError(err));
+		WalError("Cdm_Init: %s\n", Cdm_StrError(err));
         exit(1);
     }
     system("touch /tmp/webpa_initialized");
@@ -148,10 +151,12 @@ if ( bRunAsDaemon )
     if (err != CCSP_SUCCESS)
     {
     fprintf(stderr, "Cdm_Term: %s\n", Cdm_StrError(err));
+		WalError("Cdm_Term: %s\n", Cdm_StrError(err));
     exit(1);
     }
 
     ssp_cancel();
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     return WDMP_SUCCESS;
 }
 

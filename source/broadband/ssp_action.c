@@ -9,7 +9,7 @@
 #include "dslh_dmagnt_interface.h"
 #include "ccsp_trace.h"
 #include "plugin_main.h"
-
+#include "webpa_adapter.h"
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -45,7 +45,7 @@ extern  ULONG                   g_ulAllocatedSizePeak;
 ANSC_STATUS ssp_create()
 {
     /* Create component common data model object */
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
      g_pComponent_COMMON_webpaagent = (PCOMPONENT_COMMON_WEBPAAGENT)AnscAllocateMemory(sizeof(COMPONENT_COMMON_WEBPAAGENT));
 
     if ( ! g_pComponent_COMMON_webpaagent )
@@ -120,7 +120,7 @@ ANSC_STATUS ssp_create()
 
         return ANSC_STATUS_RESOURCES;
     }
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -133,7 +133,7 @@ ANSC_STATUS ssp_engage()
 	ANSC_STATUS					    returnStatus                = ANSC_STATUS_SUCCESS;
     PCCC_MBI_INTERFACE              pSsdMbiIf                   = (PCCC_MBI_INTERFACE)MsgHelper_CreateCcdMbiIf((void*)bus_handle, g_Subsystem);
     char                            CrName[256];
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
      g_pComponent_COMMON_webpaagent->Health = CCSP_COMMON_COMPONENT_HEALTH_Yellow;
 
     /* data model configuration */
@@ -163,13 +163,13 @@ ANSC_STATUS ssp_engage()
                 CCSP_COMPONENT_PATH_WEBPAAGENT,            /* Component Path    */
                 g_Subsystem                                /* Component Prefix  */
             );
-
+	WalInfo("returnStatus : %d\n",returnStatus);
     if ( returnStatus == ANSC_STATUS_SUCCESS )
     {
         /* System is fully initialized */
          g_pComponent_COMMON_webpaagent->Health = CCSP_COMMON_COMPONENT_HEALTH_Green;
     }
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -182,7 +182,7 @@ ANSC_STATUS ssp_cancel()
 	int                             nRet  = 0;
     char                            CrName[256];
     char                            CpName[256];
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     if(  g_pComponent_COMMON_webpaagent == NULL)
     {
         return ANSC_STATUS_SUCCESS;
@@ -211,7 +211,7 @@ ANSC_STATUS ssp_cancel()
      g_pComponent_COMMON_webpaagent = NULL;
     pSsdCcdIf                = NULL;
     pDslhCpeController       = NULL;
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     return ANSC_STATUS_SUCCESS;
 }
 
