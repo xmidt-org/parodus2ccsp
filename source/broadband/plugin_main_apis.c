@@ -67,8 +67,22 @@
 
 #include "plugin_main_apis.h"
 #include "cosa_webpa_apis.h"
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#include "cosa_webconfig_apis.h"
+#endif
+#include "webpa_adapter.h"
 
+COSAGetParamValueStringProc        g_GetParamValueString;
+COSAGetParamValueUlongProc         g_GetParamValueUlong;
+COSAValidateHierarchyInterfaceProc g_ValidateInterface;
+COSAGetHandleProc                  g_GetRegistryRootFolder;
+COSAGetInstanceNumberByIndexProc   g_GetInstanceNumberByIndex;
+COSAGetInterfaceByNameProc         g_GetInterfaceByName;
+COSAGetHandleProc                  g_GetMessageBusHandle;
+COSAGetSubsystemPrefixProc         g_GetSubsystemPrefix;
+PCCSP_CCD_INTERFACE                g_pSsdCcdIf;
 ANSC_HANDLE                        g_MessageBusHandle;
+
 
 /**********************************************************************
 
@@ -99,7 +113,7 @@ CosaBackEndManagerCreate
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PCOSA_BACKEND_MANAGER_OBJECT    pMyObject    = (PCOSA_BACKEND_MANAGER_OBJECT)NULL;
-
+	WalInfo("------------ %s ------------\n",__FUNCTION__);
     /*
         * We create object by first allocating memory for holding the variables and member functions.
         */
@@ -119,7 +133,7 @@ CosaBackEndManagerCreate
     pMyObject->Initialize        = CosaBackEndManagerInitialize;
 printf("-- %s %d\n", __func__, __LINE__);
     CcspTraceWarning(("RDKB_SYSTEM_BOOT_UP_LOG : Entering %s %d\n", __func__, __LINE__));
-    /*pMyObject->Initialize   ((ANSC_HANDLE)pMyObject);*/
+	WalInfo("------------ %s ------------\n",__FUNCTION__);
 
     return  (ANSC_HANDLE)pMyObject;
 }
@@ -156,12 +170,18 @@ CosaBackEndManagerInitialize
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PCOSA_BACKEND_MANAGER_OBJECT  pMyObject    = (PCOSA_BACKEND_MANAGER_OBJECT)hThisObject;
-
+	WalInfo("------------ %s ------------\n",__FUNCTION__);
     AnscTraceWarning(("%s...\n", __FUNCTION__));
 
     /* Create all object */
     pMyObject->hWebpa           = (ANSC_HANDLE)CosaWebpaCreate();
     AnscTraceWarning(("  CosaWebpaCreate done!\n"));
+	WalInfo("  CosaWebpaCreate done!\n");
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+    pMyObject->hWebConfig  = (ANSC_HANDLE)CosaWebConfigCreate();
+    AnscTraceWarning(("  CosaWebConfigCreate done!\n"));
+	WalInfo("  CosaWebConfigCreate done!\n");
+#endif
 
     return returnStatus;
 }
@@ -199,6 +219,7 @@ CosaBackEndManagerRemove
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PCOSA_BACKEND_MANAGER_OBJECT  pMyObject    = (PCOSA_BACKEND_MANAGER_OBJECT)hThisObject;
 
+	WalInfo("--------- %s --------\n",__FUNCTION__);
     /* Remove all objects */
 
     if ( pMyObject->hWebpa )
@@ -206,8 +227,15 @@ CosaBackEndManagerRemove
         CosaWebpaRemove((ANSC_HANDLE)pMyObject->hWebpa);
     }
 
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+    if ( pMyObject->hWebConfig )
+    {
+        CosaWebConfigRemove((ANSC_HANDLE)pMyObject->hWebConfig);
+    }
+#endif
+
     /* Remove self */
     AnscFreeMemory((ANSC_HANDLE)pMyObject);
-
+	WalInfo("--------- %s --------\n",__FUNCTION__);
     return returnStatus;
 }

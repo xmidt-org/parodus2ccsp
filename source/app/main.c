@@ -48,7 +48,9 @@ int main()
 	WalInfo("********** Starting component: %s **********\n ", pComponentName); 
 	/* Backend Manager for Webpa Creation and Initilization 
     CosaWebpaBEManagerCreate( );*/
+	WalInfo("B4 msgBusInit\n");
 	msgBusInit(pComponentName);
+	WalInfo("After msgBusInit\n");
 	ret = waitForOperationalReadyCondition();
 	libpd_client_mgr();
 	WalInfo("Syncing backend manager with DB....\n");

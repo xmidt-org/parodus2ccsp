@@ -66,16 +66,30 @@
 
 #include "ansc_platform.h"
 #include "cosa_apis.h"
+#include "ccsp_base_api.h"
 #include "dslh_cpeco_interface.h"
 #include "plugin_main_apis.h"
 #include "cosa_plugin_api.h"
+#include "ccsp_ifo_ccd.h"
 
+extern COSAGetParamValueStringProc        g_GetParamValueString;
+extern COSAGetParamValueUlongProc         g_GetParamValueUlong;
+extern COSAValidateHierarchyInterfaceProc g_ValidateInterface;
+extern COSAGetHandleProc                  g_GetRegistryRootFolder;
+extern COSAGetInstanceNumberByIndexProc   g_GetInstanceNumberByIndex;
+extern COSAGetHandleProc                  g_GetMessageBusHandle;
+extern COSAGetSubsystemPrefixProc         g_GetSubsystemPrefix;
+extern COSAGetInterfaceByNameProc         g_GetInterfaceByName;
+extern PCCSP_CCD_INTERFACE                g_pSsdCcdIf;
 extern ANSC_HANDLE                        g_MessageBusHandle;
-extern char*                              g_SubsystemPrefix;
+extern  char                              g_Subsystem[32];
 
 /* The OID for all objects s*/
 #define COSA_DATAMODEL_BASE_OID                                 0
 #define COSA_DATAMODEL_WEBPA_OID                                1
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#define COSA_DATAMODEL_WEBCONFIG_OID                            2
+#endif
 
 /*
  * This is the cosa datamodel backend manager which is used to manager all backend object
@@ -85,6 +99,7 @@ extern char*                              g_SubsystemPrefix;
     COSA_BASE_CONTENT                                                                       \
     /* start of NAT object class content */                                                 \
     ANSC_HANDLE                  hWebpa;                                                      \
+    ANSC_HANDLE                  hWebConfig;                                                     \
     PCOSA_PLUGIN_INFO            hCosaPluginInfo;								   		
 
 typedef  struct
