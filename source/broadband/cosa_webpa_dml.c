@@ -4,6 +4,7 @@
 #include "ccsp_trace.h"
 #include "cosa_webpa_internal.h"
 #include "ccsp_base_api.h"
+#include "plugin_main_apis.h"
 #include "webpa_internal.h"
 #include "webpa_notification.h"
 
