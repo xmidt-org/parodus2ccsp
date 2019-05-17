@@ -53,6 +53,11 @@ include_directories(
                      source/include
                      source/broadband/include
 		   )
+if (FEATURE_SUPPORT_WEBCONFIG)
+include_directories(
+                     source/WebConfig
+                    )
+endif (FEATURE_SUPPORT_WEBCONFIG)
 include_directories (SYSTEM /usr/include)
 
 # pthread external dependency
@@ -77,6 +82,10 @@ endif (BUILD_RASPBERRYPI)
 if (BUILD_EMULATOR)
 add_definitions(-DRDKB_EMU)
 endif (BUILD_EMULATOR)
+
+if (FEATURE_SUPPORT_WEBCONFIG)
+add_definitions(-DFEATURE_SUPPORT_WEBCONFIG)
+endif (FEATURE_SUPPORT_WEBCONFIG)
 
 if (NOT BUILD_YOCTO)
 # cJSON external dependency
