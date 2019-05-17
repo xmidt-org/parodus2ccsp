@@ -100,7 +100,7 @@
                 <parameter>
                     <name>ConfigFileNumberOfEntries</name>
                     <type>unsignedInt</type>
-                    <syntax>uint</syntax>
+                    <syntax>uint32</syntax>
                     <writable>false</writable>
                 </parameter>
                 <parameter>

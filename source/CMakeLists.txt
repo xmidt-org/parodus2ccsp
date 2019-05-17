@@ -23,5 +23,8 @@ set(COMMON_LIBS -ldbus-1 -lccsp_common -lwrp-c -lpthread -lwdmp-c -lmsgpackc -lt
 if (BUILD_YOCTO)
 set(COMMON_LIBS "${COMMON_LIBS} -llog4c -lrdkloggers")
 endif()
+if (FEATURE_SUPPORT_WEBCONFIG)
+set(COMMON_LIBS "${COMMON_LIBS} -lcurl")
+endif()
 target_link_libraries (webpa ${CMAKE_THREAD_LIBS_INIT} ${COMMON_LIBS})
 install (TARGETS webpa DESTINATION bin)
