@@ -100,7 +100,7 @@
                 <parameter>
                     <name>ConfigFileNumberOfEntries</name>
                     <type>unsignedInt</type>
-                    <syntax>uint</syntax>
+                    <syntax>uint32</syntax>
                     <writable>false</writable>
                 </parameter>
                 <parameter>
@@ -124,6 +124,7 @@
                         <func_DelEntry>ConfigFile_DelEntry</func_DelEntry>
                         <func_GetParamBoolValue>ConfigFile_GetParamBoolValue</func_GetParamBoolValue>
                         <func_GetParamStringValue>ConfigFile_GetParamStringValue</func_GetParamStringValue>
+                        <func_SetParamBoolValue>ConfigFile_SetParamBoolValue</func_SetParamBoolValue>
                         <func_SetParamStringValue>ConfigFile_SetParamStringValue</func_SetParamStringValue>
                         <func_Validate>ConfigFile_Validate</func_Validate>
                         <func_Commit>ConfigFile_Commit</func_Commit>
@@ -155,7 +156,7 @@
                             <writable>false</writable>
                         </parameter>
                         <parameter>
-                            <name>DocVersionSyncSuccessDateTime</name>
+                            <name>PreviousSyncDateTime</name>
                             <type>dateTime</type>
                             <syntax>string</syntax>
                             <writable>false</writable>

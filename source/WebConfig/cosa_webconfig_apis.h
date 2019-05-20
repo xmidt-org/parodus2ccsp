@@ -49,7 +49,7 @@ _COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
     char                            Version[64];
     BOOLEAN                         ForceSyncCheck;
     BOOLEAN                         SyncCheckOK;
-    char                            DocVersionSyncSuccessDateTime;                                        
+    char                            *PreviousSyncDateTime;                                        
 }
 COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY,  *PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY;
 
@@ -108,4 +108,10 @@ CosaWebConfigRemove
 PCOSA_DML_CONFIGFILE_CONTAINER
 CosaDmlGetConfigFile(    
         ANSC_HANDLE                 hThisObject
+    );
+
+PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
+CosaDmlGetConfigFileEntry
+    (
+        ULONG InstanceNumber
     );
