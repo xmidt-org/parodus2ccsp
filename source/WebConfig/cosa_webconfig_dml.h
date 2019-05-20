@@ -97,7 +97,29 @@ X_RDK_WebConfig_SetParamBoolValue
         BOOL                        bValue
     );
 
+BOOL
+X_RDK_WebConfig_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      puLong
+    );
 
+BOOL
+X_RDK_WebConfig_GetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int*                        pInt
+    );
+
+BOOL
+X_RDK_WebConfig_SetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int                         iValue
+    );
 /***********************************************************************
 
  APIs for Object:

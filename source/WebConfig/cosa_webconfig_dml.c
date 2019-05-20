@@ -30,6 +30,9 @@
 
     *  X_RDK_WebConfig_GetParamBoolValue
     *  X_RDK_WebConfig_SetParamBoolValue
+	*  X_RDK_WebConfig_GetParamIntValue
+    *  X_RDK_WebConfig_SetParamIntValue
+	*  X_RDK_WebConfig_GetParamUlongValue
 
 ***********************************************************************/
 BOOL
@@ -70,6 +73,64 @@ X_RDK_WebConfig_SetParamBoolValue
     return FALSE;
 }
 
+BOOL
+X_RDK_WebConfig_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      puLong
+    )
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    /* check the parameter name and return the corresponding value */
+    if( AnscEqualString(ParamName, "ConfigFileNumberOfEntries", TRUE))
+    {
+        /* collect value */
+        *puLong = pMyObject->pConfigFileContainer->ConfigFileEntryCount;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL
+X_RDK_WebConfig_GetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int*                        pInt
+    )
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    /* check the parameter name and return the corresponding value */
+    if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
+    {
+        *pInt = pMyObject->PeriodicSyncCheckInterval;
+        return TRUE;
+    }
+
+    /* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
+    return FALSE;
+}
+
+BOOL
+X_RDK_WebConfig_SetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int                         iValue
+    )
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    /* check the parameter name and set the corresponding value */
+    if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
+    {
+        pMyObject->PeriodicSyncCheckInterval = iValue;
+	    return TRUE;
+    }
+
+	/* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
+    return FALSE;
+}
 /***********************************************************************
 
  APIs for Object:

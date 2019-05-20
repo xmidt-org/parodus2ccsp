@@ -67,6 +67,7 @@ COSA_DML_CONFIGFILE_CONTAINER,  *PCOSA_DML_CONFIGFILE_CONTAINER;
 	ULONG                       MaxInstanceNumber;                                    \
 	ULONG                       ulWebConfigNextInstanceNumber;                                    \
     BOOL                        RfcEnable;                                         \
+    int                     PeriodicSyncCheckInterval;                      \
     SLIST_HEADER                ConfigFileList;                                        \
     PCOSA_DML_CONFIGFILE_CONTAINER    pConfigFileContainer;                                        \
 	ANSC_HANDLE                     hIrepFolderWebConfig;                                         \
@@ -107,4 +108,11 @@ CosaWebConfigRemove
 PCOSA_DML_CONFIGFILE_CONTAINER
 CosaDmlGetConfigFile(    
         ANSC_HANDLE                 hThisObject
+    );
+
+ANSC_STATUS
+CosaDmlGetConfigFileEntry
+    (
+        ULONG InstanceNumber,
+        PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY   pConfigFileEntry 
     );

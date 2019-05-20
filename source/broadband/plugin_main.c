@@ -76,6 +76,9 @@ COSA_Init
 
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamBoolValue",  X_RDK_WebConfig_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamBoolValue",  X_RDK_WebConfig_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamUlongValue",  X_RDK_WebConfig_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamIntValue",  X_RDK_WebConfig_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamIntValue",  X_RDK_WebConfig_SetParamIntValue);
 
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntryCount", ConfigFile_GetEntryCount);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntry",ConfigFile_GetEntry);
@@ -89,106 +92,6 @@ COSA_Init
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Commit", ConfigFile_Commit);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Validate", ConfigFile_Validate);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Rollback", ConfigFile_Rollback);
-	pGetStringProc = (COSAGetParamValueStringProc)pPlugInfo->AcquireFunction("COSAGetParamValueString");
-
-    if( pGetStringProc != NULL)
-    {
-        g_GetParamValueString = pGetStringProc;
-    }
-    else
-    {
-        goto EXIT;
-    }
-
-    pGetParamValueUlongProc = (COSAGetParamValueUlongProc)pPlugInfo->AcquireFunction("COSAGetParamValueUlong");
-
-    if( pGetParamValueUlongProc != NULL)
-    {
-        g_GetParamValueUlong = pGetParamValueUlongProc;
-    }
-    else
-    {
-        goto EXIT;
-    }
-
-    pValInterfaceProc = (COSAValidateHierarchyInterfaceProc)pPlugInfo->AcquireFunction("COSAValidateHierarchyInterface");
-
-    if ( pValInterfaceProc )
-    {
-        g_ValidateInterface = pValInterfaceProc;
-    }
-    else
-    {
-        goto EXIT;
-    }
-
-    pGetRegistryRootFolder = (COSAGetHandleProc)pPlugInfo->AcquireFunction("COSAGetRegistryRootFolder");
-
-    if ( pGetRegistryRootFolder != NULL )
-    {
-        g_GetRegistryRootFolder = pGetRegistryRootFolder;
-    }
-    else
-    {
-        printf("!!! haha, catcha !!!\n");
-        goto EXIT;
-    }
-
-    pGetInsNumberByIndexProc = (COSAGetInstanceNumberByIndexProc)pPlugInfo->AcquireFunction("COSAGetInstanceNumberByIndex");
-
-    if ( pGetInsNumberByIndexProc != NULL )
-    {
-        g_GetInstanceNumberByIndex = pGetInsNumberByIndexProc;
-    }
-    else
-    {
-        goto EXIT;
-    }
-
-    pGetInterfaceByNameProc = (COSAGetInterfaceByNameProc)pPlugInfo->AcquireFunction("COSAGetInterfaceByName");
-
-    if ( pGetInterfaceByNameProc != NULL )
-    {
-        g_GetInterfaceByName = pGetInterfaceByNameProc;
-    }
-    else
-    {
-        goto EXIT;
-    }
-
-    g_pSsdCcdIf = g_GetInterfaceByName(g_pDslhDmlAgent, CCSP_CCD_INTERFACE_NAME);
-
-    if ( !g_pSsdCcdIf )
-    {
-        CcspTraceError(("g_pSsdCcdIf is NULL !\n"));
-
-        goto EXIT;
-    }
-
-    /* Get Message Bus Handle */
-    g_GetMessageBusHandle = (PFN_CCSPCCDM_APPLY_CHANGES)pPlugInfo->AcquireFunction("COSAGetMessageBusHandle");
-    if ( g_GetMessageBusHandle == NULL )
-    {
-        goto EXIT;
-    }
-
-    g_MessageBusHandle = (ANSC_HANDLE)g_GetMessageBusHandle(g_pDslhDmlAgent);
-    if ( g_MessageBusHandle == NULL )
-    {
-        goto EXIT;
-    }
-    g_MessageBusHandle_Irep = g_MessageBusHandle;
-
-    g_GetSubsystemPrefix = (COSAGetSubsystemPrefixProc)pPlugInfo->AcquireFunction("COSAGetSubsystemPrefix");
-    if ( g_GetSubsystemPrefix != NULL )
-    {
-        char*  tmpSubsystemPrefix;
-
-        if ( tmpSubsystemPrefix = g_GetSubsystemPrefix(g_pDslhDmlAgent) )
-        {
-            AnscCopyString(g_SubSysPrefix_Irep, tmpSubsystemPrefix);
-        }
-    }
 
     /* Create backend framework */
     g_pCosaBEManager = (PCOSA_BACKEND_MANAGER_OBJECT)CosaBackEndManagerCreate();

@@ -72,15 +72,6 @@
 #endif
 #include "webpa_adapter.h"
 
-COSAGetParamValueStringProc        g_GetParamValueString;
-COSAGetParamValueUlongProc         g_GetParamValueUlong;
-COSAValidateHierarchyInterfaceProc g_ValidateInterface;
-COSAGetHandleProc                  g_GetRegistryRootFolder;
-COSAGetInstanceNumberByIndexProc   g_GetInstanceNumberByIndex;
-COSAGetInterfaceByNameProc         g_GetInterfaceByName;
-COSAGetHandleProc                  g_GetMessageBusHandle;
-COSAGetSubsystemPrefixProc         g_GetSubsystemPrefix;
-PCCSP_CCD_INTERFACE                g_pSsdCcdIf;
 ANSC_HANDLE                        g_MessageBusHandle;
 
 
