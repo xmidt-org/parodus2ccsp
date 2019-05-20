@@ -44,13 +44,14 @@ X_RDK_WebConfig_GetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    WalInfo("------- %s ---------\n",__FUNCTION__);
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     if( AnscEqualString(ParamName, "RfcEnable", TRUE))
     {
         /* collect value */
         *pBool = pMyObject->RfcEnable;
         return TRUE;
     }
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
     return FALSE;
 }
 
@@ -63,13 +64,14 @@ X_RDK_WebConfig_SetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    WalInfo("------- %s ---------\n",__FUNCTION__);
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     /* check the parameter name and set the corresponding value */
     if( AnscEqualString(ParamName, "RfcEnable", TRUE))
     {
         pMyObject->RfcEnable = bValue;
         return TRUE;
     }
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
     return FALSE;
 }
 
@@ -82,6 +84,7 @@ X_RDK_WebConfig_GetParamUlongValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "ConfigFileNumberOfEntries", TRUE))
     {
@@ -89,6 +92,7 @@ X_RDK_WebConfig_GetParamUlongValue
         *puLong = pMyObject->pConfigFileContainer->ConfigFileEntryCount;
         return TRUE;
     }
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
     return FALSE;
 }
 
@@ -101,13 +105,14 @@ X_RDK_WebConfig_GetParamIntValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
     {
         *pInt = pMyObject->PeriodicSyncCheckInterval;
         return TRUE;
     }
-
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
     /* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return FALSE;
 }
@@ -121,13 +126,14 @@ X_RDK_WebConfig_SetParamIntValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     /* check the parameter name and set the corresponding value */
     if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
     {
         pMyObject->PeriodicSyncCheckInterval = iValue;
 	    return TRUE;
     }
-
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
 	/* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return FALSE;
 }
@@ -145,6 +151,7 @@ X_RDK_WebConfig_SetParamIntValue
     *  ConfigFile_DelEntry
     *  ConfigFile_GetParamBoolValue
     *  ConfigFile_GetParamStringValue
+    *  ConfigFile_SetParamBoolValue
     *  ConfigFile_SetParamStringValue
     *  ConfigFile_Validate
     *  ConfigFile_Commit
@@ -161,7 +168,10 @@ ConfigFile_GetEntryCount
 {
 
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     int Qdepth = AnscSListQueryDepth( &pMyObject->ConfigFileList );
+    WalInfo("Qdepth: %d\n",Qdepth);
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
     return Qdepth;
 }
 
@@ -177,14 +187,15 @@ ConfigFile_GetEntry
     PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
-
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, nIndex);
     if ( pSListEntry )
     {
         pCxtLink      = ACCESS_COSA_CONTEXT_WEBCONFIG_LINK_OBJECT(pSListEntry);
         *pInsNumber   = pCxtLink->InstanceNumber;
+        WalInfo("pInsNumber:%d\n",*pInsNumber);
     }
-
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
     return (ANSC_HANDLE)pSListEntry;
 }
 
@@ -196,6 +207,21 @@ ConfigFile_IsUpdated
 {
     PCOSA_DATAMODEL_WEBCONFIG             pWebConfig    = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     BOOL                            bIsUpdated   = TRUE;
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+    /*
+        We can use one rough granularity interval to get whole table in case
+        that the updating is too frequent.
+        */
+    if ( ( AnscGetTickInSeconds() - pWebConfig->PreviousVisitTime ) < COSA_DML_CONFIGFILE_ACCESS_INTERVAL )
+    {
+        bIsUpdated  = FALSE;
+    }
+    else
+    {
+        pWebConfig->PreviousVisitTime =  AnscGetTickInSeconds();
+        bIsUpdated  = TRUE;
+    }
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
     return bIsUpdated;
 }
 
@@ -212,6 +238,8 @@ ConfigFile_Synchronize
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PSINGLE_LINK_ENTRY                    pSListEntry2      = NULL;
     ULONG                                 entryCount        = 0;
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+    WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
 }
 
 ANSC_HANDLE
@@ -225,7 +253,7 @@ ConfigFile_AddEntry
 	PCOSA_DATAMODEL_WEBCONFIG             pWebConfig              = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry = NULL;
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink  = NULL;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
 
     pConfigFileEntry = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)AnscAllocateMemory(sizeof(COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY));
     if ( !pConfigFileEntry )
@@ -249,8 +277,9 @@ ConfigFile_AddEntry
 	pWebConfigCxtLink->hContext = (ANSC_HANDLE)pConfigFileEntry;
 	pWebConfig->pConfigFileContainer->ConfigFileEntryCount++;
     *pInsNumber = pWebConfigCxtLink->InstanceNumber;
-
+    WalInfo("*pInsNumber: %d\n",*pInsNumber);
 	CosaSListPushEntryByInsNum(&pWebConfig->ConfigFileList, (PCOSA_CONTEXT_LINK_OBJECT)pWebConfigCxtLink);
+	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
 
     return (ANSC_HANDLE)pWebConfigCxtLink;
 
@@ -273,11 +302,11 @@ ConfigFile_DelEntry
     PCOSA_DATAMODEL_WEBCONFIG             pWebConfig               = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink   = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInstance;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry      = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
 	/* Remove entery from the database */
 
-    //TODO;
-
+    CosaDmlRemoveConfigFileEntry(pConfigFileEntry->InstanceNumber);
+    WalInfo("After CosaDmlRemoveConfigFileEntry\n");
     if ( returnStatus == ANSC_STATUS_SUCCESS )
 	{
 			/* Remove entery from the Queue */
@@ -292,7 +321,7 @@ ConfigFile_DelEntry
 			return ANSC_STATUS_FAILURE;
 		}
 	}
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
     return returnStatus;
 }
 
@@ -337,7 +366,7 @@ ConfigFile_GetParamBoolValue
 
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WalInfo("------- %s ---------\n",__FUNCTION__);
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
     {
         /* collect value */
@@ -351,7 +380,7 @@ ConfigFile_GetParamBoolValue
         *pBool = pConfigFileEntry->SyncCheckOK;
         return TRUE;
     }
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
     /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return FALSE;
 }
@@ -369,7 +398,7 @@ ConfigFile_GetParamStringValue
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
     PUCHAR                                    pString       = NULL;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
 
     if( AnscEqualString(ParamName, "URL", TRUE))
     {
@@ -401,24 +430,45 @@ ConfigFile_GetParamStringValue
         }
     }
 
-    if( AnscEqualString(ParamName, "DocVersionSyncSuccessDateTime", TRUE))
+    if( AnscEqualString(ParamName, "PreviousSyncDateTime", TRUE))
     {
         /* collect value */
-        if ( AnscSizeOfString(pConfigFileEntry->DocVersionSyncSuccessDateTime) < *pUlSize)
+        if ( AnscSizeOfString(pConfigFileEntry->PreviousSyncDateTime) < *pUlSize)
         {
-            AnscCopyString(pValue, pConfigFileEntry->DocVersionSyncSuccessDateTime);
+            AnscCopyString(pValue, pConfigFileEntry->PreviousSyncDateTime);
             return 0;
         }
         else
         {
-            *pUlSize = AnscSizeOfString(pConfigFileEntry->DocVersionSyncSuccessDateTime)+1;
+            *pUlSize = AnscSizeOfString(pConfigFileEntry->PreviousSyncDateTime)+1;
             return 1;
         }
     }
 
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
 
     return -1;
+}
+
+BOOL
+ConfigFile_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
+    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+    /* check the parameter name and set the corresponding value */
+    if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
+    {
+        pConfigFileEntry->ForceSyncCheck = bValue;
+        return TRUE;
+    }
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+    return FALSE;
 }
 
 BOOL
@@ -433,7 +483,7 @@ ConfigFile_SetParamStringValue
 	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
     BOOL ret = FALSE;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
     if( AnscEqualString(ParamName, "URL", TRUE))
     {
 	/* save update to backup */
@@ -446,13 +496,13 @@ ConfigFile_SetParamStringValue
         AnscCopyString( pConfigFileEntry->Version, strValue );
 	return TRUE;
     }
-    else if( AnscEqualString(ParamName, "DocVersionSyncSuccessDateTime", TRUE))
+    else if( AnscEqualString(ParamName, "PreviousSyncDateTime", TRUE))
     {
 	/* save update to backup */
-        AnscCopyString( pConfigFileEntry->DocVersionSyncSuccessDateTime, strValue );
+        AnscCopyString( pConfigFileEntry->PreviousSyncDateTime, strValue );
         return TRUE;
     }
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
 
     return ret;
 }

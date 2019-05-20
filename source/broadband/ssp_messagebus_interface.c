@@ -48,7 +48,7 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
         CcspTraceError((" !!! ssp_Mbi_MessageBusEngage: component_id or path is NULL !!!\n"));
 		WalError(" !!! ssp_Mbi_MessageBusEngage: component_id or path is NULL !!!\n");
     }
-
+	WalInfo("B4 CCSP_Message_Bus_Init\n");
     /* Connect to message bus */
     returnStatus = 
         CCSP_Message_Bus_Init
@@ -59,7 +59,7 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
                 Ansc_AllocateMemory_Callback,           /* mallocfc, use default */
                 Ansc_FreeMemory_Callback                /* freefc,   use default */
             );
-
+	WalInfo("After CCSP_Message_Bus_Init\n");
     if ( returnStatus != ANSC_STATUS_SUCCESS )
     {
         CcspTraceError((" !!! SSD Message Bus Init ERROR !!!\n"));
@@ -92,7 +92,7 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
     cb.busCheck               = ssp_Mbi_Buscheck;
 
     CcspBaseIf_SetCallback(bus_handle, &cb);
-
+	WalInfo("B4 CCSP_Message_Bus_Register_Path\n");
     /* Register service callback functions */
     returnStatus =
         CCSP_Message_Bus_Register_Path
@@ -102,7 +102,7 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
                 CcspComp_path_message_func,
                 bus_handle
             );
-
+	WalInfo("AFter CCSP_Message_Bus_Register_Path\n");
     if ( returnStatus != CCSP_Message_Bus_OK )
     {
         CcspTraceError((" !!! CCSP_Message_Bus_Register_Path ERROR returnStatus: %d\n!!!\n", returnStatus));

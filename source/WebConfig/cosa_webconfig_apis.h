@@ -34,6 +34,7 @@
 #define  COSA_DML_RR_NAME_WebConfigAlias                       "Alias"
 #define  COSA_DML_RR_NAME_WebConfigbNew                        "bNew"
 
+#define   COSA_DML_CONFIGFILE_ACCESS_INTERVAL   10 /* seconds*/
 typedef  struct
 _COSA_CONTEXT_WEBCONFIG_LINK_OBJECT
 {
@@ -49,7 +50,7 @@ _COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
     char                            Version[64];
     BOOLEAN                         ForceSyncCheck;
     BOOLEAN                         SyncCheckOK;
-    char                            DocVersionSyncSuccessDateTime;                                        
+    char                            *PreviousSyncDateTime;                                        
 }
 COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY,  *PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY;
 
@@ -66,6 +67,7 @@ COSA_DML_CONFIGFILE_CONTAINER,  *PCOSA_DML_CONFIGFILE_CONTAINER;
     COSA_BASE_CONTENT                                                                       \
 	ULONG                       MaxInstanceNumber;                                    \
 	ULONG                       ulWebConfigNextInstanceNumber;                                    \
+	ULONG                           PreviousVisitTime;                                      \
     BOOL                        RfcEnable;                                         \
     int                     PeriodicSyncCheckInterval;                      \
     SLIST_HEADER                ConfigFileList;                                        \
@@ -108,4 +110,16 @@ CosaWebConfigRemove
 PCOSA_DML_CONFIGFILE_CONTAINER
 CosaDmlGetConfigFile(    
         ANSC_HANDLE                 hThisObject
+    );
+
+PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
+CosaDmlGetConfigFileEntry
+    (
+        ULONG InstanceNumber
+    );
+
+ANSC_STATUS
+CosaDmlRemoveConfigFileEntry
+    (
+        ULONG InstanceNumber
     );

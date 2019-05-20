@@ -91,7 +91,7 @@ ANSC_STATUS ssp_create()
             pSsdCcdIf->ApplyChanges             = ssp_CcdIfApplyChanges;
         }
     }
-
+	WalInfo("B4 COSA_Init \n");
     /* Create ComponentCommonDatamodel interface*/
     if ( !pDslhLcbIf )
     {
@@ -111,13 +111,13 @@ ANSC_STATUS ssp_create()
             pDslhLcbIf->InitLibrary              = COSA_Init;
         }
     }
-
+	WalInfo("After COSA_Init \n");
     pDslhCpeController = DslhCreateCpeController(NULL, NULL, NULL);
 
     if ( !pDslhCpeController )
     {
         CcspTraceWarning(("CANNOT Create pDslhCpeController... Exit!\n"));
-
+		WalInfo("CANNOT Create pDslhCpeController... Exit!\n");
         return ANSC_STATUS_RESOURCES;
     }
 	WalInfo("--------- %s ----------\n",__FUNCTION__);
@@ -152,6 +152,7 @@ ANSC_STATUS ssp_engage()
         _ansc_sprintf(CrName, "%s", CCSP_DBUS_INTERFACE_CR);
     }
 
+	WalInfo("B4 RegisterCcspDataModel\n");
     returnStatus =
         pDslhCpeController->RegisterCcspDataModel
             (
@@ -163,7 +164,7 @@ ANSC_STATUS ssp_engage()
                 CCSP_COMPONENT_PATH_WEBPAAGENT,            /* Component Path    */
                 g_Subsystem                                /* Component Prefix  */
             );
-	WalInfo("returnStatus : %d\n",returnStatus);
+	WalInfo("After RegisterCcspDataModel returnStatus : %d\n",returnStatus);
     if ( returnStatus == ANSC_STATUS_SUCCESS )
     {
         /* System is fully initialized */
