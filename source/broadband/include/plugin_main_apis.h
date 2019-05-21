@@ -76,6 +76,9 @@ extern char*                              g_SubsystemPrefix;
 /* The OID for all objects s*/
 #define COSA_DATAMODEL_BASE_OID                                 0
 #define COSA_DATAMODEL_WEBPA_OID                                1
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#define COSA_DATAMODEL_WEBCONFIG_OID                            2
+#endif
 
 /*
  * This is the cosa datamodel backend manager which is used to manager all backend object
@@ -85,6 +88,7 @@ extern char*                              g_SubsystemPrefix;
     COSA_BASE_CONTENT                                                                       \
     /* start of NAT object class content */                                                 \
     ANSC_HANDLE                  hWebpa;                                                      \
+    ANSC_HANDLE                  hWebConfig;                                                     \
     PCOSA_PLUGIN_INFO            hCosaPluginInfo;								   		
 
 typedef  struct
