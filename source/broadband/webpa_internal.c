@@ -137,12 +137,14 @@ static void retryFailedComponentCaching();
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
-void initComponentCaching()
+void initComponentCaching(int status)
 {
         int err = 0;
 	pthread_t threadId;
+	int *device_status = (int *) malloc(sizeof(int));
+	*device_status = status;
 
-	err = pthread_create(&threadId, NULL, WALInit, NULL);
+	err = pthread_create(&threadId, NULL, WALInit, (void *) device_status);
 	if (err != 0)
 	{
 		WalError("Error creating WALInit thread :[%s]\n", strerror(err));
@@ -214,7 +216,7 @@ void walStrncpy(char *destStr, const char *srcStr, size_t destSize)
     destStr[destSize-1] = '\0';
 }
 
-static void *WALInit()
+static void *WALInit(void *status)
 {
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
@@ -226,6 +228,11 @@ static void *WALInit()
 	WalPrint("------------ WALInit ----------\n");
 	pthread_detach(pthread_self());
 	waitUntilSystemReady();
+	WalInfo("FEATURE_SUPPORT_WEBCONFIG is %d\n", FEATURE_SUPPORT_WEBCONFIG);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+	//Function to start webConfig operation after system ready.
+	initWebConfigTask(*(int *)status);
+#endif
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
