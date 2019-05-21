@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Added Device.X_RDK_WebConfig.ConfigFile.[i]. dynamic table
 - Avoid repeated factory reset notification when cmc is 512
 - Removed "Device.TR069Notify" parameter from component caching
 - Removed turn on notification for 'Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client' parameter when mesh/plume or cujo is enabled
