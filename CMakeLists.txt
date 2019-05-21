@@ -55,6 +55,7 @@ include_directories(
 		   )
 if (FEATURE_SUPPORT_WEBCONFIG)
 include_directories(
+		     ${INCLUDE_DIR}/curl
                      source/WebConfig
                     )
 endif (FEATURE_SUPPORT_WEBCONFIG)
@@ -133,6 +134,19 @@ ExternalProject_Add(wdmp-c
 )
 add_library(libwdmp-c STATIC SHARED IMPORTED)
 add_dependencies(libwdmp-c wdmp-c)
+
+if (FEATURE_SUPPORT_WEBCONFIG)
+# curl external dependency
+#-------------------------------------------------------------------------------
+ExternalProject_Add(curl
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/curl
+    GIT_REPOSITORY https://github.com/curl/curl.git
+    GIT_TAG "curl-7_63_0"
+    CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DBUILD_TESTING=OFF
+)
+add_library(libcurl STATIC SHARED IMPORTED)
+add_dependencies(libcurl curl)
+endif (FEATURE_SUPPORT_WEBCONFIG)
 
 # nanoMsg external dependency
 #-------------------------------------------------------------------------------
