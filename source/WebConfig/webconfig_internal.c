@@ -12,6 +12,7 @@
 #include "webconfig_internal.h"
 #include <curl/curl.h>
 #include "cJSON.h"
+#include "webconfig_log.h"
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -66,11 +67,11 @@ void initWebConfigTask(int status)
 	err = pthread_create(&threadId, NULL, WebConfigTask, (void *) device_status);
 	if (err != 0) 
 	{
-		WalError("Error creating WebConfigTask thread :[%s]\n", strerror(err));
+		WebConfigLog("Error creating WebConfigTask thread :[%s]\n", strerror(err));
 	}
 	else
 	{
-		WalInfo("WebConfigTask Thread created Successfully\n");
+		WebConfigLog("WebConfigTask Thread created Successfully\n");
 	}
 }
 
