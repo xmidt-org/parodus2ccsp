@@ -156,23 +156,50 @@ CosaWebConfigInitialize
 {
     ANSC_STATUS                     returnStatus         = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject            = (PCOSA_DATAMODEL_WEBCONFIG )hThisObject;
-	PCOSA_DML_CONFIGFILE_CONTAINER    pConfigFileContainer            = (PCOSA_DML_CONFIGFILE_CONTAINER)NULL;
+    PCOSA_DML_CONFIGFILE_CONTAINER    pConfigFileContainer            = (PCOSA_DML_CONFIGFILE_CONTAINER)NULL;
 
     AnscSListInitializeHeader( &pMyObject->ConfigFileList );
     pMyObject->MaxInstanceNumber        = 0;
     pMyObject->ulWebConfigNextInstanceNumber   = 1;
 #ifdef RDKB_BUILD
+    CHAR tmpbuf[ 128 ] = { 0 };
+    WalInfo("------- %s ---------\n",__FUNCTION__);
     // Initialize syscfg to make syscfg calls
     if (0 != syscfg_init())
     {
     	WalError("CosaWebConfigInitialize Error: syscfg_init() failed!! \n");
+    	return ANSC_STATUS_FAILURE;
+    }
+    else
+    {
+        if( 0 == syscfg_get( NULL, "WebConfigRfcEnabled", tmpbuf, sizeof(tmpbuf)))
+        {
+            if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
+            {
+                pMyObject->RfcEnable = true;
+            }
+            else
+            {
+                pMyObject->RfcEnable = false;
+            }
+            WalInfo("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
+        }
+        if( 0 == syscfg_get( NULL, "PeriodicSyncCheckInterval", tmpbuf, sizeof(tmpbuf)))
+        {
+            if(tmpbuf != NULL)
+            {
+                pMyObject->PeriodicSyncCheckInterval = atoi(tmpbuf);
+            }
+            WalInfo("pMyObject->PeriodicSyncCheckInterval:%d\n",pMyObject->PeriodicSyncCheckInterval);
+        }
     }
 #endif
+    WalInfo("B4 CosaDmlGetConfigFile\n");
     pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
-
+    WalInfo("After CosaDmlGetConfigFile\n");
     WalInfo("#### CosaWebConfigInitialize done. return %d", returnStatus);
 
-    return returnStatus;
+     return returnStatus;
 }
 
 /**********************************************************************
