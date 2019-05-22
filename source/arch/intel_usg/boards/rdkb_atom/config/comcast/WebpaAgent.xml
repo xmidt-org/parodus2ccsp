@@ -123,6 +123,7 @@
                         <func_AddEntry>ConfigFile_AddEntry</func_AddEntry>
                         <func_DelEntry>ConfigFile_DelEntry</func_DelEntry>
                         <func_GetParamBoolValue>ConfigFile_GetParamBoolValue</func_GetParamBoolValue>
+			<func_SetParamBoolValue>ConfigFile_SetParamBoolValue</func_SetParamBoolValue>
                         <func_GetParamStringValue>ConfigFile_GetParamStringValue</func_GetParamStringValue>
                         <func_SetParamStringValue>ConfigFile_SetParamStringValue</func_SetParamStringValue>
                         <func_Validate>ConfigFile_Validate</func_Validate>

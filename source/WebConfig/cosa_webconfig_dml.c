@@ -30,9 +30,9 @@
 
     *  X_RDK_WebConfig_GetParamBoolValue
     *  X_RDK_WebConfig_SetParamBoolValue
-	*  X_RDK_WebConfig_GetParamIntValue
+    *  X_RDK_WebConfig_GetParamIntValue
     *  X_RDK_WebConfig_SetParamIntValue
-	*  X_RDK_WebConfig_GetParamUlongValue
+    *  X_RDK_WebConfig_GetParamUlongValue
 
 ***********************************************************************/
 BOOL
@@ -63,12 +63,37 @@ X_RDK_WebConfig_SetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    char buf[16] = {0};
     WalInfo("------- %s ---------\n",__FUNCTION__);
     /* check the parameter name and set the corresponding value */
     if( AnscEqualString(ParamName, "RfcEnable", TRUE))
     {
-        pMyObject->RfcEnable = bValue;
-        return TRUE;
+	if(bValue == TRUE)
+	{
+	    sprintf(buf, "%s", "true");	 
+	}
+	else
+	{
+	    sprintf(buf, "%s", "false");	 
+	}  
+
+	if(syscfg_set(NULL, "WebConfigRfcEnabled", buf) != 0)
+	{
+		WalError("syscfg_set failed\n");
+	}
+	else
+	{
+		if (syscfg_commit() != 0)
+		{
+		        WalError("syscfg_commit failed\n");
+		}
+		else
+		{
+		        pMyObject->RfcEnable = bValue;
+		}
+	}
+	
+	return TRUE;
     }
     return FALSE;
 }
@@ -121,11 +146,28 @@ X_RDK_WebConfig_SetParamIntValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    char buf[16]={0};
     /* check the parameter name and set the corresponding value */
     if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
     {
-        pMyObject->PeriodicSyncCheckInterval = iValue;
-	    return TRUE;
+	sprintf(buf, "%d", value);
+	if(syscfg_set( NULL, "PeriodicSyncCheckInterval", buf) != 0)
+	{
+            WalError("syscfg_set failed\n");
+        }
+	else 
+	{
+	    if (syscfg_commit() != 0)
+            {
+                WalError("syscfg_commit failed\n");
+            }
+            else
+            {
+                pMyObject->PeriodicSyncCheckInterval = iValue;
+            }
+	}
+	
+	return TRUE;
     }
 
 	/* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
@@ -144,6 +186,7 @@ X_RDK_WebConfig_SetParamIntValue
     *  ConfigFile_AddEntry
     *  ConfigFile_DelEntry
     *  ConfigFile_GetParamBoolValue
+    *  ConfigFile_SetParamBoolValue
     *  ConfigFile_GetParamStringValue
     *  ConfigFile_SetParamStringValue
     *  ConfigFile_Validate
@@ -340,8 +383,8 @@ ConfigFile_GetParamBoolValue
     WalInfo("------- %s ---------\n",__FUNCTION__);
     if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
     {
-        /* collect value */
-        *pBool = pConfigFileEntry->ForceSyncCheck;
+        /* all read must return FALSE */
+        *pBool = FALSE;
         return TRUE;
     }
     
@@ -419,6 +462,32 @@ ConfigFile_GetParamStringValue
     WalInfo(" %s : EXIT \n", __FUNCTION__ );
 
     return -1;
+}
+
+BOOL
+ConfigFile_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
+    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
+    WalInfo("------- %s ---------\n",__FUNCTION__);
+    /* check the parameter name and set the corresponding value */
+    if( AnscEqualString(ParamName, "SyncCheckOK", TRUE))
+    {
+	pConfigFileEntry->SyncCheckOK = bValue;   // update in memory and commit to syscfg in commit func after validate
+        return TRUE;
+    }
+    else if(AnscEqualString(ParamName, "ForceSyncCheck", TRUE)) 
+    {
+	// TODO: trigger sync by sending pthread condition signal
+	return TRUE;
+    }
+
+    return FALSE;
 }
 
 BOOL
