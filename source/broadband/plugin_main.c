@@ -73,7 +73,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_GetParamStringValue", Webpa_GetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_GetParamUlongValue",  Webpa_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_SetParamUlongValue",  Webpa_SetParamUlongValue);
-
+#ifdef FEATURE_SUPPORT_WEBCONFIG
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamBoolValue",  X_RDK_WebConfig_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamBoolValue",  X_RDK_WebConfig_SetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamUlongValue",  X_RDK_WebConfig_GetParamUlongValue);
@@ -88,11 +88,12 @@ COSA_Init
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Synchronize" , ConfigFile_Synchronize);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetParamBoolValue", ConfigFile_GetParamBoolValue);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetParamStringValue", ConfigFile_GetParamStringValue);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_SetParamBoolValue", ConfigFile_SetParamBoolValue);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_SetParamStringValue", ConfigFile_SetParamStringValue);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Commit", ConfigFile_Commit);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Validate", ConfigFile_Validate);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Rollback", ConfigFile_Rollback);
-
+#endif
     /* Create backend framework */
     g_pCosaBEManager = (PCOSA_BACKEND_MANAGER_OBJECT)CosaBackEndManagerCreate();
 

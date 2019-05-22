@@ -145,6 +145,7 @@ X_RDK_WebConfig_SetParamIntValue
     *  ConfigFile_DelEntry
     *  ConfigFile_GetParamBoolValue
     *  ConfigFile_GetParamStringValue
+    *  ConfigFile_SetParamBoolValue
     *  ConfigFile_SetParamStringValue
     *  ConfigFile_Validate
     *  ConfigFile_Commit
@@ -401,17 +402,17 @@ ConfigFile_GetParamStringValue
         }
     }
 
-    if( AnscEqualString(ParamName, "DocVersionSyncSuccessDateTime", TRUE))
+    if( AnscEqualString(ParamName, "PreviousSyncDateTime", TRUE))
     {
         /* collect value */
-        if ( AnscSizeOfString(pConfigFileEntry->DocVersionSyncSuccessDateTime) < *pUlSize)
+        if ( AnscSizeOfString(pConfigFileEntry->PreviousSyncDateTime) < *pUlSize)
         {
-            AnscCopyString(pValue, pConfigFileEntry->DocVersionSyncSuccessDateTime);
+            AnscCopyString(pValue, pConfigFileEntry->PreviousSyncDateTime);
             return 0;
         }
         else
         {
-            *pUlSize = AnscSizeOfString(pConfigFileEntry->DocVersionSyncSuccessDateTime)+1;
+            *pUlSize = AnscSizeOfString(pConfigFileEntry->PreviousSyncDateTime)+1;
             return 1;
         }
     }
@@ -419,6 +420,26 @@ ConfigFile_GetParamStringValue
     WalInfo(" %s : EXIT \n", __FUNCTION__ );
 
     return -1;
+}
+
+BOOL
+ConfigFile_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
+    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
+    WalInfo("------- %s ---------\n",__FUNCTION__);
+    /* check the parameter name and set the corresponding value */
+    if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
+    {
+        pConfigFileEntry->ForceSyncCheck = bValue;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL
@@ -446,10 +467,10 @@ ConfigFile_SetParamStringValue
         AnscCopyString( pConfigFileEntry->Version, strValue );
 	return TRUE;
     }
-    else if( AnscEqualString(ParamName, "DocVersionSyncSuccessDateTime", TRUE))
+    else if( AnscEqualString(ParamName, "PreviousSyncDateTime", TRUE))
     {
 	/* save update to backup */
-        AnscCopyString( pConfigFileEntry->DocVersionSyncSuccessDateTime, strValue );
+        AnscCopyString( pConfigFileEntry->PreviousSyncDateTime, strValue );
         return TRUE;
     }
     WalInfo(" %s : EXIT \n", __FUNCTION__ );
