@@ -29,7 +29,6 @@
 /*----------------------------------------------------------------------------*/
 static WDMP_STATUS validate_cmc_and_cid(test_set_req_t *testSetReq, char *dbCMC, char *dbCID);
 static WDMP_STATUS set_cmc_and_cid(char *dbCMC, char *cid, int isNew);
-static WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
 static WDMP_STATUS validate_table_object(table_req_t *tableObj);
 static void setRebootReason(param_t param, WEBPA_SET_TYPE setType);
 
@@ -577,7 +576,7 @@ static WDMP_STATUS set_cmc_and_cid(char *dbCMC, char *cid, int isNew)
  * @param[in] param arry if parameters
  * @param[in] paramCount input cid
  */
-static WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type)
+WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type)
 {
         int i = 0;
         WalPrint("------------ validate_parameter ----------\n");

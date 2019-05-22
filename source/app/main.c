@@ -9,6 +9,9 @@
 #include "signal.h"
 #include "webpa_adapter.h"
 #include "libpd.h"
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#include <curl/curl.h>
+#endif
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
 #endif
@@ -54,12 +57,18 @@ int main()
 	WalInfo("Syncing backend manager with DB....\n");
 	CosaWebpaSyncDB();
 	WalInfo("Webpa banckend manager is in sync with DB\n");
-	initComponentCaching();
+
+	initComponentCaching(ret);
 	// Initialize Apply WiFi Settings handler
 	initApplyWiFiSettings();
 	initNotifyTask(ret);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+#endif
 	parodus_receive_wait();
- 
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+curl_global_cleanup();
+#endif
 	WalInfo("Exiting webpa main thread!!\n");
 	return 1;
 }
