@@ -223,6 +223,26 @@ void macToLower(char macValue[],char macConverted[]);
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
 
+/**
+ * @brief validate_parameter validates parameter values
+ *
+ * @param[in] param arry if parameters
+ * @param[in] paramCount input cid
+ */
+WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
+
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+/*
+ * @brief webConfig getter function to get systemReadyTime from webpa
+ * @return systemReadyTime in UTC format.
+ */
+char *get_global_systemReadyTime();
+
+/*
+ * @brief To initiate webConfig Task handling
+ */
+void initWebConfigTask();
+#endif
 BOOL get_eth_wan_status();
 
 WDMP_STATUS check_ethernet_wan_status();
