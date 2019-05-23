@@ -150,7 +150,7 @@ X_RDK_WebConfig_SetParamIntValue
     /* check the parameter name and set the corresponding value */
     if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
     {
-	sprintf(buf, "%d", value);
+	sprintf(buf, "%d", iValue);
 	if(syscfg_set( NULL, "PeriodicSyncCheckInterval", buf) != 0)
 	{
             WalError("syscfg_set failed\n");
