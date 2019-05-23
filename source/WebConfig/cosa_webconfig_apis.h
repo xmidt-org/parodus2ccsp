@@ -109,3 +109,9 @@ PCOSA_DML_CONFIGFILE_CONTAINER
 CosaDmlGetConfigFile(    
         ANSC_HANDLE                 hThisObject
     );
+
+PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
+CosaDmlGetConfigFileEntry
+    (
+        ULONG InstanceNumber
+    );

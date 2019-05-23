@@ -132,6 +132,7 @@ X_RDK_WebConfig_SetParamIntValue
     *  ConfigFile_Synchronize
     *  ConfigFile_GetParamBoolValue
     *  ConfigFile_GetParamStringValue
+    *  ConfigFile_SetParamBoolValue
     *  ConfigFile_SetParamStringValue
     *  ConfigFile_Validate
     *  ConfigFile_Commit
@@ -193,6 +194,14 @@ ConfigFile_GetParamStringValue
         char*                       ParamName,
         char*                       pValue,
         ULONG*                      pUlSize
+    );
+
+BOOL
+ConfigFile_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
     );
 
 BOOL

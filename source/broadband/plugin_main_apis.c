@@ -69,6 +69,7 @@
 #include "cosa_webpa_apis.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include "cosa_webconfig_apis.h"
+#include "webconfig_log.h"
 #endif
 #include "webpa_adapter.h"
 
@@ -170,7 +171,30 @@ CosaBackEndManagerInitialize
 #ifdef FEATURE_SUPPORT_WEBCONFIG
     pMyObject->hWebConfig  = (ANSC_HANDLE)CosaWebConfigCreate();
     AnscTraceWarning(("  CosaWebConfigCreate done!\n"));
-	WalInfo("  CosaWebConfigCreate done!\n");
+	WebConfigLog("  CosaWebConfigCreate done!\n");
+	/*if(pMyObject->hWebConfig != NULL)
+	{
+		WebConfigLog("pMyObject->hWebConfig->RfcEnable:%d\n",pMyObject->hWebConfig->RfcEnable);
+		WebConfigLog("pMyObject->hWebConfig->PeriodicSyncCheckInterval:%d\n",pMyObject->hWebConfig->PeriodicSyncCheckInterval);
+		if(pMyObject->hWebConfig->pConfigFileContainer != NULL)
+		{
+			WebConfigLog("pMyObject->hWebConfig->pConfigFileContainer->ConfigFileEntryCount:%d\n",pMyObject->hWebConfig->pConfigFileContainer->ConfigFileEntryCount);
+			if(pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable != NULL)
+			{
+				int i = 0;
+				for(i=0; i<pMyObject->hWebConfig->pConfigFileContainer->ConfigFileEntryCount; i++)
+				{
+					WebConfigLog("pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[%d].InstanceNumber:%d\n",i,pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[i].InstanceNumber);
+					WebConfigLog("pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[%d].URL:%s\n",i,pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[i].URL);
+					WebConfigLog("pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[%d].Version:%s\n",i,pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[i].Version);
+					WebConfigLog("pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck:%d\n",i,pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
+					WebConfigLog("pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK:%d\n",i,pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
+					WebConfigLog("pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[%d].PreviousSyncDateTime:%s\n",i,pMyObject->hWebConfig->pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime);					
+				}
+			}
+		}
+	}*/
+	WebConfigLog("----------- %s ----------- EXIT ------\n",__FUNCTION__);
 #endif
 
     return returnStatus;

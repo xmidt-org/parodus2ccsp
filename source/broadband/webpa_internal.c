@@ -141,10 +141,10 @@ void initComponentCaching(int status)
 {
         int err = 0;
 	pthread_t threadId;
-	int *device_status = (int *) malloc(sizeof(int));
-	*device_status = status;
+	int device_status = (int) malloc(sizeof(int));
+	device_status = status;
 
-	err = pthread_create(&threadId, NULL, WALInit, (void *) device_status);
+	err = pthread_create(&threadId, NULL, WALInit, (void *) &device_status);
 	if (err != 0)
 	{
 		WalError("Error creating WALInit thread :[%s]\n", strerror(err));
@@ -228,10 +228,10 @@ static void *WALInit(void *status)
 	WalPrint("------------ WALInit ----------\n");
 	pthread_detach(pthread_self());
 	waitUntilSystemReady();
-	WalInfo("FEATURE_SUPPORT_WEBCONFIG is %d\n", FEATURE_SUPPORT_WEBCONFIG);
+	
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	//Function to start webConfig operation after system ready.
-	initWebConfigTask(*(int *)status);
+	initWebConfigTask((int *)status);
 #endif
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
