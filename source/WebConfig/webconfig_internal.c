@@ -110,10 +110,8 @@ static void *WebConfigTask(void *status)
 		configRet = requestWebConfigData(&webConfigData, r_count, index,(int)status, &res_code);
 		WalInfo("requestWebConfigData done\n");
 		WAL_FREE(status);
-		WalInfo("free for status done\n");
 		if(configRet == 0)
 		{
-			WalInfo("B4 handleHttpResponse\n");
 			rv = handleHttpResponse(res_code, webConfigData);
 			if(rv ==1)
 			{
@@ -176,7 +174,6 @@ int handleHttpResponse(long response_code, char *webConfigData)
 	else if(response_code == 403)
 	{
 		WalError("Token is expired, fetch new token. response_code:%d\n", response_code);
-		WalInfo("serialNum is %s\n",serialNum);
 		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
 		WalInfo("createNewAuthToken done in 403 case\n");
 	}
@@ -185,9 +182,7 @@ int handleHttpResponse(long response_code, char *webConfigData)
 		WalInfo("No action required from client. response_code:%d\n", response_code);
 		return 1;
 	}
-	WalInfo("B4 first_digit\n");
 	first_digit = (int)(response_code / pow(10, (int)log10(response_code)));
-	WalInfo("First digit is %d\n", first_digit);
 	if((response_code !=403) && (first_digit == 4)) //4xx
 	{
 		WalError("Action not supported. response_code:%d\n", response_code);
@@ -228,8 +223,6 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 	struct token_data data;
 	data.size = 0;
 
-	WalInfo("-----------start of requestWebConfigData --------\n");
-
 	curl = curl_easy_init();
 	if(curl)
 	{
@@ -242,7 +235,6 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		data.data[0] = '\0';
 		createCurlheader(list, &headers_list, status);
-		WalInfo("createCurlheader done\n");
 		URL_param = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(URL_param !=NULL)
 		{
@@ -253,21 +245,16 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			//webConfigURL = getParameterValue(URL_param, &paramType);
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
 		}
-		WalInfo("setting CURLOPT_TIMEOUT\n");
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, CURL_TIMEOUT_SEC);
-		WalInfo("B4 get interface\n");
 		get_webCfg_interface(&interface);
-		WalInfo("After get_webCfg_interface\n");
 		if(interface !=NULL && strlen(interface) >0)
 		{
 			curl_easy_setopt(curl, CURLOPT_INTERFACE, interface);
 		}
-		WalInfo("setting CURLOPT_WRITEFUNCTION\n");
 		// set callback for writing received data 
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_fn);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
 
-		WalInfo("setting headers_list\n");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers_list);
 
 		// setting curl resolve option as default mode.
@@ -287,76 +274,60 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			WalInfo("curl Ip resolve option set as default mode\n");
 			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER);
 		}
-		WalInfo("setting CAINFO\n");
 		curl_easy_setopt(curl, CURLOPT_CAINFO, CA_CERT_PATH);
-		WalInfo("setting CURLOPT_SSL_VERIFYPEER\n");
 		// disconnect if it is failed to validate server's cert 
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-		WalInfo("setting CAINFO\n");
 		// Verify the certificate's name against host 
   		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-		WalInfo("setting VERIFYHOST\n");
 		// To use TLS version 1.2 or later 
   		curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
-		WalInfo("setting SSLVERSION\n");
 		// To follow HTTP 3xx redirections
   		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-		WalInfo("setting FOLLOWLOCATION\n");
 		// Perform the request, res will get the return code 
 		res = curl_easy_perform(curl);
-		WalInfo("After curl_easy_perform\n");
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 		WalInfo("webConfig curl response %d http_code %d\n", res, response_code);
 		*code = response_code;
-		WalInfo("B4 CURLINFO_TOTAL_TIME\n");
 		time_res = curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
 		if(time_res == 0)
 		{
 			WalInfo("curl response Time: %.1f seconds\n", total);
 		}
-		WalInfo("free headers_list\n");
 		curl_slist_free_all(headers_list);
-		WalInfo("free URL_param\n");
 		WAL_FREE(URL_param);
-		WalInfo("free webConfigURL\n");
 		WAL_FREE(webConfigURL);
-		WalInfo("free done\n");
 		if(res != 0)
 		{
 			WalError("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 		}
 		else
 		{
-			//content_res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
-			//if(!content_res && ct)
-			//{
-			//	if(strcmp(ct, "application/json") !=0)
-			//	{
-			//		WalError("Invalid Content-Type\n");
-		//		}
-			//	else
-			//	{
-				if(response_code == 200)
+                        WalInfo("checking content type\n");
+			content_res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+			if(!content_res && ct)
+			{
+				if(strcmp(ct, "application/json") !=0)
 				{
-					WalInfo("copying to configData\n");
-					*configData = strdup(data.data);
-					WalInfo("configData received from cloud is %s\n", *configData);
+					WalError("Invalid Content-Type\n");
 				}
-			//}
-			
+				else
+				{
+                                        if(response_code == 200)
+                                        {
+                                                *configData = strdup(data.data);
+                                                WalInfo("configData received from cloud is %s\n", *configData);
+                                        }
+                                }
+			}
 		}
-		WalInfo("free data.data\n");
 		WAL_FREE(data.data);
-		WalInfo("B4 curl_easy_cleanup\n");
 		curl_easy_cleanup(curl);
 		rv=0;
-		WalInfo("curl_easy_cleanup done\n");
 	}
 	else
 	{
 		WalError("curl init failure\n");
 	}
-	WalInfo("-----------End of requestWebConfigData --------\n");
 	return rv;
 }
 
@@ -396,15 +367,10 @@ int processJsonDocument(char *jsonData)
 {
 	cJSON *paramArray = NULL;
 	int parseStatus = 0;
-	int rollbackRet=0;
-	int i=0, item_size=0, getStatus =-1;
-	int getRet=0, count =0, setRet2=0, rollbackRet2=0;
+	int i=0;
 	req_struct *reqObj;
 	int paramCount =0;
-	param_t *getVal = NULL;
-	param_t *storeGetvalArr = NULL;
-	param_t *globalRollbackVal=NULL;
-	WDMP_STATUS setRet = WDMP_FAILURE, valid_ret = WDMP_FAILURE;
+	WDMP_STATUS valid_ret = WDMP_FAILURE;
 	WDMP_STATUS ret = WDMP_FAILURE;
 
 	parseStatus = parseJsonData(jsonData, &reqObj);
@@ -415,10 +381,9 @@ int processJsonDocument(char *jsonData)
 		paramCount = (int)reqObj->u.setReq->paramCnt;
 		for (i = 0; i < paramCount; i++) 
 		{
-		        WalPrint("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
-		        WalPrint("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
-		        WalPrint("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
-
+		        WalInfo("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
+		        WalInfo("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
+		        WalInfo("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
 		}
 
 		valid_ret = validate_parameter(reqObj->u.setReq->param, paramCount, reqObj->reqType);
@@ -426,8 +391,16 @@ int processJsonDocument(char *jsonData)
 		if(valid_ret == WDMP_SUCCESS)
 		{
 			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret);
-			WalInfo("setValues success. ret : %d\n", ret);
-			return 1;
+                        if(ret == WDMP_SUCCESS)
+                        {
+                                WalInfo("setValues success. ret : %d\n", ret);
+                                return 1;
+                        }
+                        else
+                        {
+                              WalError("setValues Failed. ret : %d\n", ret);
+                              return 0;
+                        }
 		}
 		else
 		{
@@ -446,7 +419,7 @@ int processJsonDocument(char *jsonData)
 int parseJsonData(char* jsonData, req_struct **req_obj)
 {
 	cJSON *json = NULL;
-	cJSON *paramData = NULL;
+	//cJSON *paramData = NULL;
 	cJSON *paramArray = NULL;
 	int i=0, isValid =0;
 	int rv =-1;
@@ -477,9 +450,9 @@ int parseJsonData(char* jsonData, req_struct **req_obj)
                 	memset((reqObj), 0, sizeof(req_struct));
 
 			//testing purpose as json format is differnt in test server
-			paramData = cJSON_GetObjectItem( json, "data" );
-			//parse_set_request(json, &reqObj, WDMP_TR181); testing purpose.
-			parse_set_request(paramData, &reqObj, WDMP_TR181);
+			//paramData = cJSON_GetObjectItem( json, "data" );
+			parse_set_request(json, &reqObj, WDMP_TR181);
+        		//parse_set_request(paramData, &reqObj, WDMP_TR181);
 			if(reqObj != NULL)
         		{
 				*req_obj = reqObj;	
@@ -616,7 +589,6 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 
 	//Fetch auth JWT token from cloud.
 	getAuthToken();
-	WalInfo("webpa_auth_token is %s\n", webpa_auth_token);
 
 	auth_header = (char *) malloc(sizeof(char)*MAX_HEADER_LEN);
 	if(auth_header !=NULL)
@@ -634,7 +606,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		if(ETAG !=NULL)
 		{
 			snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ETAG);
-			WalInfo("\nversion_header formed %s\n", version_header);
+			WalInfo("version_header formed %s\n", version_header);
 			list = curl_slist_append(list, version_header);
 			WAL_FREE(version_header);
 		}
@@ -718,21 +690,17 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 
         if(strlen(g_systemReadyTime) ==0)
         {
-                WalInfo("updating g_systemReadyTime in first case\n");
                 systemReadyTime = get_global_systemReadyTime();
                 if(systemReadyTime !=NULL)
                 {
                        strncpy(g_systemReadyTime, systemReadyTime, sizeof(g_systemReadyTime));
                        WalInfo("g_systemReadyTime fetched is %s\n", g_systemReadyTime);
                        WAL_FREE(systemReadyTime);
-                       WalInfo("systemReadyTime free done\n");
                 }
         }
 
-        WalInfo("checking g_systemReadyTime\n");
         if(strlen(g_systemReadyTime))
         {
-                WalInfo("adding g_systemReadyTime header\n");
                 systemReadyTime_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
                 if(systemReadyTime_header !=NULL)
                 {
@@ -818,7 +786,6 @@ void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_seria
 	//Call create script
 	char output[12] = {'\0'};
 	execute_token_script(output,WEBPA_CREATE_HEADER,sizeof(output),hw_mac,hw_serial_number);
-	WalInfo("output is %s. strlen(output):%lu\n", output, strlen(output));
 	if (strlen(output)>0  && strcmp(output,"SUCCESS")==0)
 	{
 		//Call read script
@@ -841,25 +808,24 @@ void getAuthToken()
 	//local var to update webpa_auth_token only in success case
 	char output[4069] = {'\0'} ;
 	char *serial_number=NULL;
-	WalInfo("----------start of getAuthToken-------\n");
 	memset (webpa_auth_token, 0, sizeof(webpa_auth_token));
 
-	WalInfo("after memset of webpa_auth_token\n");
 	if( strlen(WEBPA_READ_HEADER) !=0 && strlen(WEBPA_CREATE_HEADER) !=0)
 	{
-                WalInfo("calling getDeviceMac\n");
                 getDeviceMac();
                 WalInfo("deviceMAC: %s\n",deviceMAC);
 
 		if( deviceMAC != NULL && strlen(deviceMAC) !=0 )
 		{
 			serial_number = getParameterValue(SERIAL_NUMBER);
-			WalInfo("serial_number fetched: %s\n", serial_number);
-			strncpy(serialNum ,serial_number, sizeof(serialNum));
-			WalInfo("serialNum: %s\n", serialNum);
-			WAL_FREE(serial_number);
+                        if(serial_number !=NULL)
+                        {
+			        strncpy(serialNum ,serial_number, sizeof(serialNum));
+			        WalInfo("serialNum: %s\n", serialNum);
+			        WAL_FREE(serial_number);
+                        }
 
-			if( serialNum != NULL && strlen(serialNum) !=0 )
+			if( serialNum != NULL && strlen(serialNum)>0 )
 			{
 				//set_global_hw_serial_number(hw_serial_number);
 				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), deviceMAC, serialNum);
