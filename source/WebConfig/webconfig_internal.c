@@ -13,6 +13,9 @@
 #include <curl/curl.h>
 #include "cJSON.h"
 #include <uuid/uuid.h>
+#include "ansc_platform.h"
+#include "ccsp_base_api.h"
+#include <sysevent/sysevent.h>
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -24,10 +27,12 @@
 #define WEBCFG_INTERFACE_DEFAULT   "erouter0"
 #define MAX_BUF_SIZE	           256
 #define WEB_CFG_FILE		      "/nvram/webConfig.json"
-#define MAX_PARAMETERNAME_LEN			4096
+#define MAX_HEADER_LEN			4096
+#define MAX_PARAMETERNAME_LEN       512
 #define WEBPA_READ_HEADER             "/etc/parodus/parodus_read_file.sh"
 #define WEBPA_CREATE_HEADER           "/etc/parodus/parodus_create_file.sh"
 #define BACKOFF_SLEEP_DELAY_SEC 	    10
+
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -38,14 +43,15 @@ struct token_data {
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
-char deviceMac[32]={'\0'};
+static char deviceMAC[32]={'\0'};
 char *ETAG="NONE";
 char serialNum[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
+pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
-static void *WebConfigTask();
+static void *WebConfigTask(void *status);
 int processJsonDocument(char *jsonData);
 int validateConfigFormat(cJSON *json, char *etag);
 int requestWebConfigData(char **configData, int r_count, int index, int status, long *code);
@@ -57,6 +63,8 @@ void getAuthToken();
 void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_serial_number);
 int handleHttpResponse(long response_code, char *webConfigData );
 static char* generate_trans_uuid();
+static void getDeviceMac();
+static void macToLowerCase(char macValue[]);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -66,7 +74,7 @@ void initWebConfigTask(int status)
 	int err = 0;
 	pthread_t threadId;
 
-	err = pthread_create(&threadId, NULL, WebConfigTask, (void *) device_status);
+	err = pthread_create(&threadId, NULL, WebConfigTask, (void *) status);
 	if (err != 0) 
 	{
 		WalError("Error creating WebConfigTask thread :[%s]\n", strerror(err));
@@ -98,7 +106,7 @@ static void *WebConfigTask(void *status)
 			break;
 		}
 		WalInfo("calling requestWebConfigData\n");
-		configRet = requestWebConfigData(&webConfigData, r_count, index, *(int *)status, &res_code);
+		configRet = requestWebConfigData(&webConfigData, r_count, index,(int)status, &res_code);
 		WalInfo("requestWebConfigData done\n");
 		WAL_FREE(status);
 		WalInfo("free for status done\n");
@@ -168,7 +176,7 @@ int handleHttpResponse(long response_code, char *webConfigData)
 	{
 		WalError("Token is expired, fetch new token. response_code:%d\n", response_code);
 		WalInfo("serialNum is %s\n",serialNum);
-		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMac, serialNum );
+		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
 		WalInfo("createNewAuthToken done in 403 case\n");
 	}
 	else if(response_code == 429)
@@ -238,7 +246,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		if(URL_param !=NULL)
 		{
 			//snprintf(URL_param, MAX_BUF_SIZE, "Device.X_RDK_WebConfig.ConfigFile.[%d].URL", i);//testing purpose.
-			snprintf(URL_param, MAX_BUF_SIZE, "http://96.116.56.207:8080/api/v4/gateway-cpe/%s/config/voice", deviceMac);
+			snprintf(URL_param, MAX_BUF_SIZE, "http://96.116.56.207:8080/api/v4/gateway-cpe/%s/config/voice", deviceMAC);
 			webConfigURL = strdup(URL_param); //testing. remove this.
 			WalInfo("webConfigURL is %s\n", webConfigURL);
 			//webConfigURL = getParameterValue(URL_param, &paramType);
@@ -391,7 +399,6 @@ int processJsonDocument(char *jsonData)
 	int i=0, item_size=0, getStatus =-1;
 	int getRet=0, count =0, setRet2=0, rollbackRet2=0;
 	req_struct *reqObj;
-	const char *getParamList[MAX_PARAMETERNAME_LEN];
 	int paramCount =0;
 	param_t *getVal = NULL;
 	param_t *storeGetvalArr = NULL;
@@ -611,10 +618,10 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	getAuthToken();
 	WalInfo("webpa_auth_token is %s\n", webpa_auth_token);
 
-	auth_header = (char *) malloc(sizeof(char)*MAX_PARAMETERNAME_LEN);
+	auth_header = (char *) malloc(sizeof(char)*MAX_HEADER_LEN);
 	if(auth_header !=NULL)
 	{
-		snprintf(auth_header, MAX_PARAMETERNAME_LEN, "Authorization:Bearer %s", (0 < strlen(webpa_auth_token) ? webpa_auth_token : NULL));
+		snprintf(auth_header, MAX_HEADER_LEN, "Authorization:Bearer %s", (0 < strlen(webpa_auth_token) ? webpa_auth_token : NULL));
 		list = curl_slist_append(list, auth_header);
 		WAL_FREE(auth_header);
 	}
@@ -826,8 +833,6 @@ void getAuthToken()
 {
 	//local var to update webpa_auth_token only in success case
 	char output[4069] = {'\0'} ;
-	char *macID = NULL;
-	char deviceMACValue[32] = { '\0' };
 	char *serial_number=NULL;
 	WalInfo("----------start of getAuthToken-------\n");
 	memset (webpa_auth_token, 0, sizeof(webpa_auth_token));
@@ -835,26 +840,22 @@ void getAuthToken()
 	WalInfo("after memset of webpa_auth_token\n");
 	if( strlen(WEBPA_READ_HEADER) !=0 && strlen(WEBPA_CREATE_HEADER) !=0)
 	{
-		macID = getParameterValue(DEVICE_MAC);
-		if (macID != NULL)
-		{
-		    strncpy(deviceMACValue, macID, strlen(macID)+1);
-		    macToLower(deviceMACValue, deviceMac);
-		    WalInfo("deviceMAC: %s\n", deviceMac);
-		    WAL_FREE(macID);
-		}
-		if( deviceMac != NULL && strlen(deviceMac) !=0 )
+                WalInfo("calling getDeviceMac\n");
+                getDeviceMac();
+                WalInfo("deviceMAC: %s\n",deviceMAC);
+
+		if( deviceMAC != NULL && strlen(deviceMAC) !=0 )
 		{
 			serial_number = getParameterValue(SERIAL_NUMBER);
 			WalInfo("serial_number fetched: %s\n", serial_number);
-			serialNum = strdup(serial_number);
+			strncpy(serialNum ,serial_number, sizeof(serialNum));
 			WalInfo("serialNum: %s\n", serialNum);
 			WAL_FREE(serial_number);
 
 			if( serialNum != NULL && strlen(serialNum) !=0 )
 			{
 				//set_global_hw_serial_number(hw_serial_number);
-				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), deviceMac, serialNum);
+				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), deviceMAC, serialNum);
 				if ((strlen(output) == 0))
 				{
 					WalError("Unable to get auth token\n");
@@ -863,7 +864,7 @@ void getAuthToken()
 				{
 					WalInfo("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
 					//Call create/acquisition script
-					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMac, serialNum );
+					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
 				}
 				else
 				{
@@ -885,4 +886,114 @@ void getAuthToken()
 	{
 		WalInfo("Both read and write file are NULL \n");
 	}
+}
+
+
+static void getDeviceMac()
+{
+    int retryCount = 0;
+
+    while(!strlen(deviceMAC))
+    {
+	pthread_mutex_lock(&device_mac_mutex);
+
+        int ret = -1, size =0, val_size =0,cnt =0;
+        char compName[MAX_PARAMETERNAME_LEN/2] = { '\0' };
+        char dbusPath[MAX_PARAMETERNAME_LEN/2] = { '\0' };
+        parameterValStruct_t **parameterval = NULL;
+        char *getList[] = {DEVICE_MAC};
+        componentStruct_t **        ppComponents = NULL;
+        char dst_pathname_cr[256] = {0};
+
+	if (strlen(deviceMAC))
+	{
+	        pthread_mutex_unlock(&device_mac_mutex);
+	        break;
+	}
+        sprintf(dst_pathname_cr, "%s%s", "eRT.", CCSP_DBUS_INTERFACE_CR);
+        ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle, dst_pathname_cr, DEVICE_MAC, "", &ppComponents, &size);
+        if ( ret == CCSP_SUCCESS && size >= 1)
+        {
+                strncpy(compName, ppComponents[0]->componentName, sizeof(compName)-1);
+                strncpy(dbusPath, ppComponents[0]->dbusPath, sizeof(compName)-1);
+        }
+        else
+        {
+                WalError("Failed to get component for %s ret: %d\n",DEVICE_MAC,ret);
+                retryCount++;
+        }
+        free_componentStruct_t(bus_handle, size, ppComponents);
+        if(strlen(compName) != 0 && strlen(dbusPath) != 0)
+        {
+                ret = CcspBaseIf_getParameterValues(bus_handle,
+                        compName, dbusPath,
+                        getList,
+                        1, &val_size, &parameterval);
+                if(ret == CCSP_SUCCESS)
+                {
+                    for (cnt = 0; cnt < val_size; cnt++)
+                    {
+                        WalInfo("parameterval[%d]->parameterName : %s\n",cnt,parameterval[cnt]->parameterName);
+                        WalInfo("parameterval[%d]->parameterValue : %s\n",cnt,parameterval[cnt]->parameterValue);
+                        WalInfo("parameterval[%d]->type :%d\n",cnt,parameterval[cnt]->type);
+                    }
+                    macToLowerCase(parameterval[0]->parameterValue);
+                    retryCount = 0;
+                }
+                else
+                {
+                        WalError("Failed to get values for %s ret: %d\n",getList[0],ret);
+                        retryCount++;
+                }
+                free_parameterValStruct_t(bus_handle, val_size, parameterval);
+        }
+        if(retryCount == 0)
+        {
+                WalInfo("deviceMAC is %s\n",deviceMAC);
+                pthread_mutex_unlock(&device_mac_mutex);
+                break;
+        }
+        else
+        {
+                if(retryCount > 5 )
+                {
+                        WalError("Unable to get CM Mac after %d retry attempts..\n", retryCount);
+                        pthread_mutex_unlock(&device_mac_mutex);
+                        break;
+                }
+                else
+                {
+                        WalError("Failed to GetValue for MAC. Retrying...retryCount %d\n", retryCount);
+                        pthread_mutex_unlock(&device_mac_mutex);
+                        sleep(10);
+                }
+        }
+    }
+}
+
+static void macToLowerCase(char macValue[])
+{
+    int i = 0;
+    int j;
+    char *token[32]={'\0'};
+    char tmp[32]={'\0'};
+    strncpy(tmp, macValue,sizeof(tmp)-1);
+    token[i] = strtok(tmp, ":");
+    if(token[i]!=NULL)
+    {
+        strncpy(deviceMAC, token[i],sizeof(deviceMAC)-1);
+        deviceMAC[31]='\0';
+        i++;
+    }
+    while ((token[i] = strtok(NULL, ":")) != NULL)
+    {
+        strncat(deviceMAC, token[i],sizeof(deviceMAC)-1);
+        deviceMAC[31]='\0';
+        i++;
+    }
+    deviceMAC[31]='\0';
+    for(j = 0; deviceMAC[j]; j++)
+    {
+        deviceMAC[j] = tolower(deviceMAC[j]);
+    }
 }
