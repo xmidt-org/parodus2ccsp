@@ -347,7 +347,7 @@ CosaDmlGetConfigFile(
                     WalInfo("pConfigFileEntry->SyncCheckOK: %d\n",pConfigFileEntry->SyncCheckOK);
                     pConfigFileContainer->pConfigFileTable[i].SyncCheckOK = pConfigFileEntry->SyncCheckOK;
                     WalInfo("pConfigFileEntry->PreviousSyncDateTime: %s\n",pConfigFileEntry->PreviousSyncDateTime);
-                    pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime = AnscCloneString(pConfigFileEntry->PreviousSyncDateTime);
+                    AnscCopyString(pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime, pConfigFileEntry->PreviousSyncDateTime);
                     i++;
                     tok = strtok(NULL, ",");
                 }
@@ -424,7 +424,7 @@ CosaDmlGetConfigFileEntry
 	if( 0 == syscfg_get( NULL, ParamName, tmpbuf, sizeof(tmpbuf)))
 	{
 		WalInfo("PreviousSyncDateTime at %d:%s\n",InstanceNumber,tmpbuf);
-		pConfigFileEntry->PreviousSyncDateTime=strndup(tmpbuf,sizeof(tmpbuf));
+		AnscCopyString(pConfigFileEntry->PreviousSyncDateTime,tmpbuf);
 	}
 #endif
     WalInfo("-------- %s ----- EXIT ------\n",__FUNCTION__);
