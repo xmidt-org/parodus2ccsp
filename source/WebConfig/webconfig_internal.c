@@ -44,6 +44,7 @@ struct token_data {
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 static char deviceMAC[32]={'\0'};
+static char g_systemReadyTime[64]={'\0'};
 char *ETAG="NONE";
 char serialNum[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
@@ -186,10 +187,10 @@ int handleHttpResponse(long response_code, char *webConfigData)
 	}
 	WalInfo("B4 first_digit\n");
 	first_digit = (int)(response_code / pow(10, (int)log10(response_code)));
-	printf("First digit is %d\n", first_digit);
-	if(first_digit == 4) //4xx
+	WalInfo("First digit is %d\n", first_digit);
+	if((response_code !=403) && (first_digit == 4)) //4xx
 	{
-		WalError("action not supported. response_code:%d\n", response_code);
+		WalError("Action not supported. response_code:%d\n", response_code);
 		return 1;
 	}
 	else //5xx & all other errors
@@ -613,7 +614,6 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	char *uuid_header = NULL;
 	char *transaction_uuid = NULL;
 
-	WalInfo("Start of createCurlheader\n");
 	//Fetch auth JWT token from cloud.
 	getAuthToken();
 	WalInfo("webpa_auth_token is %s\n", webpa_auth_token);
@@ -634,7 +634,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		if(ETAG !=NULL)
 		{
 			snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ETAG);
-			WalInfo("version_header formed %s\n", version_header);
+			WalInfo("\nversion_header formed %s\n", version_header);
 			list = curl_slist_append(list, version_header);
 			WAL_FREE(version_header);
 		}
@@ -652,7 +652,6 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		list = curl_slist_append(list, schema_header);
 		WAL_FREE(schema_header);
 	}
-	WalInfo("schema_header done\n");
 	bootTime = getParameterValue(DEVICE_BOOT_TIME);
 	if(bootTime !=NULL)
 	{
@@ -717,27 +716,38 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		WAL_FREE(currentTime_header);
 	}
 
-	systemReadyTime = get_global_systemReadyTime();
-	if(systemReadyTime !=NULL)
-	{
-		systemReadyTime_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
-		if(systemReadyTime_header !=NULL)
-		{
-			snprintf(systemReadyTime_header, MAX_BUF_SIZE, "X-System-Ready-Time: %s", systemReadyTime);
-			WalInfo("systemReadyTime_header formed %s\n", systemReadyTime_header);
-			list = curl_slist_append(list, systemReadyTime_header);
-			WAL_FREE(systemReadyTime_header);
-		}
-		WAL_FREE(systemReadyTime);
-	}
-	else
-	{
-		WalError("Failed to get systemReadyTime\n");
-	}
+        if(strlen(g_systemReadyTime) ==0)
+        {
+                WalInfo("updating g_systemReadyTime in first case\n");
+                systemReadyTime = get_global_systemReadyTime();
+                if(systemReadyTime !=NULL)
+                {
+                       strncpy(g_systemReadyTime, systemReadyTime, sizeof(g_systemReadyTime));
+                       WalInfo("g_systemReadyTime fetched is %s\n", g_systemReadyTime);
+                       WAL_FREE(systemReadyTime);
+                       WalInfo("systemReadyTime free done\n");
+                }
+        }
 
-	WalInfo("calculating transaction id\n");
+        WalInfo("checking g_systemReadyTime\n");
+        if(strlen(g_systemReadyTime))
+        {
+                WalInfo("adding g_systemReadyTime header\n");
+                systemReadyTime_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
+                if(systemReadyTime_header !=NULL)
+                {
+	                snprintf(systemReadyTime_header, MAX_BUF_SIZE, "X-System-Ready-Time: %s", g_systemReadyTime);
+	                WalInfo("systemReadyTime_header formed %s\n", systemReadyTime_header);
+	                list = curl_slist_append(list, systemReadyTime_header);
+	                WAL_FREE(systemReadyTime_header);
+                }
+        }
+        else
+        {
+                WalError("Failed to get systemReadyTime\n");
+        }
+
 	transaction_uuid = generate_trans_uuid();
-	WalInfo("transaction_uuid is %s\n", transaction_uuid);
 	if(transaction_uuid !=NULL)
 	{
 		uuid_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
@@ -754,9 +764,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	{
 		WalError("Failed to generate transaction_uuid\n");
 	}
-	WalInfo("uuid_header done\n");
 	*header_list = list;
-	WalInfo("End of createCurlheader\n");
 }
 
 static char* generate_trans_uuid()
@@ -772,7 +780,6 @@ static char* generate_trans_uuid()
 	{
 		transID = trans_id;
 	}
-	WalInfo("returning transID:%s\n", transID);
 	return transID;
 }
 
