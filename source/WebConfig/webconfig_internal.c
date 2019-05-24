@@ -49,6 +49,8 @@ char *ETAG="NONE";
 char serialNum[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t periodicsync_condition=PTHREAD_COND_INITIALIZER;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
@@ -69,6 +71,16 @@ static void macToLowerCase(char macValue[]);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
+
+pthread_cond_t *get_global_periodicsync_condition(void)
+{
+    return &periodicsync_condition;
+}
+
+pthread_mutex_t *get_global_periodicsync_mutex(void)
+{
+    return &periodicsync_mutex;
+}
 
 void initWebConfigTask(int status)
 {
@@ -95,8 +107,17 @@ static void *WebConfigTask(void *status)
 	long res_code;
 	int index;
 	int json_status=-1;
-	int retry_count=0, rv=0;
+	int retry_count=0, rv=0, rc=0;
+        struct timeval tp;
+        struct timespec ts;
+        time_t t;
+	int wait_flag=0;
+        int value =Get_PeriodicSyncCheckInterval();
 
+      while(1)
+      {
+	if(!wait_flag)
+	{
 	while(1)
 	{
 		//TODO: iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud. 
@@ -127,6 +148,30 @@ static void *WebConfigTask(void *status)
 		sleep(BACKOFF_SLEEP_DELAY_SEC);
 		retry_count++;
 	}
+	}
+
+                pthread_mutex_lock (&periodicsync_mutex);
+                gettimeofday(&tp, NULL);
+                ts.tv_sec = tp.tv_sec;
+                ts.tv_nsec = tp.tv_usec * 1000;
+                ts.tv_sec += value;
+                rv = pthread_cond_timedwait(&periodicsync_condition, &periodicsync_mutex, &ts);
+		value=Get_PeriodicSyncCheckInterval();
+                if(!rv)
+                {
+                        time(&t);
+			wait_flag=1;
+                        WalInfo("Recieved signal interput to change the sync interval to %d\n",value);
+                }
+                else if (rv == ETIMEDOUT)
+                {
+                        time(&t);
+			wait_flag=0;
+                        WalInfo("Periodic Sync Interval %d sec and syncing at %s\n",value,ctime(&t));
+                }
+			pthread_mutex_unlock(&periodicsync_mutex);
+
+    }
 	return NULL;
 }
 
