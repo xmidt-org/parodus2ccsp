@@ -131,7 +131,7 @@ static void waitUntilSystemReady();
 static void ccspSystemReadySignalCB(void* user_data);
 static int checkIfSystemReady();
 extern ANSC_HANDLE bus_handle;
-static void *WALInit();
+static void *WALInit(void *status);
 static void retryFailedComponentCaching();
 
 /*----------------------------------------------------------------------------*/
@@ -141,10 +141,8 @@ void initComponentCaching(int status)
 {
         int err = 0;
 	pthread_t threadId;
-	int *device_status = (int *) malloc(sizeof(int));
-	*device_status = status;
 
-	err = pthread_create(&threadId, NULL, WALInit, (void *) device_status);
+	err = pthread_create(&threadId, NULL, WALInit, (void *) status);
 	if (err != 0)
 	{
 		WalError("Error creating WALInit thread :[%s]\n", strerror(err));
@@ -228,10 +226,11 @@ static void *WALInit(void *status)
 	WalPrint("------------ WALInit ----------\n");
 	pthread_detach(pthread_self());
 	waitUntilSystemReady();
-	WalInfo("FEATURE_SUPPORT_WEBCONFIG is %d\n", FEATURE_SUPPORT_WEBCONFIG);
+	
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	//Function to start webConfig operation after system ready.
-	initWebConfigTask(*(int *)status);
+	WalInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
+	initWebConfigTask(((int)status));
 #endif
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
