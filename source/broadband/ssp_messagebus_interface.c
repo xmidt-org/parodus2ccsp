@@ -5,7 +5,7 @@
 *
 */
 #include "ssp_global.h"
-
+#include "webpa_adapter.h"
 
 ANSC_HANDLE                 bus_handle               = NULL;
 extern char                 g_Subsystem[32];
@@ -20,13 +20,13 @@ DBusHandlerResult CcspComp_path_message_func(DBusConnection  *conn,DBusMessage *
     const char *interface = dbus_message_get_interface(message);
     const char *method   = dbus_message_get_member(message);
     DBusMessage *reply;
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     reply = dbus_message_new_method_return (message);
     if (reply == NULL)
     {
         return DBUS_HANDLER_RESULT_HANDLED;
     }
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     return CcspBaseIf_base_path_message_func
                (
                    conn,
@@ -42,12 +42,13 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
 {
     ANSC_STATUS                 returnStatus       = ANSC_STATUS_SUCCESS;
     CCSP_Base_Func_CB           cb                 = {0};
-
+	WalInfo("--------- %s ----------\n",__FUNCTION__);
     if ( ! component_id || ! path )
     {
         CcspTraceError((" !!! ssp_Mbi_MessageBusEngage: component_id or path is NULL !!!\n"));
+		WalError(" !!! ssp_Mbi_MessageBusEngage: component_id or path is NULL !!!\n");
     }
-
+	WalInfo("B4 CCSP_Message_Bus_Init\n");
     /* Connect to message bus */
     returnStatus = 
         CCSP_Message_Bus_Init
@@ -58,15 +59,16 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
                 Ansc_AllocateMemory_Callback,           /* mallocfc, use default */
                 Ansc_FreeMemory_Callback                /* freefc,   use default */
             );
-
+	WalInfo("After CCSP_Message_Bus_Init\n");
     if ( returnStatus != ANSC_STATUS_SUCCESS )
     {
         CcspTraceError((" !!! SSD Message Bus Init ERROR !!!\n"));
-
+		WalError(" !!! SSD Message Bus Init ERROR !!!\n");
         return returnStatus;
     }
 
     CcspTraceInfo(("INFO: bus_handle: 0x%8x \n", bus_handle));
+	WalInfo("INFO: bus_handle: 0x%8x \n", bus_handle);
     g_MessageBusHandle_Irep = bus_handle;
     AnscCopyString(g_SubSysPrefix_Irep, g_Subsystem);
 
@@ -90,7 +92,7 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
     cb.busCheck               = ssp_Mbi_Buscheck;
 
     CcspBaseIf_SetCallback(bus_handle, &cb);
-
+	WalInfo("B4 CCSP_Message_Bus_Register_Path\n");
     /* Register service callback functions */
     returnStatus =
         CCSP_Message_Bus_Register_Path
@@ -100,11 +102,11 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
                 CcspComp_path_message_func,
                 bus_handle
             );
-
+	WalInfo("AFter CCSP_Message_Bus_Register_Path\n");
     if ( returnStatus != CCSP_Message_Bus_OK )
     {
         CcspTraceError((" !!! CCSP_Message_Bus_Register_Path ERROR returnStatus: %d\n!!!\n", returnStatus));
-
+		WalError(" !!! CCSP_Message_Bus_Register_Path ERROR returnStatus: %d\n!!!\n", returnStatus);
         return returnStatus;
     }
 
@@ -121,7 +123,7 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
     if ( returnStatus != CCSP_Message_Bus_OK )
     {
          CcspTraceError((" !!! CCSP_Message_Bus_Register_Event: CurrentSessionIDSignal ERROR returnStatus: %d!!!\n", returnStatus));
-
+		WalError(" !!! CCSP_Message_Bus_Register_Event: CurrentSessionIDSignal ERROR returnStatus: %d!!!\n", returnStatus);
         return returnStatus;
     }
 
