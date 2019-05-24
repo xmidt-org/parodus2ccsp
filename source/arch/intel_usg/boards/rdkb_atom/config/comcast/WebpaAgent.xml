@@ -105,7 +105,7 @@
                 </parameter>
                 <parameter>
                     <name>PeriodicSyncCheckInterval</name>
-                    <type>integer</type>
+                    <type>int</type>
                     <syntax>int</syntax>
                     <writable>true</writable>
                 </parameter>
@@ -123,6 +123,7 @@
                         <func_AddEntry>ConfigFile_AddEntry</func_AddEntry>
                         <func_DelEntry>ConfigFile_DelEntry</func_DelEntry>
                         <func_GetParamBoolValue>ConfigFile_GetParamBoolValue</func_GetParamBoolValue>
+			<func_SetParamBoolValue>ConfigFile_SetParamBoolValue</func_SetParamBoolValue>
                         <func_GetParamStringValue>ConfigFile_GetParamStringValue</func_GetParamStringValue>
                         <func_SetParamBoolValue>ConfigFile_SetParamBoolValue</func_SetParamBoolValue>
                         <func_SetParamStringValue>ConfigFile_SetParamStringValue</func_SetParamStringValue>

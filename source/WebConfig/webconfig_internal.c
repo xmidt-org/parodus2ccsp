@@ -12,6 +12,10 @@
 #include "webconfig_internal.h"
 #include <curl/curl.h>
 #include "cJSON.h"
+#include <uuid/uuid.h>
+#include "ansc_platform.h"
+#include "ccsp_base_api.h"
+#include <sysevent/sysevent.h>
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -23,10 +27,12 @@
 #define WEBCFG_INTERFACE_DEFAULT   "erouter0"
 #define MAX_BUF_SIZE	           256
 #define WEB_CFG_FILE		      "/nvram/webConfig.json"
-#define MAX_PARAMETERNAME_LEN			4096
+#define MAX_HEADER_LEN			4096
+#define MAX_PARAMETERNAME_LEN       512
 #define WEBPA_READ_HEADER             "/etc/parodus/parodus_read_file.sh"
 #define WEBPA_CREATE_HEADER           "/etc/parodus/parodus_create_file.sh"
 #define BACKOFF_SLEEP_DELAY_SEC 	    10
+
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -37,14 +43,16 @@ struct token_data {
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
-char deviceMac[32]={'\0'};
+static char deviceMAC[32]={'\0'};
+static char g_systemReadyTime[64]={'\0'};
 char *ETAG="NONE";
-static char *hw_serial_number = NULL;
+char serialNum[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
+pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
-static void *WebConfigTask();
+static void *WebConfigTask(void *status);
 int processJsonDocument(char *jsonData);
 int validateConfigFormat(cJSON *json, char *etag);
 int requestWebConfigData(char **configData, int r_count, int index, int status, long *code);
@@ -52,11 +60,12 @@ static void get_webCfg_interface(char **interface);
 void createCurlheader(struct curl_slist *list, struct curl_slist **header_list, int status);
 size_t write_callback_fn(void *buffer, size_t size, size_t nmemb, struct token_data *data);
 WDMP_STATUS setConfigParamValues( param_t paramVal[], int paramCount );
-void getAuthToken(char *webpa_auth_token);
+void getAuthToken();
 void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_serial_number);
 int handleHttpResponse(long response_code, char *webConfigData );
-char *get_global_hw_serial_number();
-void set_global_hw_serial_number(char *serNum);
+static char* generate_trans_uuid();
+static void getDeviceMac();
+static void macToLowerCase(char macValue[]);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -65,10 +74,8 @@ void initWebConfigTask(int status)
 {
 	int err = 0;
 	pthread_t threadId;
-	int *device_status = (int *) malloc(sizeof(int));
-	*device_status = status;
 
-	err = pthread_create(&threadId, NULL, WebConfigTask, (void *) device_status);
+	err = pthread_create(&threadId, NULL, WebConfigTask, (void *) status);
 	if (err != 0) 
 	{
 		WalError("Error creating WebConfigTask thread :[%s]\n", strerror(err));
@@ -100,13 +107,11 @@ static void *WebConfigTask(void *status)
 			break;
 		}
 		WalInfo("calling requestWebConfigData\n");
-		configRet = requestWebConfigData(&webConfigData, r_count, index, *(int *)status, &res_code);
+		configRet = requestWebConfigData(&webConfigData, r_count, index,(int)status, &res_code);
 		WalInfo("requestWebConfigData done\n");
 		WAL_FREE(status);
-		WalInfo("free for status done\n");
 		if(configRet == 0)
 		{
-			WalInfo("B4 handleHttpResponse\n");
 			rv = handleHttpResponse(res_code, webConfigData);
 			if(rv ==1)
 			{
@@ -143,9 +148,9 @@ int handleHttpResponse(long response_code, char *webConfigData)
 		{
 			WalInfo("webConfigData fetched successfully\n");
 			json_status = processJsonDocument(webConfigData);
-			WalInfo("freeing webConfigData\n");
-			WAL_FREE(webConfigData);
-			WalInfo("free for webConfigData done\n");
+			//WalInfo("freeing webConfigData\n");
+			//WAL_FREE(webConfigData);
+			//WalInfo("free for webConfigData done\n");
 			if(json_status == 1)
 			{
 				WalInfo("processJsonDocument success\n");
@@ -169,20 +174,18 @@ int handleHttpResponse(long response_code, char *webConfigData)
 	else if(response_code == 403)
 	{
 		WalError("Token is expired, fetch new token. response_code:%d\n", response_code);
-		WalInfo("get_global_hw_serial_number() is %s\n", get_global_hw_serial_number());
-		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMac, get_global_hw_serial_number() );
+		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
+		WalInfo("createNewAuthToken done in 403 case\n");
 	}
 	else if(response_code == 429)
 	{
 		WalInfo("No action required from client. response_code:%d\n", response_code);
 		return 1;
 	}
-	WalInfo("B4 first_digit\n");
 	first_digit = (int)(response_code / pow(10, (int)log10(response_code)));
-	printf("First digit is %d\n", first_digit);
-	if(first_digit == 4) //4xx
+	if((response_code !=403) && (first_digit == 4)) //4xx
 	{
-		WalError("action not supported. response_code:%d\n", response_code);
+		WalError("Action not supported. response_code:%d\n", response_code);
 		return 1;
 	}
 	else //5xx & all other errors
@@ -234,12 +237,11 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		data.data[0] = '\0';
 		createCurlheader(list, &headers_list, status);
-		WalInfo("createCurlheader done\n");
 		URL_param = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(URL_param !=NULL)
 		{
 			//snprintf(URL_param, MAX_BUF_SIZE, "Device.X_RDK_WebConfig.ConfigFile.[%d].URL", i);//testing purpose.
-			snprintf(URL_param, MAX_BUF_SIZE, "http://96.116.56.207:8080/api/v4/gateway-cpe/%s/config/voice", deviceMac);
+			snprintf(URL_param, MAX_BUF_SIZE, "http://96.116.56.207:8080/api/v4/gateway-cpe/%s/config/voice", deviceMAC);
 			webConfigURL = strdup(URL_param); //testing. remove this.
 			WalInfo("webConfigURL is %s\n", webConfigURL);
 			//webConfigURL = getParameterValue(URL_param, &paramType);
@@ -247,9 +249,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		WalInfo("setting CURLOPT_TIMEOUT\n");
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, CURL_TIMEOUT_SEC);
-		WalInfo("B4 get interface\n");
 		get_webCfg_interface(&interface);
-		WalInfo("After get_webCfg_interface\n");
 		if(interface !=NULL && strlen(interface) >0)
 		{
 			curl_easy_setopt(curl, CURLOPT_INTERFACE, interface);
@@ -279,28 +279,20 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			WalInfo("curl Ip resolve option set as default mode\n");
 			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER);
 		}
-		WalInfo("setting CAINFO\n");
 		curl_easy_setopt(curl, CURLOPT_CAINFO, CA_CERT_PATH);
-		WalInfo("setting CURLOPT_SSL_VERIFYPEER\n");
 		// disconnect if it is failed to validate server's cert 
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-		WalInfo("setting CAINFO\n");
 		// Verify the certificate's name against host 
   		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-		WalInfo("setting VERIFYHOST\n");
 		// To use TLS version 1.2 or later 
   		curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
-		WalInfo("setting SSLVERSION\n");
 		// To follow HTTP 3xx redirections
   		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-		WalInfo("setting FOLLOWLOCATION\n");
 		// Perform the request, res will get the return code 
 		res = curl_easy_perform(curl);
-		WalInfo("After curl_easy_perform\n");
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 		WalInfo("webConfig curl response %d http_code %d\n", res, response_code);
 		*code = response_code;
-		WalInfo("B4 CURLINFO_TOTAL_TIME\n");
 		time_res = curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
 		if(time_res == 0)
 		{
@@ -319,23 +311,23 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		else
 		{
-			//content_res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
-			//if(!content_res && ct)
-			//{
-			//	if(strcmp(ct, "application/json") !=0)
-			//	{
-			//		WalError("Invalid Content-Type\n");
-		//		}
-			//	else
-			//	{
-				if(response_code == 200)
+                        WalInfo("checking content type\n");
+			content_res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+			if(!content_res && ct)
+			{
+				if(strcmp(ct, "application/json") !=0)
 				{
-					WalInfo("copying to configData\n");
-					*configData = strdup(data.data);
-					WalInfo("configData received from cloud is %s\n", *configData);
+					WalError("Invalid Content-Type\n");
 				}
-			//}
-			
+				else
+				{
+                                        if(response_code == 200)
+                                        {
+                                                *configData = strdup(data.data);
+                                                WalInfo("configData received from cloud is %s\n", *configData);
+                                        }
+                                }
+			}
 		}
 		WalInfo("free data.data\n");
 		WAL_FREE(data.data);
@@ -388,16 +380,10 @@ int processJsonDocument(char *jsonData)
 {
 	cJSON *paramArray = NULL;
 	int parseStatus = 0;
-	int rollbackRet=0;
-	int i=0, item_size=0, getStatus =-1;
-	int getRet=0, count =0, setRet2=0, rollbackRet2=0;
+	int i=0;
 	req_struct *reqObj;
-	const char *getParamList[MAX_PARAMETERNAME_LEN];
 	int paramCount =0;
-	param_t *getVal = NULL;
-	param_t *storeGetvalArr = NULL;
-	param_t *globalRollbackVal=NULL;
-	WDMP_STATUS setRet = WDMP_FAILURE, valid_ret = WDMP_FAILURE;
+	WDMP_STATUS valid_ret = WDMP_FAILURE;
 	WDMP_STATUS ret = WDMP_FAILURE;
 
 	parseStatus = parseJsonData(jsonData, &reqObj);
@@ -408,10 +394,9 @@ int processJsonDocument(char *jsonData)
 		paramCount = (int)reqObj->u.setReq->paramCnt;
 		for (i = 0; i < paramCount; i++) 
 		{
-		        WalPrint("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
-		        WalPrint("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
-		        WalPrint("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
-
+		        WalInfo("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
+		        WalInfo("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
+		        WalInfo("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
 		}
 
 		valid_ret = validate_parameter(reqObj->u.setReq->param, paramCount, reqObj->reqType);
@@ -419,8 +404,16 @@ int processJsonDocument(char *jsonData)
 		if(valid_ret == WDMP_SUCCESS)
 		{
 			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret);
-			WalInfo("setValues success. ret : %d\n", ret);
-			return 1;
+                        if(ret == WDMP_SUCCESS)
+                        {
+                                WalInfo("setValues success. ret : %d\n", ret);
+                                return 1;
+                        }
+                        else
+                        {
+                              WalError("setValues Failed. ret : %d\n", ret);
+                              return 0;
+                        }
 		}
 		else
 		{
@@ -439,7 +432,7 @@ int processJsonDocument(char *jsonData)
 int parseJsonData(char* jsonData, req_struct **req_obj)
 {
 	cJSON *json = NULL;
-	cJSON *paramData = NULL;
+	//cJSON *paramData = NULL;
 	cJSON *paramArray = NULL;
 	int i=0, isValid =0;
 	int rv =-1;
@@ -470,9 +463,9 @@ int parseJsonData(char* jsonData, req_struct **req_obj)
                 	memset((reqObj), 0, sizeof(req_struct));
 
 			//testing purpose as json format is differnt in test server
-			paramData = cJSON_GetObjectItem( json, "data" );
-			//parse_set_request(json, &reqObj, WDMP_TR181); testing purpose.
-			parse_set_request(paramData, &reqObj, WDMP_TR181);
+			//paramData = cJSON_GetObjectItem( json, "data" );
+			parse_set_request(json, &reqObj, WDMP_TR181);
+        		//parse_set_request(paramData, &reqObj, WDMP_TR181);
 			if(reqObj != NULL)
         		{
 				*req_obj = reqObj;	
@@ -608,22 +601,24 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	//char webpa_auth_token[4096];
 	char *auth_header = NULL;
 	char *status_header=NULL;
+	char *schema_header=NULL;
 	char *bootTime = NULL, *bootTime_header = NULL;
 	char *FwVersion = NULL, *FwVersion_header=NULL;
 	char *systemReadyTime = NULL, *systemReadyTime_header=NULL;
 	struct timespec cTime;
 	char currentTime[32];
 	char *currentTime_header=NULL;
+	char *uuid_header = NULL;
+	char *transaction_uuid = NULL;
 
 	WalInfo("Start of createCurlheader\n");
 	//Fetch auth JWT token from cloud.
-	getAuthToken(webpa_auth_token); 
-	WalInfo("webpa_auth_token is %s\n", webpa_auth_token);
+	getAuthToken();
 
-	auth_header = (char *) malloc(sizeof(char)*MAX_PARAMETERNAME_LEN);
+	auth_header = (char *) malloc(sizeof(char)*MAX_HEADER_LEN);
 	if(auth_header !=NULL)
 	{
-		snprintf(auth_header, MAX_PARAMETERNAME_LEN, "Authorization:Bearer %s", (0 < strlen(webpa_auth_token) ? webpa_auth_token : NULL));
+		snprintf(auth_header, MAX_HEADER_LEN, "Authorization:Bearer %s", (0 < strlen(webpa_auth_token) ? webpa_auth_token : NULL));
 		list = curl_slist_append(list, auth_header);
 		WAL_FREE(auth_header);
 	}
@@ -635,7 +630,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		//snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:[%s]-[%d]", cur_firmware_ver, ETAG_version);
 		if(ETAG !=NULL)
 		{
-			snprintf(version_header, MAX_BUF_SIZE, "XV-Version:%s", ETAG);
+			snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ETAG);
 			WalInfo("version_header formed %s\n", version_header);
 			list = curl_slist_append(list, version_header);
 			WAL_FREE(version_header);
@@ -646,6 +641,14 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		}
 	}
 
+	schema_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
+	if(schema_header !=NULL)
+	{
+		snprintf(schema_header, MAX_BUF_SIZE, "Schema-Version: %s", "v1.0");
+		WalInfo("schema_header formed %s\n", schema_header);
+		list = curl_slist_append(list, schema_header);
+		WAL_FREE(schema_header);
+	}
 	bootTime = getParameterValue(DEVICE_BOOT_TIME);
 	if(bootTime !=NULL)
 	{
@@ -710,27 +713,69 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		WAL_FREE(currentTime_header);
 	}
 
-	systemReadyTime = get_global_systemReadyTime();
-	if(systemReadyTime !=NULL)
+        if(strlen(g_systemReadyTime) ==0)
+        {
+                systemReadyTime = get_global_systemReadyTime();
+                if(systemReadyTime !=NULL)
+                {
+                       strncpy(g_systemReadyTime, systemReadyTime, sizeof(g_systemReadyTime));
+                       WalInfo("g_systemReadyTime fetched is %s\n", g_systemReadyTime);
+                       WAL_FREE(systemReadyTime);
+                }
+        }
+
+        if(strlen(g_systemReadyTime))
+        {
+                systemReadyTime_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
+                if(systemReadyTime_header !=NULL)
+                {
+	                snprintf(systemReadyTime_header, MAX_BUF_SIZE, "X-System-Ready-Time: %s", g_systemReadyTime);
+	                WalInfo("systemReadyTime_header formed %s\n", systemReadyTime_header);
+	                list = curl_slist_append(list, systemReadyTime_header);
+	                WAL_FREE(systemReadyTime_header);
+                }
+        }
+        else
+        {
+                WalError("Failed to get systemReadyTime\n");
+        }
+
+	transaction_uuid = generate_trans_uuid();
+	if(transaction_uuid !=NULL)
 	{
-		systemReadyTime_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
-		if(systemReadyTime_header !=NULL)
+		uuid_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
+		if(uuid_header !=NULL)
 		{
-			snprintf(systemReadyTime_header, MAX_BUF_SIZE, "X-System-Ready-Time: %s", systemReadyTime);
-			WalInfo("systemReadyTime_header formed %s\n", systemReadyTime_header);
-			list = curl_slist_append(list, systemReadyTime_header);
-			WAL_FREE(systemReadyTime_header);
+			snprintf(uuid_header, MAX_BUF_SIZE, "Transaction-ID: %s", transaction_uuid);
+			WalInfo("uuid_header formed %s\n", uuid_header);
+			list = curl_slist_append(list, uuid_header);
+			WAL_FREE(transaction_uuid);
+			WAL_FREE(uuid_header);
 		}
-		WAL_FREE(systemReadyTime);
 	}
 	else
 	{
-		WalError("Failed to get systemReadyTime\n");
+		WalError("Failed to generate transaction_uuid\n");
 	}
 	*header_list = list;
 	WalInfo("End of createCurlheader\n");
 }
 
+static char* generate_trans_uuid()
+{
+	char *transID = NULL;
+	uuid_t transaction_Id;
+	char *trans_id = NULL;
+	trans_id = (char *)malloc(37);
+	uuid_generate_random(transaction_Id);
+	uuid_unparse(transaction_Id, trans_id);
+
+	if(trans_id !=NULL)
+	{
+		transID = trans_id;
+	}
+	return transID;
+}
 
 void execute_token_script(char *token, char *name, size_t len, char *mac, char *serNum)
 {
@@ -785,36 +830,33 @@ void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_seria
 * it will call createNewAuthToken to create and read new token
 */
 
-void getAuthToken(char *webpa_auth_token)
+void getAuthToken()
 {
 	//local var to update webpa_auth_token only in success case
 	char output[4069] = {'\0'} ;
-	char *macID = NULL;
-	char deviceMACValue[32] = { '\0' };
-	//char *hw_serial_number=NULL;
-	WalInfo("----------start of getAuthToken-------\n");
+	char *serial_number=NULL;
 	memset (webpa_auth_token, 0, sizeof(webpa_auth_token));
 
 	WalInfo("after memset of webpa_auth_token\n");
 	if( strlen(WEBPA_READ_HEADER) !=0 && strlen(WEBPA_CREATE_HEADER) !=0)
 	{
-		macID = getParameterValue(DEVICE_MAC);
-		if (macID != NULL)
-		{
-		    strncpy(deviceMACValue, macID, strlen(macID)+1);
-		    macToLower(deviceMACValue, deviceMac);
-		    WalInfo("deviceMAC: %s\n", deviceMac);
-		    WAL_FREE(macID);
-		}
-		if( deviceMac != NULL && strlen(deviceMac) !=0 )
-		{
-			hw_serial_number = getParameterValue(SERIAL_NUMBER);
-			WalInfo("hw_serial_number: %s\n", hw_serial_number);
+                getDeviceMac();
+                WalInfo("deviceMAC: %s\n",deviceMAC);
 
-			if( hw_serial_number != NULL && strlen(hw_serial_number) !=0 )
+		if( deviceMAC != NULL && strlen(deviceMAC) !=0 )
+		{
+			serial_number = getParameterValue(SERIAL_NUMBER);
+                        if(serial_number !=NULL)
+                        {
+			        strncpy(serialNum ,serial_number, sizeof(serialNum));
+			        WalInfo("serialNum: %s\n", serialNum);
+			        WAL_FREE(serial_number);
+                        }
+
+			if( serialNum != NULL && strlen(serialNum)>0 )
 			{
-				set_global_hw_serial_number(hw_serial_number);
-				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), deviceMac, hw_serial_number);
+				//set_global_hw_serial_number(hw_serial_number);
+				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), deviceMAC, serialNum);
 				if ((strlen(output) == 0))
 				{
 					WalError("Unable to get auth token\n");
@@ -823,7 +865,7 @@ void getAuthToken(char *webpa_auth_token)
 				{
 					WalInfo("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
 					//Call create/acquisition script
-					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMac, hw_serial_number );
+					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
 				}
 				else
 				{
@@ -833,7 +875,7 @@ void getAuthToken(char *webpa_auth_token)
 			}
 			else
 			{
-				WalError("hw_serial_number is NULL, failed to fetch auth token\n");
+				WalError("serialNum is NULL, failed to fetch auth token\n");
 			}
 		}
 		else
@@ -845,4 +887,114 @@ void getAuthToken(char *webpa_auth_token)
 	{
 		WalInfo("Both read and write file are NULL \n");
 	}
+}
+
+
+static void getDeviceMac()
+{
+    int retryCount = 0;
+
+    while(!strlen(deviceMAC))
+    {
+	pthread_mutex_lock(&device_mac_mutex);
+
+        int ret = -1, size =0, val_size =0,cnt =0;
+        char compName[MAX_PARAMETERNAME_LEN/2] = { '\0' };
+        char dbusPath[MAX_PARAMETERNAME_LEN/2] = { '\0' };
+        parameterValStruct_t **parameterval = NULL;
+        char *getList[] = {DEVICE_MAC};
+        componentStruct_t **        ppComponents = NULL;
+        char dst_pathname_cr[256] = {0};
+
+	if (strlen(deviceMAC))
+	{
+	        pthread_mutex_unlock(&device_mac_mutex);
+	        break;
+	}
+        sprintf(dst_pathname_cr, "%s%s", "eRT.", CCSP_DBUS_INTERFACE_CR);
+        ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle, dst_pathname_cr, DEVICE_MAC, "", &ppComponents, &size);
+        if ( ret == CCSP_SUCCESS && size >= 1)
+        {
+                strncpy(compName, ppComponents[0]->componentName, sizeof(compName)-1);
+                strncpy(dbusPath, ppComponents[0]->dbusPath, sizeof(compName)-1);
+        }
+        else
+        {
+                WalError("Failed to get component for %s ret: %d\n",DEVICE_MAC,ret);
+                retryCount++;
+        }
+        free_componentStruct_t(bus_handle, size, ppComponents);
+        if(strlen(compName) != 0 && strlen(dbusPath) != 0)
+        {
+                ret = CcspBaseIf_getParameterValues(bus_handle,
+                        compName, dbusPath,
+                        getList,
+                        1, &val_size, &parameterval);
+                if(ret == CCSP_SUCCESS)
+                {
+                    for (cnt = 0; cnt < val_size; cnt++)
+                    {
+                        WalInfo("parameterval[%d]->parameterName : %s\n",cnt,parameterval[cnt]->parameterName);
+                        WalInfo("parameterval[%d]->parameterValue : %s\n",cnt,parameterval[cnt]->parameterValue);
+                        WalInfo("parameterval[%d]->type :%d\n",cnt,parameterval[cnt]->type);
+                    }
+                    macToLowerCase(parameterval[0]->parameterValue);
+                    retryCount = 0;
+                }
+                else
+                {
+                        WalError("Failed to get values for %s ret: %d\n",getList[0],ret);
+                        retryCount++;
+                }
+                free_parameterValStruct_t(bus_handle, val_size, parameterval);
+        }
+        if(retryCount == 0)
+        {
+                WalInfo("deviceMAC is %s\n",deviceMAC);
+                pthread_mutex_unlock(&device_mac_mutex);
+                break;
+        }
+        else
+        {
+                if(retryCount > 5 )
+                {
+                        WalError("Unable to get CM Mac after %d retry attempts..\n", retryCount);
+                        pthread_mutex_unlock(&device_mac_mutex);
+                        break;
+                }
+                else
+                {
+                        WalError("Failed to GetValue for MAC. Retrying...retryCount %d\n", retryCount);
+                        pthread_mutex_unlock(&device_mac_mutex);
+                        sleep(10);
+                }
+        }
+    }
+}
+
+static void macToLowerCase(char macValue[])
+{
+    int i = 0;
+    int j;
+    char *token[32]={'\0'};
+    char tmp[32]={'\0'};
+    strncpy(tmp, macValue,sizeof(tmp)-1);
+    token[i] = strtok(tmp, ":");
+    if(token[i]!=NULL)
+    {
+        strncpy(deviceMAC, token[i],sizeof(deviceMAC)-1);
+        deviceMAC[31]='\0';
+        i++;
+    }
+    while ((token[i] = strtok(NULL, ":")) != NULL)
+    {
+        strncat(deviceMAC, token[i],sizeof(deviceMAC)-1);
+        deviceMAC[31]='\0';
+        i++;
+    }
+    deviceMAC[31]='\0';
+    for(j = 0; deviceMAC[j]; j++)
+    {
+        deviceMAC[j] = tolower(deviceMAC[j]);
+    }
 }

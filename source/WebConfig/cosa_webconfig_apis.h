@@ -49,7 +49,7 @@ _COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
     char                            Version[64];
     BOOLEAN                         ForceSyncCheck;
     BOOLEAN                         SyncCheckOK;
-    char                            *PreviousSyncDateTime;                                        
+    char                            *PreviousSyncDateTime;
 }
 COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY,  *PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY;
 

@@ -20,7 +20,7 @@
 #include "cosa_webconfig_apis.h"
 #include "cosa_webconfig_dml.h"
 #include "plugin_main_apis.h"
-
+#include "webconfig_log.h"
 
 /***********************************************************************
 
@@ -30,9 +30,9 @@
 
     *  X_RDK_WebConfig_GetParamBoolValue
     *  X_RDK_WebConfig_SetParamBoolValue
-	*  X_RDK_WebConfig_GetParamIntValue
+    *  X_RDK_WebConfig_GetParamIntValue
     *  X_RDK_WebConfig_SetParamIntValue
-	*  X_RDK_WebConfig_GetParamUlongValue
+    *  X_RDK_WebConfig_GetParamUlongValue
 
 ***********************************************************************/
 BOOL
@@ -44,13 +44,14 @@ X_RDK_WebConfig_GetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    WalInfo("------- %s ---------\n",__FUNCTION__);
+    WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
     if( AnscEqualString(ParamName, "RfcEnable", TRUE))
     {
         /* collect value */
         *pBool = pMyObject->RfcEnable;
         return TRUE;
     }
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
     return FALSE;
 }
 
@@ -62,15 +63,41 @@ X_RDK_WebConfig_SetParamBoolValue
         BOOL                        bValue
     )
 {
-    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    WalInfo("------- %s ---------\n",__FUNCTION__);
-    /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "RfcEnable", TRUE))
-    {
-        pMyObject->RfcEnable = bValue;
-        return TRUE;
-    }
-    return FALSE;
+	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	char buf[16] = {0};
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	/* check the parameter name and set the corresponding value */
+	if( AnscEqualString(ParamName, "RfcEnable", TRUE))
+	{
+		if(bValue == TRUE)
+		{
+			sprintf(buf, "%s", "true");	 
+		}
+		else
+		{
+			sprintf(buf, "%s", "false");	 
+		}  
+
+		if(syscfg_set(NULL, "WebConfigRfcEnabled", buf) != 0)
+		{
+			WebConfigLog("syscfg_set failed\n");
+		}
+		else
+		{
+			if (syscfg_commit() != 0)
+			{
+				WebConfigLog("syscfg_commit failed\n");
+			}
+			else
+			{
+				pMyObject->RfcEnable = bValue;
+			}
+		}
+
+		return TRUE;
+	}
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
+	return FALSE;
 }
 
 BOOL
@@ -82,6 +109,7 @@ X_RDK_WebConfig_GetParamUlongValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "ConfigFileNumberOfEntries", TRUE))
     {
@@ -89,6 +117,7 @@ X_RDK_WebConfig_GetParamUlongValue
         *puLong = pMyObject->pConfigFileContainer->ConfigFileEntryCount;
         return TRUE;
     }
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
     return FALSE;
 }
 
@@ -101,13 +130,14 @@ X_RDK_WebConfig_GetParamIntValue
     )
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
     {
         *pInt = pMyObject->PeriodicSyncCheckInterval;
         return TRUE;
     }
-
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
     /* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return FALSE;
 }
@@ -120,16 +150,33 @@ X_RDK_WebConfig_SetParamIntValue
         int                         iValue
     )
 {
-    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
-    {
-        pMyObject->PeriodicSyncCheckInterval = iValue;
-	    return TRUE;
-    }
-
+	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	char buf[16]={0};
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	/* check the parameter name and set the corresponding value */
+	if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
+	{
+		sprintf(buf, "%d", iValue);
+		if(syscfg_set( NULL, "PeriodicSyncCheckInterval", buf) != 0)
+		{
+			WebConfigLog("syscfg_set failed\n");
+		}
+		else 
+		{
+			if (syscfg_commit() != 0)
+			{
+				WebConfigLog("syscfg_commit failed\n");
+			}
+			else
+			{
+				pMyObject->PeriodicSyncCheckInterval = iValue;
+			}
+		}
+		return TRUE;
+	}
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
 	/* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+	return FALSE;
 }
 /***********************************************************************
 
@@ -144,6 +191,7 @@ X_RDK_WebConfig_SetParamIntValue
     *  ConfigFile_AddEntry
     *  ConfigFile_DelEntry
     *  ConfigFile_GetParamBoolValue
+    *  ConfigFile_SetParamBoolValue
     *  ConfigFile_GetParamStringValue
     *  ConfigFile_SetParamBoolValue
     *  ConfigFile_SetParamStringValue
@@ -160,9 +208,10 @@ ConfigFile_GetEntryCount
     )
 
 {
-
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
     int Qdepth = AnscSListQueryDepth( &pMyObject->ConfigFileList );
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
     return Qdepth;
 }
 
@@ -174,18 +223,17 @@ ConfigFile_GetEntry
         ULONG*                      pInsNumber
     )
 {
-
     PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
-
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
     pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, nIndex);
     if ( pSListEntry )
     {
         pCxtLink      = ACCESS_COSA_CONTEXT_WEBCONFIG_LINK_OBJECT(pSListEntry);
         *pInsNumber   = pCxtLink->InstanceNumber;
     }
-
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
     return (ANSC_HANDLE)pSListEntry;
 }
 
@@ -197,6 +245,8 @@ ConfigFile_IsUpdated
 {
     PCOSA_DATAMODEL_WEBCONFIG             pWebConfig    = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     BOOL                            bIsUpdated   = TRUE;
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
     return bIsUpdated;
 }
 
@@ -213,6 +263,8 @@ ConfigFile_Synchronize
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PSINGLE_LINK_ENTRY                    pSListEntry2      = NULL;
     ULONG                                 entryCount        = 0;
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
 }
 
 ANSC_HANDLE
@@ -226,12 +278,12 @@ ConfigFile_AddEntry
 	PCOSA_DATAMODEL_WEBCONFIG             pWebConfig              = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry = NULL;
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink  = NULL;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
 
     pConfigFileEntry = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)AnscAllocateMemory(sizeof(COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY));
     if ( !pConfigFileEntry )
     {
-		WalError("%s resource allocation failed\n",__FUNCTION__);
+		WebConfigLog("%s resource allocation failed\n",__FUNCTION__);
         return NULL;
     }
  
@@ -252,6 +304,7 @@ ConfigFile_AddEntry
     *pInsNumber = pWebConfigCxtLink->InstanceNumber;
 
 	CosaSListPushEntryByInsNum(&pWebConfig->ConfigFileList, (PCOSA_CONTEXT_LINK_OBJECT)pWebConfigCxtLink);
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
 
     return (ANSC_HANDLE)pWebConfigCxtLink;
 
@@ -274,7 +327,7 @@ ConfigFile_DelEntry
     PCOSA_DATAMODEL_WEBCONFIG             pWebConfig               = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink   = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInstance;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry      = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WebConfigLog(" %s : ENTER \n", __FUNCTION__ );
 	/* Remove entery from the database */
 
     //TODO;
@@ -293,7 +346,7 @@ ConfigFile_DelEntry
 			return ANSC_STATUS_FAILURE;
 		}
 	}
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
     return returnStatus;
 }
 
@@ -338,11 +391,11 @@ ConfigFile_GetParamBoolValue
 
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WalInfo("------- %s ---------\n",__FUNCTION__);
+    WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
     if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
     {
-        /* collect value */
-        *pBool = pConfigFileEntry->ForceSyncCheck;
+        /* all read must return FALSE */
+        *pBool = FALSE;
         return TRUE;
     }
     
@@ -352,7 +405,7 @@ ConfigFile_GetParamBoolValue
         *pBool = pConfigFileEntry->SyncCheckOK;
         return TRUE;
     }
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
     /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return FALSE;
 }
@@ -370,7 +423,7 @@ ConfigFile_GetParamStringValue
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
     PUCHAR                                    pString       = NULL;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WebConfigLog(" %s : ENTER \n", __FUNCTION__ );
 
     if( AnscEqualString(ParamName, "URL", TRUE))
     {
@@ -417,7 +470,7 @@ ConfigFile_GetParamStringValue
         }
     }
 
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 
     return -1;
 }
@@ -430,16 +483,22 @@ ConfigFile_SetParamBoolValue
         BOOL                        bValue
     )
 {
-     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
-    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WalInfo("------- %s ---------\n",__FUNCTION__);
-    /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
-    {
-        pConfigFileEntry->ForceSyncCheck = bValue;
-        return TRUE;
-    }
-    return FALSE;
+	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
+	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	/* check the parameter name and set the corresponding value */
+	if( AnscEqualString(ParamName, "SyncCheckOK", TRUE))
+	{
+		pConfigFileEntry->SyncCheckOK = bValue;   // update in memory and commit to syscfg in commit func after validate
+		return TRUE;
+	}
+	else if(AnscEqualString(ParamName, "ForceSyncCheck", TRUE)) 
+	{
+		// TODO: trigger sync by sending pthread condition signal
+		return TRUE;
+	}
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
+	return FALSE;
 }
 
 BOOL
@@ -454,7 +513,7 @@ ConfigFile_SetParamStringValue
 	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
     BOOL ret = FALSE;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WebConfigLog(" %s : ENTER \n", __FUNCTION__ );
     if( AnscEqualString(ParamName, "URL", TRUE))
     {
 	/* save update to backup */
@@ -473,7 +532,7 @@ ConfigFile_SetParamStringValue
         AnscCopyString( pConfigFileEntry->PreviousSyncDateTime, strValue );
         return TRUE;
     }
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 
     return ret;
 }
@@ -489,11 +548,11 @@ ConfigFile_Validate
 {
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WebConfigLog(" %s : ENTER \n", __FUNCTION__ );
 
     BOOL ret = FALSE;
     //TODO
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 
     return ret;
 }
@@ -507,9 +566,9 @@ ConfigFile_Commit
 {
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WebConfigLog(" %s : ENTER \n", __FUNCTION__ );
     //TODO
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 }
 
 ULONG
@@ -522,9 +581,9 @@ ConfigFile_Rollback
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
 
-    WalInfo(" %s : ENTER \n", __FUNCTION__ );
+    WebConfigLog(" %s : ENTER \n", __FUNCTION__ );
     //TODO
-    WalInfo(" %s : EXIT \n", __FUNCTION__ );
+    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 }
 
 
