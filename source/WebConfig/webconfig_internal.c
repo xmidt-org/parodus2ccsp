@@ -44,7 +44,7 @@ char *ETAG="NONE";
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
-static void *WebConfigTask();
+static void *WebConfigTask(void *status);
 int processJsonDocument(char *jsonData);
 int validateConfigFormat(cJSON *json, char *etag);
 int requestWebConfigData(char **configData, int r_count, int index, int status, long *code);
@@ -61,10 +61,8 @@ void initWebConfigTask(int status)
 {
 	int err = 0;
 	pthread_t threadId;
-	int *device_status = (int *) malloc(sizeof(int));
-	*device_status = status;
 
-	err = pthread_create(&threadId, NULL, WebConfigTask, (void *) device_status);
+	err = pthread_create(&threadId, NULL, WebConfigTask, (void *) status);
 	if (err != 0) 
 	{
 		WebConfigLog("Error creating WebConfigTask thread :[%s]\n", strerror(err));
@@ -90,7 +88,7 @@ static void *WebConfigTask(void *status)
     	int c=2;
 
 	max_retry_sleep = (int) pow(2, backoff_max_time) -1;
-        WalInfo("max_retry_sleep is %d\n", max_retry_sleep );
+        WebConfigLog("max_retry_sleep is %d\n", max_retry_sleep );
 
 	while(1)
 	{
@@ -100,52 +98,52 @@ static void *WebConfigTask(void *status)
 		{
 		  backoffRetryTime = (int) pow(2, c) -1;
 		}
-		WalPrint("New backoffRetryTime value calculated as %d seconds\n", backoffRetryTime);
+		WebConfigLog("New backoffRetryTime value calculated as %d seconds\n", backoffRetryTime);
 
-		configRet = requestWebConfigData(&webConfigData, r_count, index, *(int *)status, &res_code);
+		configRet = requestWebConfigData(&webConfigData, r_count, index, (int)status, &res_code);
 		WAL_FREE(status);
 
 		if(configRet == 0)
 		{
 			if(res_code == 304)
 			{
-				WalInfo("webConfig is in sync with cloud. response_code:%d\n", res_code); //:TODO do sync check OK
+				WebConfigLog("webConfig is in sync with cloud. response_code:%d\n", res_code); //:TODO do sync check OK
 				break;
 			}
 			else if(res_code == 200)
 			{
-				WalInfo("webConfig is not in sync with cloud. response_code:%d\n", res_code);
+				WebConfigLog("webConfig is not in sync with cloud. response_code:%d\n", res_code);
 
 				if(webConfigData !=NULL)
 				{
-					WalInfo("webConfigData fetched successfully\n");
+					WebConfigLog("webConfigData fetched successfully\n");
 					json_status = processJsonDocument(webConfigData);
 					if(json_status == 1)
 					{
-						WalInfo("processJsonDocument success\n");
+						WebConfigLog("processJsonDocument success\n");
 					}
 					else
 					{
-						WalError("Failure in processJsonDocument\n");
+						WebConfigLog("Failure in processJsonDocument\n");
 					}
 				}
 				break;
 			}
 			else if(res_code == 204)
 			{
-				WalInfo("No action required from client. response_code:%d\n", res_code);
+				WebConfigLog("No action required from client. response_code:%d\n", res_code);
 				break;
 			}
 			else
 			{
-				WalError("Error code returned, need to retry. response_code:%d\n", res_code);
+				WebConfigLog("Error code returned, need to retry. response_code:%d\n", res_code);
 			}
 		}
 		else
 		{
-			WalError("Failed to get webConfigData from cloud\n");	
+			WebConfigLog("Failed to get webConfigData from cloud\n");	
 		}
-		WalInfo("requestWebConfigData backoffRetryTime %d seconds\n", backoffRetryTime);
+		WebConfigLog("requestWebConfigData backoffRetryTime %d seconds\n", backoffRetryTime);
 		sleep(backoffRetryTime);
 		c++;
 	}
@@ -188,7 +186,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		data.data = (char *) malloc(sizeof(char) * 1);
 		if(NULL == data.data)
 		{
-			WalError("Failed to allocate memory.\n");
+			WebConfigLog("Failed to allocate memory.\n");
 			return rv;
 		}
 		data.data[0] = '\0';
@@ -200,7 +198,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			//snprintf(URL_param, MAX_BUF_SIZE, "Device.X_RDK_WebConfig.ConfigFile.[%d].URL", i);//testing purpose.
 			snprintf(URL_param, MAX_BUF_SIZE, "http://96.116.56.207:8080/api/v4/gateway-cpe/%s/config/voice", deviceMac);
 			webConfigURL = strdup(URL_param); //testing. remove this.
-			WalInfo("webConfigURL is %s\n", webConfigURL);
+			WebConfigLog("webConfigURL is %s\n", webConfigURL);
 			//webConfigURL = getParameterValue(URL_param, &paramType);
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
 		}
@@ -222,17 +220,17 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		//If any failure, retry with v4 first and then v6 mode. 
 		if(r_count == 1)
 		{
-			WalInfo("curl Ip resolve option set as V4 mode\n");
+			WebConfigLog("curl Ip resolve option set as V4 mode\n");
 			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 		}
 		else if(r_count == 2)
 		{
-			WalInfo("curl Ip resolve option set as V6 mode\n");
+			WebConfigLog("curl Ip resolve option set as V6 mode\n");
 			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);
 		}
 		else
 		{
-			WalInfo("curl Ip resolve option set as default mode\n");
+			WebConfigLog("curl Ip resolve option set as default mode\n");
 			curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER);
 		}
 
@@ -254,20 +252,20 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		res = curl_easy_perform(curl);
 
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-		WalInfo("webConfig curl response %d http_code %d\n", res, response_code);
+		WebConfigLog("webConfig curl response %d http_code %d\n", res, response_code);
 		*code = response_code;
 
 		time_res = curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
 		if(time_res == 0)
 		{
-			WalInfo("curl response Time: %.1f seconds\n", total);
+			WebConfigLog("curl response Time: %.1f seconds\n", total);
 		}
 		curl_slist_free_all(headers_list);
 		WAL_FREE(URL_param);
 		WAL_FREE(webConfigURL);
 		if(res != 0)
 		{
-			WalError("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			WebConfigLog("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 		}
 		else
 		{
@@ -276,12 +274,12 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			{
 				if(strcmp(ct, "application/json") !=0)
 				{
-					WalError("Invalid Content-Type\n");
+					WebConfigLog("Invalid Content-Type\n");
 				}
 				else
 				{
 					*configData = strdup(data.data);
-					WalInfo("configData received from cloud is %s\n", *configData);
+					WebConfigLog("configData received from cloud is %s\n", *configData);
 				}
 			}
 			
@@ -292,7 +290,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 	}
 	else
 	{
-		WalError("curl init failure\n");
+		WebConfigLog("curl init failure\n");
 	}
 	return rv;
 }
@@ -319,7 +317,7 @@ size_t write_callback_fn(void *buffer, size_t size, size_t nmemb, struct token_d
         if(data->data) {
             free(data->data);
         }
-        WalError("Failed to allocate memory for data\n");
+        WebConfigLog("Failed to allocate memory for data\n");
         return 0;
     }
 
@@ -348,14 +346,14 @@ int processJsonDocument(char *jsonData)
 	parseStatus = parseJsonData(jsonData, &reqObj);
 	if(parseStatus ==1)
 	{
-		WalInfo("Request:> Type : %d\n",reqObj->reqType);
-		WalInfo("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
+		WebConfigLog("Request:> Type : %d\n",reqObj->reqType);
+		WebConfigLog("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
 		paramCount = (int)reqObj->u.setReq->paramCnt;
 		for (i = 0; i < paramCount; i++) 
 		{
-		        WalPrint("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
-		        WalPrint("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
-		        WalPrint("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
+		        WebConfigLog("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
+		        WebConfigLog("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
+		        WebConfigLog("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
 
 		}
 
@@ -364,18 +362,18 @@ int processJsonDocument(char *jsonData)
 		if(valid_ret == WDMP_SUCCESS)
 		{
 			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret);
-			WalInfo("setValues success. ret : %d\n", ret);
+			WebConfigLog("setValues success. ret : %d\n", ret);
 			return 1;
 		}
 		else
 		{
-			WalError("validate_parameter failed. parseStatus is %d\n", valid_ret);
+			WebConfigLog("validate_parameter failed. parseStatus is %d\n", valid_ret);
 			return 0;
 		}
 	}
 	else
 	{
-		WalError("parseJsonData failed. parseStatus is %d\n", parseStatus);
+		WebConfigLog("parseJsonData failed. parseStatus is %d\n", parseStatus);
 		return 0;
 	}
 	return 0;
@@ -400,7 +398,7 @@ int parseJsonData(char* jsonData, req_struct **req_obj)
 
 		if( json == NULL )
 		{
-			WalError("WebConfig Parse error\n");
+			WebConfigLog("WebConfig Parse error\n");
 			return rv;
 		}
 		else
@@ -408,7 +406,7 @@ int parseJsonData(char* jsonData, req_struct **req_obj)
 			isValid = validateConfigFormat(json, ETAG); //check eTAG value here :TODO
 			if(isValid)// testing purpose. make it to !isValid
 			{
-				WalError("validateConfigFormat failed\n");
+				WebConfigLog("validateConfigFormat failed\n");
 				return rv;
 			}
 			(reqObj) = (req_struct *) malloc(sizeof(req_struct));
@@ -425,13 +423,13 @@ int parseJsonData(char* jsonData, req_struct **req_obj)
 			}
 			else
 			{
-				WalError("Failed to parse set request\n");
+				WebConfigLog("Failed to parse set request\n");
 			}
 		}
 	}
 	else
 	{
-		WalError("jsonData is empty\n");
+		WebConfigLog("jsonData is empty\n");
 	}
 	return rv;
 }
@@ -464,19 +462,19 @@ int validateConfigFormat(cJSON *json, char *eTag)
 						}
 						else
 						{
-							WalError("config contains fields other than version and parameters\n");
+							WebConfigLog("config contains fields other than version and parameters\n");
 							return 0;
 						}
 					}
 					else
 					{
-						WalError("Invalid config json, parameters field is not present\n");
+						WebConfigLog("Invalid config json, parameters field is not present\n");
 						return 0;
 					}
 				}
 				else
 				{
-					WalError("Invalid config json, version and ETAG are not same\n");
+					WebConfigLog("Invalid config json, version and ETAG are not same\n");
 					return 0;
 				}
 			}
@@ -484,7 +482,7 @@ int validateConfigFormat(cJSON *json, char *eTag)
 	}
 	else
 	{
-		WalError("Invalid config json, version field is not present\n");
+		WebConfigLog("Invalid config json, version field is not present\n");
 		return 0;
 	}
 
@@ -514,20 +512,20 @@ static void get_webCfg_interface(char **interface)
 	}
 	else
 	{
-		WalError("Failed to open device.properties file:%s\n", DEVICE_PROPS_FILE);
-		WalInfo("Adding default values for webConfig interface\n");
+		WebConfigLog("Failed to open device.properties file:%s\n", DEVICE_PROPS_FILE);
+		WebConfigLog("Adding default values for webConfig interface\n");
 		*interface = strdup(WEBCFG_INTERFACE_DEFAULT);
 	}
 
 	if (NULL == *interface)
 	{
-		WalError("WebConfig interface is not present in device.properties, adding default interface\n");
+		WebConfigLog("WebConfig interface is not present in device.properties, adding default interface\n");
 		
 		*interface = strdup(WEBCFG_INTERFACE_DEFAULT);
 	}
 	else
 	{
-		WalPrint("interface fetched is %s\n", *interface);
+		WebConfigLog("interface fetched is %s\n", *interface);
 	}
 }
 
@@ -568,13 +566,13 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		if(ETAG !=NULL)
 		{
 			snprintf(version_header, MAX_BUF_SIZE, "XV-Version:%s", ETAG);
-			WalInfo("version_header formed %s\n", version_header);
+			WebConfigLog("version_header formed %s\n", version_header);
 			list = curl_slist_append(list, version_header);
 			WAL_FREE(version_header);
 		}
 		else
 		{
-			WalError("Failed to create version header\n");
+			WebConfigLog("Failed to create version header\n");
 		}
 	}
 
@@ -585,7 +583,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		if(bootTime_header !=NULL)
 		{
 			snprintf(bootTime_header, MAX_BUF_SIZE, "X-System-Boot-Time: %s", bootTime);
-			WalInfo("bootTime_header formed %s\n", bootTime_header);
+			WebConfigLog("bootTime_header formed %s\n", bootTime_header);
 			list = curl_slist_append(list, bootTime_header);
 			WAL_FREE(bootTime_header);
 		}
@@ -593,7 +591,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	}
 	else
 	{
-		WalError("Failed to get bootTime\n");
+		WebConfigLog("Failed to get bootTime\n");
 	}
 
 	FwVersion = getParameterValue(FIRMWARE_VERSION);
@@ -603,7 +601,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		if(FwVersion_header !=NULL)
 		{
 			snprintf(FwVersion_header, MAX_BUF_SIZE, "X-System-Firmware-Version: %s", FwVersion);
-			WalInfo("FwVersion_header formed %s\n", FwVersion_header);
+			WebConfigLog("FwVersion_header formed %s\n", FwVersion_header);
 			list = curl_slist_append(list, FwVersion_header);
 			WAL_FREE(FwVersion_header);
 		}
@@ -611,7 +609,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	}
 	else
 	{
-		WalError("Failed to get FwVersion\n");
+		WebConfigLog("Failed to get FwVersion\n");
 	}
 
 	status_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
@@ -625,7 +623,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		{
 			snprintf(status_header, MAX_BUF_SIZE, "X-System-Status: %s", "Operational");
 		}
-		WalInfo("status_header formed %s\n", status_header);
+		WebConfigLog("status_header formed %s\n", status_header);
 		list = curl_slist_append(list, status_header);
 		WAL_FREE(status_header);
 	}
@@ -637,7 +635,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	if(currentTime_header !=NULL)
 	{
 		snprintf(currentTime_header, MAX_BUF_SIZE, "X-System-Current-Time: %s", currentTime);
-		WalInfo("currentTime_header formed %s\n", currentTime_header);
+		WebConfigLog("currentTime_header formed %s\n", currentTime_header);
 		list = curl_slist_append(list, currentTime_header);
 		WAL_FREE(currentTime_header);
 	}
@@ -649,7 +647,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		if(systemReadyTime_header !=NULL)
 		{
 			snprintf(systemReadyTime_header, MAX_BUF_SIZE, "X-System-Ready-Time: %s", systemReadyTime);
-			WalInfo("systemReadyTime_header formed %s\n", systemReadyTime_header);
+			WebConfigLog("systemReadyTime_header formed %s\n", systemReadyTime_header);
 			list = curl_slist_append(list, systemReadyTime_header);
 			WAL_FREE(systemReadyTime_header);
 		}
@@ -657,7 +655,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	}
 	else
 	{
-		WalError("Failed to get systemReadyTime\n");
+		WebConfigLog("Failed to get systemReadyTime\n");
 	}
 	*header_list = list;
 }
@@ -683,7 +681,7 @@ void execute_token_script(char *token, char *name, size_t len, char *mac, char *
         }
         else
         {
-            WalError ("File %s open error\n", name);
+            WebConfigLog ("File %s open error\n", name);
         }
     }
 }
@@ -705,7 +703,7 @@ void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_seria
 	}
 	else
 	{
-		WalError("Failed to create new token\n");
+		WebConfigLog("Failed to create new token\n");
 	}
 }
 
@@ -729,45 +727,45 @@ void getAuthToken(char *webpa_auth_token)
 		{
 		    strncpy(deviceMACValue, macID, strlen(macID)+1);
 		    macToLower(deviceMACValue, deviceMac);
-		    WalInfo("deviceMAC: %s\n", deviceMac);
+		    WebConfigLog("deviceMAC: %s\n", deviceMac);
 		    WAL_FREE(macID);
 		}
 		if( deviceMac != NULL && strlen(deviceMac) !=0 )
 		{
 			hw_serial_number = getParameterValue(SERIAL_NUMBER);
-			WalInfo("hw_serial_number: %s\n", hw_serial_number);
+			WebConfigLog("hw_serial_number: %s\n", hw_serial_number);
 
 			if( hw_serial_number != NULL && strlen(hw_serial_number) !=0 )
 			{
 				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), deviceMac, hw_serial_number);
 				if ((strlen(output) == 0))
 				{
-					WalError("Unable to get auth token\n");
+					WebConfigLog("Unable to get auth token\n");
 				}
 				else if(strcmp(output,"ERROR")==0)
 				{
-					WalInfo("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
+					WebConfigLog("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
 					//Call create/acquisition script
 					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMac, hw_serial_number );
 				}
 				else
 				{
-					WalInfo("update webpa_auth_token in success case\n");
+					WebConfigLog("update webpa_auth_token in success case\n");
 					walStrncpy(webpa_auth_token, output, sizeof(webpa_auth_token));
 				}
 			}
 			else
 			{
-				WalError("hw_serial_number is NULL, failed to fetch auth token\n");
+				WebConfigLog("hw_serial_number is NULL, failed to fetch auth token\n");
 			}
 		}
 		else
 		{
-			WalError("deviceMAC is NULL, failed to fetch auth token\n");
+			WebConfigLog("deviceMAC is NULL, failed to fetch auth token\n");
 		}
 	}
 	else
 	{
-		WalInfo("Both read and write file are NULL \n");
+		WebConfigLog("Both read and write file are NULL \n");
 	}
 }
