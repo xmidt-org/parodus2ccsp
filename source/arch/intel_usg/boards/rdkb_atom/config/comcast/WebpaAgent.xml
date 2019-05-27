@@ -153,13 +153,13 @@
                             <name>SyncCheckOK</name>
                             <type>boolean</type>
                             <syntax>bool</syntax>
-                            <writable>false</writable>
+                            <writable>true</writable>
                         </parameter>
                         <parameter>
                             <name>PreviousSyncDateTime</name>
                             <type>dateTime</type>
                             <syntax>string</syntax>
-                            <writable>false</writable>
+                            <writable>true</writable>
                         </parameter>
                     </parameters>
                 </object>
