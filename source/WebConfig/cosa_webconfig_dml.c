@@ -142,6 +142,13 @@ X_RDK_WebConfig_GetParamIntValue
     return FALSE;
 }
 
+int Get_PeriodicSyncCheckInterval()
+{
+       PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+
+        return pMyObject->PeriodicSyncCheckInterval; 
+}
+
 BOOL
 X_RDK_WebConfig_SetParamIntValue
     (
@@ -170,6 +177,10 @@ X_RDK_WebConfig_SetParamIntValue
 			else
 			{
 				pMyObject->PeriodicSyncCheckInterval = iValue;
+		             /* sending signal to WebConfigTask to update the sync time interval*/
+		               pthread_mutex_lock (get_global_periodicsync_mutex());
+		               pthread_cond_signal(get_global_periodicsync_condition());
+		               pthread_mutex_unlock(get_global_periodicsync_mutex());
 			}
 		}
 		return TRUE;
