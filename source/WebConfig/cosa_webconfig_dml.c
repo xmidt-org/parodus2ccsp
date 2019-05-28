@@ -279,6 +279,9 @@ ConfigFile_AddEntry
     *pInsNumber = pWebConfigCxtLink->InstanceNumber;
     WalInfo("*pInsNumber: %d\n",*pInsNumber);
 	CosaSListPushEntryByInsNum(&pWebConfig->ConfigFileList, (PCOSA_CONTEXT_LINK_OBJECT)pWebConfigCxtLink);
+	updateConfigFileNumberOfEntries(pWebConfig->pConfigFileContainer->ConfigFileEntryCount);
+	updateConfigFileIndexsList(*pInsNumber);
+	updateConfigFileNextInstanceNumber(pWebConfig->ulWebConfigNextInstanceNumber);
 	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
 
     return (ANSC_HANDLE)pWebConfigCxtLink;
@@ -321,6 +324,9 @@ ConfigFile_DelEntry
 			return ANSC_STATUS_FAILURE;
 		}
 	}
+	int configCount = AnscSListQueryDepth( &pWebConfig->ConfigFileList );
+	WalInfo("configCount: %d\n",configCount);
+	updateConfigFileNumberOfEntries(configCount);
     WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
     return returnStatus;
 }
@@ -467,6 +473,12 @@ ConfigFile_SetParamBoolValue
         pConfigFileEntry->ForceSyncCheck = bValue;
         return TRUE;
     }
+
+	if( AnscEqualString(ParamName, "SyncCheckOK", TRUE))
+    {
+        pConfigFileEntry->SyncCheckOK = bValue;
+        return TRUE;
+    }
     WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
     return FALSE;
 }
@@ -507,6 +519,19 @@ ConfigFile_SetParamStringValue
     return ret;
 }
 
+BOOL isValidUrl
+    (
+        PCHAR                       pUrl
+    )
+{
+	if(strstr(pUrl, "https") == NULL)
+	{
+		WalError("Invalid URL\n");
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL
 ConfigFile_Validate
     (
@@ -521,7 +546,12 @@ ConfigFile_Validate
     WalInfo(" %s : ENTER \n", __FUNCTION__ );
 
     BOOL ret = FALSE;
-    //TODO
+	ret = (isValidUrl(pConfigFileEntry->URL) == TRUE) ? TRUE : FALSE;
+	if(ret == FALSE)
+	{
+		AnscCopyString(pReturnParamName, "URL is Invalid");
+		AnscCopyString(pConfigFileEntry->URL, "");
+	}
     WalInfo(" %s : EXIT \n", __FUNCTION__ );
 
     return ret;
@@ -537,7 +567,7 @@ ConfigFile_Commit
     PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
     WalInfo(" %s : ENTER \n", __FUNCTION__ );
-    //TODO
+    CosaDmlSetConfigFileEntry(pConfigFileEntry);
     WalInfo(" %s : EXIT \n", __FUNCTION__ );
 }
 

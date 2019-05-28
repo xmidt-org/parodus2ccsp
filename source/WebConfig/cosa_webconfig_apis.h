@@ -119,6 +119,12 @@ CosaDmlGetConfigFileEntry
     );
 
 ANSC_STATUS
+CosaDmlSetConfigFileEntry
+    (
+	    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY configFileEntry
+    );
+
+ANSC_STATUS
 CosaDmlRemoveConfigFileEntry
     (
         ULONG InstanceNumber
