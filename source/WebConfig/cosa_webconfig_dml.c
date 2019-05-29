@@ -225,8 +225,8 @@ X_RDK_WebConfig_SetParamIntValue
     *  ConfigFile_AddEntry
     *  ConfigFile_DelEntry
     *  ConfigFile_GetParamBoolValue
-    *  ConfigFile_SetParamBoolValue
     *  ConfigFile_GetParamStringValue
+    *  ConfigFile_SetParamBoolValue
     *  ConfigFile_SetParamStringValue
     *  ConfigFile_Validate
     *  ConfigFile_Commit
@@ -278,8 +278,21 @@ ConfigFile_IsUpdated
 {
     PCOSA_DATAMODEL_WEBCONFIG             pWebConfig    = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     BOOL                            bIsUpdated   = TRUE;
-	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
-	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
+    WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
+    /*
+        We can use one rough granularity interval to get whole table in case
+        that the updating is too frequent.
+        */
+    if ( ( AnscGetTickInSeconds() - pWebConfig->PreviousVisitTime ) < COSA_DML_CONFIGFILE_ACCESS_INTERVAL )
+    {
+        bIsUpdated  = FALSE;
+    }
+    else
+    {
+        pWebConfig->PreviousVisitTime =  AnscGetTickInSeconds();
+        bIsUpdated  = TRUE;
+    }
+    WebConfigLog("-------- %s ----- EXIT ------\n",__FUNCTION__);
     return bIsUpdated;
 }
 
@@ -341,9 +354,11 @@ ConfigFile_AddEntry
 	pWebConfigCxtLink->hContext = (ANSC_HANDLE)pConfigFileEntry;
 	pWebConfig->pConfigFileContainer->ConfigFileEntryCount++;
     *pInsNumber = pWebConfigCxtLink->InstanceNumber;
-
+    WebConfigLog("*pInsNumber: %d\n",*pInsNumber);
 	CosaSListPushEntryByInsNum(&pWebConfig->ConfigFileList, (PCOSA_CONTEXT_LINK_OBJECT)pWebConfigCxtLink);
-	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
+	updateConfigFileNumberOfEntries(pWebConfig->pConfigFileContainer->ConfigFileEntryCount);
+	updateConfigFileIndexsList(*pInsNumber);
+	WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
 
     return (ANSC_HANDLE)pWebConfigCxtLink;
 
@@ -375,8 +390,9 @@ ConfigFile_DelEntry
     }
 	/* Remove entery from the database */
 
-    //TODO;
-
+    CosaDmlRemoveConfigFileEntry(pConfigFileEntry->InstanceNumber);
+    WebConfigLog("After CosaDmlRemoveConfigFileEntry\n");
+	WebConfigLog("B4 AnscSListPopEntryByLinkAnscSListPopEntryByLinkAnscSListPopEntryByLinkAnscSListPopEntryByLinkAnscSListPopEntryByLink pWebConfig->pConfigFileContainer->ConfigFileEntryCount:%d\n",pWebConfig->pConfigFileContainer->ConfigFileEntryCount);
     if ( returnStatus == ANSC_STATUS_SUCCESS )
 	{
 			/* Remove entery from the Queue */
@@ -391,7 +407,8 @@ ConfigFile_DelEntry
 			return ANSC_STATUS_FAILURE;
 		}
 	}
-    WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
+	WebConfigLog("After AnscSListPopEntryByLink pWebConfig->pConfigFileContainer->ConfigFileEntryCount:%d\n",pWebConfig->pConfigFileContainer->ConfigFileEntryCount);
+    WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
     return returnStatus;
 }
 
@@ -606,6 +623,19 @@ ConfigFile_SetParamStringValue
     return ret;
 }
 
+BOOL isValidUrl
+    (
+        PCHAR                       pUrl
+    )
+{
+	if(strstr(pUrl, "https") == NULL)
+	{
+		WalError("Invalid URL\n");
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL
 ConfigFile_Validate
     (
@@ -626,7 +656,12 @@ ConfigFile_Validate
      }
 
     BOOL ret = FALSE;
-    //TODO
+    ret = (isValidUrl(pConfigFileEntry->URL) == TRUE) ? TRUE : FALSE;
+	if(ret == FALSE)
+	{
+		AnscCopyString(pReturnParamName, "URL is Invalid");
+		AnscCopyString(pConfigFileEntry->URL, "");
+	}
     WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 
     return ret;
@@ -648,7 +683,7 @@ ConfigFile_Commit
            WalInfo("%s RfcEnable is disabled so, ConfigFile_Commit failed\n",__FUNCTION__);
            return -1;
      }    
-    //TODO
+    CosaDmlSetConfigFileEntry(pConfigFileEntry);
     WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 }
 
