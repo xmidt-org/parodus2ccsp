@@ -123,8 +123,8 @@
                         <func_AddEntry>ConfigFile_AddEntry</func_AddEntry>
                         <func_DelEntry>ConfigFile_DelEntry</func_DelEntry>
                         <func_GetParamBoolValue>ConfigFile_GetParamBoolValue</func_GetParamBoolValue>
-			<func_SetParamBoolValue>ConfigFile_SetParamBoolValue</func_SetParamBoolValue>
                         <func_GetParamStringValue>ConfigFile_GetParamStringValue</func_GetParamStringValue>
+                        <func_SetParamBoolValue>ConfigFile_SetParamBoolValue</func_SetParamBoolValue>
                         <func_SetParamStringValue>ConfigFile_SetParamStringValue</func_SetParamStringValue>
                         <func_Validate>ConfigFile_Validate</func_Validate>
                         <func_Commit>ConfigFile_Commit</func_Commit>
@@ -153,13 +153,13 @@
                             <name>SyncCheckOK</name>
                             <type>boolean</type>
                             <syntax>bool</syntax>
-                            <writable>false</writable>
+                            <writable>true</writable>
                         </parameter>
                         <parameter>
                             <name>PreviousSyncDateTime</name>
-                            <type>dateTime</type>
+                            <type>string(64)</type>
                             <syntax>string</syntax>
-                            <writable>false</writable>
+                            <writable>true</writable>
                         </parameter>
                     </parameters>
                 </object>
