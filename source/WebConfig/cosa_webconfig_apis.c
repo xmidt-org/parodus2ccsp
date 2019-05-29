@@ -181,8 +181,8 @@ CosaWebConfigInitialize
     AnscSListInitializeHeader( &pMyObject->ConfigFileList );
     pMyObject->MaxInstanceNumber        = 0;
     pMyObject->ulWebConfigNextInstanceNumber   = 1;
-#ifdef RDKB_BUILD
     CHAR tmpbuf[ 128 ] = { 0 };
+#ifdef RDKB_BUILD
     WebConfigLog("------- %s ---------\n",__FUNCTION__);
     // Initialize syscfg to make syscfg calls
     if (0 != syscfg_init())

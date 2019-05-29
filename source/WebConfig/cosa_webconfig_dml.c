@@ -77,7 +77,7 @@ X_RDK_WebConfig_SetParamBoolValue
 		{
 			sprintf(buf, "%s", "false");	 
 		}  
-
+#ifdef RDKB_BUILD
 		if(syscfg_set(NULL, "WebConfigRfcEnabled", buf) != 0)
 		{
 			WebConfigLog("syscfg_set failed\n");
@@ -93,7 +93,7 @@ X_RDK_WebConfig_SetParamBoolValue
 				pMyObject->RfcEnable = bValue;
 			}
 		}
-
+#endif
 		return TRUE;
 	}
 	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
@@ -187,6 +187,7 @@ X_RDK_WebConfig_SetParamIntValue
 	if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
 	{
 		sprintf(buf, "%d", iValue);
+#ifdef RDKB_BUILD
 		if(syscfg_set( NULL, "PeriodicSyncCheckInterval", buf) != 0)
 		{
 			WebConfigLog("syscfg_set failed\n");
@@ -206,6 +207,7 @@ X_RDK_WebConfig_SetParamIntValue
 		               pthread_mutex_unlock(get_global_periodicsync_mutex());
 			}
 		}
+#endif
 		return TRUE;
 	}
 	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);

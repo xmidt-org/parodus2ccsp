@@ -15,7 +15,9 @@
 #include <uuid/uuid.h>
 #include "ansc_platform.h"
 #include "ccsp_base_api.h"
+#ifdef RDKB_BUILD
 #include <sysevent/sysevent.h>
+#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
