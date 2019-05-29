@@ -362,6 +362,7 @@ ConfigFile_AddEntry
 	WebConfigLog("configCount: %d\n",configCount);
 	updateConfigFileNumberOfEntries(configCount);
 	updateConfigFileIndexsList(*pInsNumber);
+	updateConfigFileNextInstanceNumber(pWebConfig->ulWebConfigNextInstanceNumber);
 	WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
 
     return (ANSC_HANDLE)pWebConfigCxtLink;
