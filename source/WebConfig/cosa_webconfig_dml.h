@@ -231,5 +231,6 @@ ConfigFile_Rollback
     (
         ANSC_HANDLE                 hInsContext
     );
-
+BOOL Get_RfcEnable();
+BOOL RFC_ENABLE;
 #endif
