@@ -15,9 +15,6 @@
 #include <uuid/uuid.h>
 #include "ansc_platform.h"
 #include "ccsp_base_api.h"
-#ifdef RDKB_BUILD
-#include <sysevent/sysevent.h>
-#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -42,6 +39,16 @@ struct token_data {
     size_t size;
     char* data;
 };
+
+typedef struct _notify_params
+{
+	char * url;
+	long status_code;
+	char * application_status;
+	int application_details;
+	char * previous_sync_time;
+	char * version;
+} notify_params_t;
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -49,6 +56,7 @@ static char deviceMAC[32]={'\0'};
 static char g_systemReadyTime[64]={'\0'};
 char *ETAG="NONE";
 char serialNum[64]={'\0'};
+int initURL=0;
 char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
@@ -57,7 +65,7 @@ pthread_cond_t periodicsync_condition=PTHREAD_COND_INITIALIZER;
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 static void *WebConfigTask(void *status);
-int processJsonDocument(char *jsonData);
+int processJsonDocument(char *jsonData, WDMP_STATUS *setRet);
 int validateConfigFormat(cJSON *json, char *etag);
 int requestWebConfigData(char **configData, int r_count, int index, int status, long *code);
 static void get_webCfg_interface(char **interface);
@@ -66,10 +74,14 @@ size_t write_callback_fn(void *buffer, size_t size, size_t nmemb, struct token_d
 WDMP_STATUS setConfigParamValues( param_t paramVal[], int paramCount );
 void getAuthToken();
 void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_serial_number);
-int handleHttpResponse(long response_code, char *webConfigData );
+int handleHttpResponse(long response_code, char *webConfigData, int retry_count );
 static char* generate_trans_uuid();
 static void getDeviceMac();
 static void macToLowerCase(char macValue[]);
+static void loadInitURLFromFile(char **url);
+void* processWebConfigNotification(void* pValue);
+void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version);
+void free_notify_params_struct(notify_params_t *param);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -124,9 +136,9 @@ static void *WebConfigTask(void *status)
 	{
 		//TODO: iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud. 
 
-		if(retry_count >=3)
+		if(retry_count >3)
 		{
-			WalError("retry_count has reached max limit %d. Exiting.\n",retry_count);
+			WalError("retry_count has reached max limit. Exiting.\n");
 			break;
 		}
 		WalInfo("calling requestWebConfigData\n");
@@ -135,7 +147,7 @@ static void *WebConfigTask(void *status)
 		WAL_FREE(status);
 		if(configRet == 0)
 		{
-			rv = handleHttpResponse(res_code, webConfigData);
+			rv = handleHttpResponse(res_code, webConfigData, retry_count);
 			if(rv ==1)
 			{
 				WalInfo("No retries are required. Exiting..\n");
@@ -149,6 +161,7 @@ static void *WebConfigTask(void *status)
 		WalInfo("requestWebConfigData BACKOFF_SLEEP_DELAY_SEC is %d seconds\n", BACKOFF_SLEEP_DELAY_SEC);
 		sleep(BACKOFF_SLEEP_DELAY_SEC);
 		retry_count++;
+		WalInfo("Webconfig retry_count is %d\n", retry_count);
 	}
 	}
 
@@ -177,10 +190,11 @@ static void *WebConfigTask(void *status)
 	return NULL;
 }
 
-int handleHttpResponse(long response_code, char *webConfigData)
+int handleHttpResponse(long response_code, char *webConfigData, int retry_count)
 {
 	int first_digit=0;
 	int json_status=0;
+	WDMP_STATUS setRet = WDMP_FAILURE;
 
 	if(response_code == 304)
 	{
@@ -194,18 +208,24 @@ int handleHttpResponse(long response_code, char *webConfigData)
 		if(webConfigData !=NULL)
 		{
 			WalInfo("webConfigData fetched successfully\n");
-			json_status = processJsonDocument(webConfigData);
-			//WalInfo("freeing webConfigData\n");
-			//WAL_FREE(webConfigData);
-			//WalInfo("free for webConfigData done\n");
+			json_status = processJsonDocument(webConfigData, &setRet);
+			WalInfo("setRet after process Json is %d\n", setRet);
 			if(json_status == 1)
 			{
 				WalInfo("processJsonDocument success\n");
+				//Send_Notification_Task(url, status_code, application_status, application_details, previous_sync_time, version);
+				Send_Notification_Task("http://96.116.56.207:8080/api/v4/gateway-cpe/12345/config/voice", response_code, "success", setRet, "1559210562" , "v1.0-NONE");
 				return 1;
 			}
 			else
 			{
 				WalError("Failure in processJsonDocument\n");
+				WalInfo("retry_count is %d\n", retry_count);
+				if(retry_count == 3)
+				{
+					WalError("Sending Failure Notification after 3 retry attempts\n");
+					Send_Notification_Task("http://96.116.56.207:8080/api/v4/gateway-cpe/12345/config/voice", response_code, "failed", setRet, "1559210562" , "v1.0-NONE");
+				}
 			}
 		}
 		else
@@ -269,6 +289,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 	int content_res=0;
 	struct token_data data;
 	data.size = 0;
+	char * configURL = NULL;
 
 	curl = curl_easy_init();
 	if(curl)
@@ -410,7 +431,7 @@ size_t write_callback_fn(void *buffer, size_t size, size_t nmemb, struct token_d
     return size * nmemb;
 }
 
-int processJsonDocument(char *jsonData)
+int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus)
 {
 	cJSON *paramArray = NULL;
 	int parseStatus = 0;
@@ -438,6 +459,9 @@ int processJsonDocument(char *jsonData)
 		if(valid_ret == WDMP_SUCCESS)
 		{
 			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret);
+			WalInfo("Assigning retStatus\n");
+			*retStatus = ret;
+			WalInfo("*retStatus is %d\n", *retStatus);
                         if(ret == WDMP_SUCCESS)
                         {
                                 WalInfo("setValues success. ret : %d\n", ret);
@@ -1016,4 +1040,143 @@ static void macToLowerCase(char macValue[])
     {
         deviceMAC[j] = tolower(deviceMAC[j]);
     }
+}
+
+void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version)
+{
+	int err = 0;
+	pthread_t NotificationThreadId;
+	notify_params_t *args = NULL;
+
+	args = (notify_params_t *)malloc(sizeof(notify_params_t));
+
+	if(args != NULL)
+	{
+		memset(args, 0, sizeof(notify_params_t));
+		WalInfo("Send_Notification_Task: start processing\n");
+		if(url != NULL)
+		{
+			args->url = strdup(url);
+			WalInfo("args->url: %s\n", args->url);
+		}
+		args->status_code = status_code;
+		WalInfo("args->status_code: %d\n", args->status_code);
+		if(application_status != NULL)
+		{
+			args->application_status = strdup(application_status);
+			WalInfo("args->application_status: %s\n", args->application_status);
+		}
+		args->application_details = application_details;
+		WalInfo("args->application_details: %d\n", args->application_details);
+		if(previous_sync_time != NULL)
+		{
+			args->previous_sync_time = strdup(previous_sync_time);
+			WalInfo("args->previous_sync_time: %s\n", args->previous_sync_time);
+		}
+		if(version != NULL)
+		{
+			args->version = strdup(version);
+			WalInfo("args->version: %s\n", args->version);
+		}
+		WalInfo("args values are printing\n");
+		WalInfo("args->url:%s args->status_code:%d args->application_status:%s args->application_details:%d args->previous_sync_time:%s args->version:%s\n", args->url, args->status_code, args->application_status, args->application_details, args->previous_sync_time, args->version );
+		WalInfo("creating processWebConfigNotification thread\n");
+		err = pthread_create(&NotificationThreadId, NULL, processWebConfigNotification, (void *) args);
+		if (err != 0)
+		{
+			WalError("Error creating Webconfig Notification thread :[%s]\n", strerror(err));
+		}
+		else
+		{
+			WalInfo("Webconfig Notification thread created Successfully\n");
+		}
+	}
+}
+
+void* processWebConfigNotification(void* pValue)
+{
+    char device_id[32] = { '\0' };
+    cJSON *notifyPayload = cJSON_CreateObject();
+    char  * stringifiedNotifyPayload;
+    notify_params_t *msg;
+    char dest[512] = {'\0'};
+    char *source = NULL;
+    cJSON * reports, *one_report;
+
+    pthread_detach(pthread_self());
+    if(pValue)
+    {
+		msg = (notify_params_t *) pValue;
+    }
+    if(strlen(deviceMAC) == 0)
+    {
+		WalError("deviceMAC is NULL, failed to send Webconfig Notification\n");
+    }
+    else
+    {
+	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
+	WalInfo("webconfig Device_id %s\n", device_id);
+
+	if(notifyPayload != NULL)
+	{
+		cJSON_AddStringToObject(notifyPayload,"device_id", device_id);
+
+		if(msg)
+		{
+			cJSON_AddItemToObject(notifyPayload, "reports", reports = cJSON_CreateArray());
+			cJSON_AddItemToArray(reports, one_report = cJSON_CreateObject());
+			cJSON_AddStringToObject(one_report, "url", (NULL != msg->url) ? msg->url : "unknown");
+			cJSON_AddNumberToObject(one_report,"http_status_code", msg->status_code);
+			cJSON_AddStringToObject(one_report,"document_application_status", (NULL != msg->application_status) ? msg->application_status : "unknown");
+			cJSON_AddNumberToObject(one_report,"document_application_details", msg->application_details);
+			cJSON_AddNumberToObject(one_report, "previous_sync_time", (NULL != msg->previous_sync_time) ? atoi(msg->previous_sync_time) : 0);
+			cJSON_AddStringToObject(one_report,"version", (NULL != msg->version) ? msg->version : "unknown");
+		}
+		stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
+		cJSON_Delete(notifyPayload);
+	}
+
+	snprintf(dest,sizeof(dest),"event:config-version-report/%s",device_id);
+	WalInfo("dest is %s\n", dest);
+
+	if (stringifiedNotifyPayload != NULL && strlen(device_id) != 0)
+        {
+		source = (char*) malloc(sizeof(char) * sizeof(device_id));
+		strncpy(source, device_id, sizeof(device_id));
+		WalInfo("source is %s\n", source);
+
+		sendNotification(stringifiedNotifyPayload, source, dest);
+	}
+	WalInfo("After sendNotification\n");
+	if(msg != NULL)
+	{
+		free_notify_params_struct(msg);
+	}
+   }
+}
+
+void free_notify_params_struct(notify_params_t *param)
+{
+    WalInfo("Inside free_notify_params_struct\n");
+    if(param != NULL)
+    {
+        if(param->url != NULL)
+        {
+            WAL_FREE(param->url);
+        }
+        if(param->application_status != NULL)
+        {
+            WAL_FREE(param->application_status);
+        }
+        if(param->previous_sync_time != NULL)
+        {
+            WAL_FREE(param->previous_sync_time);
+        }
+        if(param->version != NULL)
+        {
+            WAL_FREE(param->version);
+        }
+        WAL_FREE(param);
+    }
+    WalInfo("End of free_notify_params_struct\n");
 }
