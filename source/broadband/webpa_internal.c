@@ -230,7 +230,26 @@ static void *WALInit(void *status)
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	//Function to start webConfig operation after system ready.
 	WalInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
-	initWebConfigTask((int)status);
+	char RfcEnable[64];
+	memset(RfcEnable, 0, sizeof(RfcEnable));
+	if(0 == syscfg_init())
+	{
+	    syscfg_get( NULL, "WebConfigRfcEnabled", RfcEnable, sizeof(RfcEnable));
+            WalInfo("RfcEnable is %s\n", RfcEnable);
+	}
+	else
+	{
+	    WalError("syscfg_init failed\n");
+	}
+	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
+	{
+	    WalInfo("WebConfig Rfc is enabled, starting WebConfigTask\n");
+	    initWebConfigTask((int)status);
+	}
+	else
+	{
+		WalError("WebConfig Rfc Flag is not enabled\n");
+	}
 #endif
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
