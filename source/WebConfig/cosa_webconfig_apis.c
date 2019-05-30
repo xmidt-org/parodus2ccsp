@@ -180,7 +180,6 @@ CosaWebConfigInitialize
 	WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
     AnscSListInitializeHeader( &pMyObject->ConfigFileList );
     pMyObject->MaxInstanceNumber        = 0;
-    pMyObject->ulWebConfigNextInstanceNumber   = 1;
     CHAR tmpbuf[ 128 ] = { 0 };
 #ifdef RDKB_BUILD
     WebConfigLog("------- %s ---------\n",__FUNCTION__);
@@ -193,6 +192,16 @@ CosaWebConfigInitialize
     else
 #endif
     {
+        CosaDmlGetValueFromDb("WebConfig_NextInstanceNumber",tmpbuf);
+        if(tmpbuf[0] != '\0')
+        {
+            pMyObject->ulWebConfigNextInstanceNumber   = atoi(tmpbuf);
+        }
+        else
+        {
+            pMyObject->ulWebConfigNextInstanceNumber   = 1;
+        }
+        WebConfigLog("pMyObject->ulWebConfigNextInstanceNumber: %d\n",pMyObject->ulWebConfigNextInstanceNumber);
 		CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
         if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
         {
@@ -483,10 +492,7 @@ void FillEntryInList(PCOSA_DATAMODEL_WEBCONFIG pWebConfig, PCOSA_DML_WEBCONFIG_C
         return;
     }
 
-	pWebConfigCxtLink->InstanceNumber =  pWebConfig->ulWebConfigNextInstanceNumber;
-    configFileEntry->InstanceNumber =  pWebConfig->ulWebConfigNextInstanceNumber;
-	pWebConfig->ulWebConfigNextInstanceNumber++;
-
+	pWebConfigCxtLink->InstanceNumber =  configFileEntry->InstanceNumber;
 	pWebConfigCxtLink->hContext = (ANSC_HANDLE)configFileEntry;
 	CosaSListPushEntryByInsNum(&pWebConfig->ConfigFileList, (PCOSA_CONTEXT_LINK_OBJECT)pWebConfigCxtLink);
 	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
@@ -556,8 +562,11 @@ void RemoveEntryFromIndexesList(ULONG InstanceNumber)
                 index = atoi(tok);
                 if(index == InstanceNumber)
                 {
-                    appendToIndexesList(st, newList);
-                    WalInfo("newList: %s\n",newList);
+                    if(st[0] != '\0')
+                    {
+                        appendToIndexesList(st, newList);
+                    }
+                    WalInfo("Final newList: %s\n",newList);
                     CosaDmlStoreValueIntoDb("WebConfig_IndexesList",newList);
                     return;
                 }
@@ -636,5 +645,15 @@ void updateConfigFileIndexsList(ULONG index)
 	appendToIndexesList(instance, strInstance);
     WalInfo("Updated list: %s\n",strInstance);
     CosaDmlStoreValueIntoDb("WebConfig_IndexesList",strInstance);
+	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+}
+
+void updateConfigFileNextInstanceNumber(ULONG index)
+{
+    char buf[16] = { 0 };
+	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+	sprintf(buf, "%d", index);
+	WalInfo("Updated NextInstanceNumber:%d\n",index);
+	CosaDmlStoreValueIntoDb("WebConfig_NextInstanceNumber",buf);
 	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
 }

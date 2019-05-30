@@ -358,8 +358,11 @@ ConfigFile_AddEntry
     *pInsNumber = pWebConfigCxtLink->InstanceNumber;
     WebConfigLog("*pInsNumber: %d\n",*pInsNumber);
 	CosaSListPushEntryByInsNum(&pWebConfig->ConfigFileList, (PCOSA_CONTEXT_LINK_OBJECT)pWebConfigCxtLink);
-	updateConfigFileNumberOfEntries(pWebConfig->pConfigFileContainer->ConfigFileEntryCount);
+	int configCount = AnscSListQueryDepth( &pWebConfig->ConfigFileList );
+	WebConfigLog("configCount: %d\n",configCount);
+	updateConfigFileNumberOfEntries(configCount);
 	updateConfigFileIndexsList(*pInsNumber);
+	updateConfigFileNextInstanceNumber(pWebConfig->ulWebConfigNextInstanceNumber);
 	WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
 
     return (ANSC_HANDLE)pWebConfigCxtLink;
@@ -394,7 +397,6 @@ ConfigFile_DelEntry
 
     CosaDmlRemoveConfigFileEntry(pConfigFileEntry->InstanceNumber);
     WebConfigLog("After CosaDmlRemoveConfigFileEntry\n");
-	WebConfigLog("B4 AnscSListPopEntryByLinkAnscSListPopEntryByLinkAnscSListPopEntryByLinkAnscSListPopEntryByLinkAnscSListPopEntryByLink pWebConfig->pConfigFileContainer->ConfigFileEntryCount:%d\n",pWebConfig->pConfigFileContainer->ConfigFileEntryCount);
     if ( returnStatus == ANSC_STATUS_SUCCESS )
 	{
 			/* Remove entery from the Queue */
@@ -409,7 +411,9 @@ ConfigFile_DelEntry
 			return ANSC_STATUS_FAILURE;
 		}
 	}
-	WebConfigLog("After AnscSListPopEntryByLink pWebConfig->pConfigFileContainer->ConfigFileEntryCount:%d\n",pWebConfig->pConfigFileContainer->ConfigFileEntryCount);
+	int configCount = AnscSListQueryDepth( &pWebConfig->ConfigFileList );
+	WebConfigLog("configCount: %d\n",configCount);
+	updateConfigFileNumberOfEntries(configCount);
     WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
     return returnStatus;
 }
