@@ -676,13 +676,20 @@ BOOL getConfigURL(int index,char **configURL)
         WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
 
-        for(i=0;i<=count;i++)
+        for(i=0;i<count;i++)
         {
                 if(pConfigFileEntry[i].InstanceNumber == index)
                 {
-                    *configURL = strdup(pConfigFileEntry[i].URL);
-                    indexFound = 1;
-                    break;
+		    if((pConfigFileEntry[i].URL)[0] != '\0')
+		    {
+		            *configURL = strdup(pConfigFileEntry[i].URL);
+		            indexFound = 1;
+		            break;
+		    }
+		    else
+		    {
+			*configURL = NULL;
+		    }
                 }
         }
         if(indexFound == 0)
@@ -702,7 +709,7 @@ int setConfigURL(int index, char *configURL)
         char ParamName[MAX_BUFF_SIZE] = { 0 };
 	    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
 	    count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-        for(i=0;i<=count;i++)
+        for(i=0;i<count;i++)
         {
 		        WalInfo("Inside setConfigURL for\n");
                 if(pConfigFileEntry[i].InstanceNumber == index)
@@ -731,13 +738,20 @@ BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime)
         WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
 
-        for(i=0;i<=count;i++)
+        for(i=0;i<count;i++)
         {
                 if(pConfigFileEntry[i].InstanceNumber == index)
                 {
-                    *PreviousSyncDateTime = strdup(pConfigFileEntry[i].PreviousSyncDateTime);
-                    indexFound = 1;
-                    break;
+		    if((pConfigFileEntry[i].PreviousSyncDateTime)[0] != '\0')
+		    {
+		            *PreviousSyncDateTime = strdup(pConfigFileEntry[i].PreviousSyncDateTime);
+		            indexFound = 1;
+		            break;
+		    }
+		    else
+		    {
+			*PreviousSyncDateTime = NULL;
+		    }
                 }
         }
         if(indexFound == 0)
@@ -759,7 +773,7 @@ int setPreviousSyncDateTime(int index)
         char current_time[MAX_BUFF_SIZE] = { 0 };
 	    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
 	    count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-        for(i=0;i<=count;i++)
+        for(i=0;i<count;i++)
         {
 		        WalInfo("Inside setConfigURL for\n");
                 if(pConfigFileEntry[i].InstanceNumber == index)
@@ -790,16 +804,28 @@ BOOL getConfigVersion(int index, char **version)
         int i, count, indexFound = 0;
         WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-
-        for(i=0;i<=count;i++)
+	WalInfo("count is %d\n", count);
+        for(i=0;i<count;i++)
         {
+		WalInfo("Inside getConfigVersion for\n");
                 if(pConfigFileEntry[i].InstanceNumber == index)
                 {
-                    *version = strdup(pConfigFileEntry[i].Version);
-                    indexFound = 1;
-                    break;
+		    WalInfo("Null check\n");
+		    if((pConfigFileEntry[i].Version)[0] != '\0')
+		    {
+			    WalInfo("Before strdup\n");
+		            *version = strdup(pConfigFileEntry[i].Version);
+		            indexFound = 1;
+		            break;
+		    }
+		    else
+		    {
+			   WalInfo("version is null\n");
+		     	   *version = NULL;
+		    }
                 }
         }
+	WalInfo("outside for\n");
         if(indexFound == 0)
         {
             WalError("Table with %d index is not available\n", index);
@@ -817,7 +843,7 @@ int setConfigVersion(int index, char *version)
         char ParamName[MAX_BUFF_SIZE] = { 0 };
 	    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
 	    count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-        for(i=0;i<=count;i++)
+        for(i=0;i<count;i++)
         {
 		        WalInfo("Inside setConfigVersion for\n");
                 if(pConfigFileEntry[i].InstanceNumber == index)
@@ -845,7 +871,7 @@ BOOL getSyncCheckOK(int index)
         int i, count, indexFound = 0;
         WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-        for(i=0;i<=count;i++)
+        for(i=0;i<count;i++)
         {
                 if(pConfigFileEntry[i].InstanceNumber == index)
                 {
@@ -865,7 +891,7 @@ int setSyncCheckOK(int index, BOOL status)
         char ParamName[MAX_BUFF_SIZE] = { 0 };
 	    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
 	    count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-        for(i=0;i<=count;i++)
+        for(i=0;i<count;i++)
         {
 		        WalInfo("Inside setSyncCheckOK for\n");
                 if(pConfigFileEntry[i].InstanceNumber == index)
