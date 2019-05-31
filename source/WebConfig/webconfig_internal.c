@@ -610,9 +610,16 @@ int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersio
 	char *version = NULL;
 
 	parseStatus = parseJsonData(jsonData, &reqObj, &version);
-	WalInfo("After parseJsonData\n");
-	*docVersion = version;
-	WalInfo("docVersion is %s\n", docVersion);
+	WalInfo("After parseJsonData version is %s\n", version);
+	if(version!=NULL)
+	{
+		WalInfo("copying to docVersion\n");
+		*docVersion = strdup(version);
+		WalInfo("docVersion is %s\n", *docVersion);
+		WAL_FREE(version);
+		WalInfo("free for version done\n");
+	}
+	WalInfo("checking parseStatus\n");
 	if(parseStatus ==1)
 	{
 		WalInfo("Request:> Type : %d\n",reqObj->reqType);
@@ -743,6 +750,8 @@ int validateConfigFormat(cJSON *json, char **eTag)
 				WalInfo("Copying version to eTag value\n"); //free eTag
 					*eTag = strdup(version);
 					WalInfo("eTag is %s\n", *eTag);
+					//WAL_FREE(version);
+					//WalInfo("free version done\n");
 					//check parameters
 					paramArray = cJSON_GetObjectItem( json, "parameters" );
 					if( paramArray != NULL )
@@ -896,7 +905,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		//WalInfo("calling getConfigVersion for index %d\n", index);
 		getConfigVersion(1, &version); //TODO: local api implementation
 		WalInfo("createCurlheader version fetched is %s\n", version);
-		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "NONE"));
+		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "V1.0-NONE"));
 		WalInfo("version_header formed %s\n", version_header);
 		list = curl_slist_append(list, version_header);
 		WAL_FREE(version_header);
@@ -1345,7 +1354,7 @@ void* processWebConfigNotification(void* pValue)
 			cJSON_AddStringToObject(one_report,"document_application_status", (NULL != msg->application_status) ? msg->application_status : "unknown");
 			cJSON_AddNumberToObject(one_report,"document_application_details", msg->application_details);
 			cJSON_AddNumberToObject(one_report, "previous_sync_time", (NULL != msg->previous_sync_time) ? atoi(msg->previous_sync_time) : 0);
-			cJSON_AddStringToObject(one_report,"version", (NULL != msg->version) ? msg->version : "NONE");
+			cJSON_AddStringToObject(one_report,"version", (NULL != msg->version) ? msg->version : "V1.0-NONE");
 		}
 		stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
 		cJSON_Delete(notifyPayload);
