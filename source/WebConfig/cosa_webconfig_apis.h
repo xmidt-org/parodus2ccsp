@@ -21,6 +21,8 @@
 #include "dslh_definitions_tr143.h"
 #include "webpa_adapter.h"
 
+#define MAX_BUFF_SIZE 256
+
 #define  COSA_CONTEXT_WEBCONFIG_LINK_CLASS_CONTENT                                  \
         COSA_CONTEXT_LINK_CLASS_CONTENT                                            \
         BOOL                            bFound;                                    \
@@ -129,3 +131,13 @@ CosaDmlRemoveConfigFileEntry
     (
         ULONG InstanceNumber
     );
+
+int getConfigNumberOfEntries();
+BOOL getConfigURL(int index,char **configURL);
+int setConfigURL(int index, char *configURL);
+BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime);
+int setPreviousSyncDateTime(int index);
+BOOL getConfigVersion(int index, char **version);
+int setConfigVersion(int index, char *version);
+BOOL getSyncCheckOK(int index);
+int setSyncCheckOK(int index, BOOL status);
