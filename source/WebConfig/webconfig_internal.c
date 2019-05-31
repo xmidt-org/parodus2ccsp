@@ -430,7 +430,10 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 				{
 					snprintf(configURL, MAX_BUF_SIZE, url, deviceMAC);
 					WalInfo("configURL is %s\n", configURL);
-					ret = setConfigURL(1, configURL); //TODO: local api implementation
+					//ret = setConfigURL(1, configURL); //TODO: local api implementation
+					WalInfo("calling initConfigFileWithURL\n");
+					ret = initConfigFileWithURL(configURL, 1);
+					WalInfo("initConfigFileWithURL done ret %d\n", ret);
 					if(ret == 0)
 					{
 						WalInfo("setConfigURL done\n");
@@ -889,20 +892,22 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	WalInfo("Start of createCurlheader\n");
 	//Fetch auth JWT token from cloud.
 	getAuthToken();
-
+	WalInfo("After getAuthToken\n");
+	
 	auth_header = (char *) malloc(sizeof(char)*MAX_HEADER_LEN);
 	if(auth_header !=NULL)
 	{
+		WalInfo("forming auth_header\n");
 		snprintf(auth_header, MAX_HEADER_LEN, "Authorization:Bearer %s", (0 < strlen(webpa_auth_token) ? webpa_auth_token : NULL));
 		list = curl_slist_append(list, auth_header);
 		WAL_FREE(auth_header);
 	}
-
+	WalInfo("B4 version header\n");
 	version_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 	if(version_header !=NULL)
 	{
 		//snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ETAG);
-		//WalInfo("calling getConfigVersion for index %d\n", index);
+		WalInfo("calling getConfigVersion\n");
 		getConfigVersion(1, &version); //TODO: local api implementation
 		WalInfo("createCurlheader version fetched is %s\n", version);
 		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "V1.0-NONE"));

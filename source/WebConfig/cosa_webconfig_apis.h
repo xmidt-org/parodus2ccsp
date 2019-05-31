@@ -141,3 +141,5 @@ BOOL getConfigVersion(int index, char **version);
 int setConfigVersion(int index, char *version);
 BOOL getSyncCheckOK(int index);
 int setSyncCheckOK(int index, BOOL status);
+
+int initConfigFileWithURL(char *Url, ULONG InstanceNumber);

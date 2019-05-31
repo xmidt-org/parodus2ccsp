@@ -704,8 +704,11 @@ int setConfigURL(int index, char *configURL)
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
         int i;
         char ParamName[MAX_BUFF_SIZE] = { 0 };
+	WalInfo("Inside setConfigURL\n");
+	WalInfo("pMyObject->pConfigFileContainer->ConfigFileEntryCount is %d\n", pMyObject->pConfigFileContainer->ConfigFileEntryCount);
         for(i=0;i<=pMyObject->pConfigFileContainer->ConfigFileEntryCount;i++)
         {
+		WalInfo("Inside setConfigURL for\n");
                 pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
                 if ( pSListEntry )
                 {
@@ -714,6 +717,7 @@ int setConfigURL(int index, char *configURL)
                 pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pCxtLink->hContext;
                 if(pConfigFileEntry->InstanceNumber==index)
                 {
+			WalInfo("setConfigURL break\n");
                         break;
                 }
                 else if(i==pMyObject->pConfigFileContainer->ConfigFileEntryCount && pConfigFileEntry->InstanceNumber!=index)
@@ -722,9 +726,13 @@ int setConfigURL(int index, char *configURL)
                                 return 1;
                 }
         }
+	WalInfo("Inside setConfigURL b4 configURL\n");
         AnscCopyString(pConfigFileEntry->URL,configURL);
+	WalInfo("Inside setConfigURL ParamName\n");
         snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_Url", pConfigFileEntry->InstanceNumber);
+	WalInfo("B4 CosaDmlStoreValueIntoDb\n");
         CosaDmlStoreValueIntoDb(ParamName, pConfigFileEntry->URL);
+	WalInfo("CosaDmlStoreValueIntoDb done\n");
         return 0;
 
 }
@@ -804,8 +812,11 @@ BOOL getConfigVersion(int index, char **version)
         PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
         int i;
+	WalInfo("Inside getConfigVersion\n");
+	WalInfo("pMyObject->pConfigFileContainer->ConfigFileEntryCount is %d\n", pMyObject->pConfigFileContainer->ConfigFileEntryCount);
         for(i=0;i<=pMyObject->pConfigFileContainer->ConfigFileEntryCount;i++)
         {
+		WalInfo("Inside for\n");
                 pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
                 if ( pSListEntry )
                 {
@@ -814,6 +825,7 @@ BOOL getConfigVersion(int index, char **version)
                 pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pCxtLink->hContext;
                 if(pConfigFileEntry->InstanceNumber==index)
                 {
+			WalInfo("Before break\n");
                         break;
                 }
                 else if(i==pMyObject->pConfigFileContainer->ConfigFileEntryCount && pConfigFileEntry->InstanceNumber!=index)
@@ -822,8 +834,9 @@ BOOL getConfigVersion(int index, char **version)
                                 return FALSE;
                 }
         }
-
+	WalInfo("getConfigVersion assigining\n");
         *version=pConfigFileEntry->Version;
+	WalInfo("*version is %s\n", *version);
         return TRUE;
 
 }
@@ -929,4 +942,29 @@ int setSyncCheckOK(int index, BOOL status)
         }
         return 0;
 
+}
+
+int initConfigFileWithURL(char *Url, ULONG InstanceNumber)
+{
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+	if(isValidUrl(Url) == TRUE)
+	{
+        PCOSA_DATAMODEL_WEBCONFIG             pWebConfig              = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+        PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry = NULL;
+        pConfigFileEntry = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)AnscAllocateMemory(sizeof(COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY));
+        memset(pConfigFileEntry, 0, sizeof(COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY));
+	    pConfigFileEntry->InstanceNumber = InstanceNumber;
+	    AnscCopyString( pConfigFileEntry->URL, Url );
+        FillEntryInList(pWebConfig, pConfigFileEntry);
+	    int configCount = AnscSListQueryDepth( &pWebConfig->ConfigFileList );
+	    WalInfo("configCount: %d\n",configCount);
+	    updateConfigFileNumberOfEntries(configCount);
+	    updateConfigFileIndexsList(InstanceNumber);
+	    updateConfigFileNextInstanceNumber(InstanceNumber+1);
+	    CosaDmlSetConfigFileEntry(pConfigFileEntry);
+	    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	    return 0;
+	}
+	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	return 1;
 }

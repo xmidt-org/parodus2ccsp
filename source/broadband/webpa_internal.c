@@ -1078,7 +1078,7 @@ static int waitForComponentReady(char *compName, char *dbusPath)
 		else
 		{
                         count++;
-                        if(count > 10) //60
+                        if(count > 60)
                         {
                                 WalError("%s component Health check failed (ret:%d), continue\n",compName, ret);
                                 break;
