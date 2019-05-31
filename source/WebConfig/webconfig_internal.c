@@ -1087,6 +1087,7 @@ void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_seria
 		//Call read script
 		WalInfo("calling read script\n");
 		execute_token_script(newToken,WEBPA_READ_HEADER,len,hw_mac,hw_serial_number);
+		WalInfo("after read script\n");
 	}
 	else
 	{
@@ -1133,6 +1134,7 @@ void getAuthToken()
 					WalInfo("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
 					//Call create/acquisition script
 					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
+					WalInfo("After createNewAuthToken\n");
 				}
 				else
 				{
