@@ -232,6 +232,7 @@ static void *WALInit(void *status)
 	WalInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
 	char RfcEnable[64];
 	memset(RfcEnable, 0, sizeof(RfcEnable));
+#ifdef RDKB_BUILD
 	if(0 == syscfg_init())
 	{
 	    syscfg_get( NULL, "WebConfigRfcEnabled", RfcEnable, sizeof(RfcEnable));
@@ -241,6 +242,7 @@ static void *WALInit(void *status)
 	{
 	    WalError("syscfg_init failed\n");
 	}
+#endif
 	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
 	{
 	    WalInfo("WebConfig Rfc is enabled, starting WebConfigTask\n");

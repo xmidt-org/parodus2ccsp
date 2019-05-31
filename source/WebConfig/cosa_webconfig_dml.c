@@ -634,7 +634,7 @@ BOOL isValidUrl
         PCHAR                       pUrl
     )
 {
-	if(strstr(pUrl, "https") == NULL)
+	if(strstr(pUrl, "http") == NULL)
 	{
 		WalError("Invalid URL\n");
 		return FALSE;
