@@ -126,7 +126,7 @@ X_RDK_WebConfig_GetParamUlongValue
     if( AnscEqualString(ParamName, "ConfigFileNumberOfEntries", TRUE))
     {
         /* collect value */
-        *puLong = pMyObject->pConfigFileContainer->ConfigFileEntryCount;
+        *puLong = AnscSListQueryDepth( &pMyObject->ConfigFileList );
         return TRUE;
     }
 	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
@@ -143,6 +143,7 @@ X_RDK_WebConfig_GetParamIntValue
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	RFC_ENABLE=Get_RfcEnable();
         if(!RFC_ENABLE)
         {
                 WalInfo("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
