@@ -69,6 +69,9 @@ char *objectList[] ={
 "Device.NotifyComponent.",
 "Device.LogAgent.",
 "Device.X_RDKCENTRAL-COM_Webpa.",
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+"Device.X_RDK_WebConfig.",
+#endif
 "Device.Webpa."
 };
  
@@ -91,6 +94,9 @@ char *subObjectList[] =
 "Device.X_RDKCENTRAL-COM_Report.RadioInterfaceStatistics.",
 "Device.X_RDKCENTRAL-COM_Report.NeighboringAP.",
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesStatus.",
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+"Device.X_RDK_WebConfig.ConfigFile.",
+#endif
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic."
 }; 
 

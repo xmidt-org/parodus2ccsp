@@ -439,7 +439,16 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
         WalInfo("CompName = %s, dbusPath : %s, paramCount = %d\n", CompName, dbusPath, paramCount);
         if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
         {
-            ret = getWebpaParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+			if(strstr(parameterNamesLocal[0],RDKB_PARAM_WEBCONFIG) != NULL)
+			{
+				ret = getWebConfigParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
+			}
+			else
+#endif
+			{
+            	ret = getWebpaParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
+			}
         }
         else
         {
@@ -678,7 +687,16 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
 
         if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
         {
-            ret = setWebpaParameterValues(val, paramCount,&faultParam);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+			if(strstr(val[0].parameterName, RDKB_PARAM_WEBCONFIG) != NULL)
+			{
+				ret = setWebConfigParameterValues(val, paramCount,&faultParam);
+			}
+			else
+#endif
+			{
+            	ret = setWebpaParameterValues(val, paramCount,&faultParam);
+			}
         }
         else
         {
