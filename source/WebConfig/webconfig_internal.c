@@ -403,7 +403,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 	struct token_data data;
 	data.size = 0;
 	char * configURL = NULL;
-	int ret =0;
+	int ret =0, count = 0;
 	char *url = NULL;
 
 	curl = curl_easy_init();
@@ -430,15 +430,20 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 				{
 					snprintf(configURL, MAX_BUF_SIZE, url, deviceMAC);
 					WalInfo("configURL is %s\n", configURL);
+					count = getConfigNumberOfEntries();
+					WalInfo("count = %d\n",count);
 					//ret = setConfigURL(1, configURL); //TODO: local api implementation
-					WalInfo("calling initConfigFileWithURL\n");
-					ret = initConfigFileWithURL(configURL, 1);
-					WalInfo("initConfigFileWithURL done ret %d\n", ret);
-					if(ret == 0)
+					if(count == 0)
 					{
-						WalInfo("setConfigURL done\n");
-					}
-					initURL=1;
+				        WalInfo("calling initConfigFileWithURL\n");
+				        ret = initConfigFileWithURL(configURL, 1);
+				        WalInfo("initConfigFileWithURL done ret %d\n", ret);
+				        if(ret == 0)
+				        {
+					        WalInfo("setConfigURL done\n");
+				        }
+				        initURL=1;
+			        }
 				}
 			}
 		}
