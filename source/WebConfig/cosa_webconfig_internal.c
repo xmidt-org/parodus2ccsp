@@ -71,10 +71,24 @@ int getInstanceNumberAtIndex(int index)
 BOOL getConfigURL(int index,char **configURL)
 {
 	PCOSA_DATAMODEL_WEBCONFIG  pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = pMyObject->pConfigFileContainer->pConfigFileTable;
-	int i, count, indexFound = 0;
+	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
+	//int i, count, indexFound = 0;
 	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
-	count = getConfigNumberOfEntries();
+	pConfigFileEntry = CosaSListGetEntryByInsNum(&pMyObject->ConfigFileList, index);
+	if(NULL != pConfigFileEntry)
+	{
+	    WalInfo("pConfigFileEntry->URL: %s\n",pConfigFileEntry->URL);
+	    if((pConfigFileEntry->URL)[0] != '\0')
+		{
+		    *configURL = strdup(pConfigFileEntry->URL);
+	    }
+	    else
+	    {
+	        *configURL = strdup("");
+        }
+        return TRUE;
+	}
+	/*count = getConfigNumberOfEntries();
 	WalInfo("count = %d\n",count);
 	WalInfo("index: %d\n",index);
 	for(i=0;i<count;i++)
@@ -83,7 +97,14 @@ BOOL getConfigURL(int index,char **configURL)
 		if(getInstanceNumberAtIndex(i) == index)
 		{
 			WalInfo("pConfigFileEntry[%d].URL: %s\n",i,pConfigFileEntry[i].URL);
-			*configURL = strdup(pConfigFileEntry[i].URL);
+			if((pConfigFileEntry[i].URL)[0] != '\0')
+			{
+			    *configURL = strdup(pConfigFileEntry[i].URL);
+		    }
+		    else
+		    {
+		        *configURL = strdup("");
+	        }
 			indexFound = 1;
 			break;
 		}
@@ -92,19 +113,26 @@ BOOL getConfigURL(int index,char **configURL)
 	{
 		WalError("Table with %d index is not available\n", index);
 		return FALSE;
-	}
+	}*/
+	WalError("Table with %d index is not available\n", index);
 	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
-	return TRUE;
+	return FALSE;
 }
 
 int setConfigURL(int index, char *configURL)
 {
 	PCOSA_DATAMODEL_WEBCONFIG  pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = pMyObject->pConfigFileContainer->pConfigFileTable;
-	int i, count, indexFound = 0;
-	char ParamName[MAX_BUFF_SIZE] = { 0 };
+	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
+	//int i, count, indexFound = 0;
+	//char ParamName[MAX_BUFF_SIZE] = { 0 };
 	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
-	count = getConfigNumberOfEntries();
+	pConfigFileEntry = CosaSListGetEntryByInsNum(&pMyObject->ConfigFileList, index);
+	if(NULL != pConfigFileEntry)
+	{
+	    AnscCopyString( pConfigFileEntry->URL, configURL );
+	    CosaDmlSetConfigFileEntry(pConfigFileEntry);
+	}
+	/*count = getConfigNumberOfEntries();
 	WalInfo("count : %d\n",count);
 	for(i=0;i<count;i++)
 	{
@@ -122,7 +150,7 @@ int setConfigURL(int index, char *configURL)
 	{
 		WalError("Table with %d index is not available\n", index);
 		return 1;
-	}
+	}*/
 	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
 	return 0;
 }
