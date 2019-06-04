@@ -43,6 +43,31 @@ int getConfigNumberOfEntries()
 	return count;
 }
 
+int getInstanceNumberAtIndex(int index)
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
+    PCOSA_CONTEXT_LINK_OBJECT       pCosaContextEntry = (PCOSA_CONTEXT_LINK_OBJECT)NULL;
+    int count , i;
+    WalInfo("----------- %s --------- Enter -----\n",__FUNCTION__);
+    WalInfo("index: %d\n",index);
+    count = getConfigNumberOfEntries();
+    WalInfo("count: %d\n",count);
+    pSLinkEntry = AnscSListGetFirstEntry(&pMyObject->ConfigFileList);
+    for(i = 0; i<count; i++)
+    {
+        pCosaContextEntry = ACCESS_COSA_CONTEXT_LINK_OBJECT(pSLinkEntry);
+        pSLinkEntry       = AnscSListGetNextEntry(pSLinkEntry);
+        if(index == i)
+        {
+            WalInfo("InstanceNumber at %d is: %d\n",i, pCosaContextEntry->InstanceNumber);
+            return pCosaContextEntry->InstanceNumber;
+        }
+    }
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+    return 0;
+}
+
 BOOL getConfigURL(int index,char **configURL)
 {
 	PCOSA_DATAMODEL_WEBCONFIG  pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
@@ -54,8 +79,8 @@ BOOL getConfigURL(int index,char **configURL)
 	WalInfo("index: %d\n",index);
 	for(i=0;i<count;i++)
 	{
-		WalInfo("pConfigFileEntry[%d].InstanceNumber: %d\n",i,pConfigFileEntry[i].InstanceNumber);
-		if(pConfigFileEntry[i].InstanceNumber == index)
+	    WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(i));
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			WalInfo("pConfigFileEntry[%d].URL: %s\n",i,pConfigFileEntry[i].URL);
 			*configURL = strdup(pConfigFileEntry[i].URL);
@@ -83,7 +108,8 @@ int setConfigURL(int index, char *configURL)
 	WalInfo("count : %d\n",count);
 	for(i=0;i<count;i++)
 	{
-		if(pConfigFileEntry[i].InstanceNumber == index)
+	    WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(i));
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			AnscCopyString(pConfigFileEntry[i].URL,configURL);
 			snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_Url", index);
@@ -111,7 +137,8 @@ BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime)
 	WalInfo("count : %d\n",count);
 	for(i=0;i<count;i++)
 	{
-		if(pConfigFileEntry[i].InstanceNumber == index)
+	    WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(i));
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			*PreviousSyncDateTime = strdup(pConfigFileEntry[i].PreviousSyncDateTime);
 			indexFound = 1;
@@ -139,7 +166,8 @@ int setPreviousSyncDateTime(int index)
 	WalInfo("count : %d\n",count);
 	for(i=0;i<count;i++)
 	{
-		if(pConfigFileEntry[i].InstanceNumber == index)
+	    WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(i));
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			time_t curr_time = time(NULL);
 			struct tm *tm = localtime(&curr_time);
@@ -171,7 +199,8 @@ BOOL getConfigVersion(int index, char **version)
 
 	for(i=0;i<count;i++)
 	{
-		if(pConfigFileEntry[i].InstanceNumber == index)
+	    WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(i));
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			*version = strdup(pConfigFileEntry[i].Version);
 			indexFound = 1;
@@ -198,8 +227,9 @@ int setConfigVersion(int index, char *version)
 	WalInfo("count : %d\n",count);
 	for(i=0;i<count;i++)
 	{
+	    WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(i));
 		WalInfo("Inside setConfigVersion for\n");
-		if(pConfigFileEntry[i].InstanceNumber == index)
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			AnscCopyString(pConfigFileEntry[i].Version,version);
 			snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_Version", index);
@@ -227,7 +257,7 @@ BOOL getSyncCheckOK(int index)
 	WalInfo("count : %d\n",count);
 	for(i=0;i<count;i++)
 	{
-		if(pConfigFileEntry[i].InstanceNumber == index)
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			return pConfigFileEntry[i].SyncCheckOK;
 		}
@@ -249,7 +279,7 @@ int setSyncCheckOK(int index, BOOL status)
 	for(i=0;i<count;i++)
 	{
 		WalInfo("Inside setSyncCheckOK for\n");
-		if(pConfigFileEntry[i].InstanceNumber == index)
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			pConfigFileEntry[i].SyncCheckOK = status;
 			snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_SyncCheckOk", index);
@@ -284,7 +314,8 @@ BOOL getForceSyncCheck(int index)
 	WalInfo("count : %d\n",count);
 	for(i=0;i<count;i++)
 	{
-		if(pConfigFileEntry[i].InstanceNumber == index)
+	    WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(i));
+		if(getInstanceNumberAtIndex(i) == index)
 		{
 			return pConfigFileEntry[i].ForceSyncCheck;
 		}
@@ -536,7 +567,8 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                     int n = 0, index = 0;
                                     for(n = 0; n<count; n++)
                                     {
-                                        index = pWebConfig->pConfigFileContainer->pConfigFileTable[n].InstanceNumber;
+                                        WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(n));
+                                        index = getInstanceNumberAtIndex(n);
                                         WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
 								        updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
 								        WalInfo("k = %d\n",k);
@@ -661,7 +693,8 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             int n = 0, index = 0;
                             for(n = 0; n<count; n++)
                             {
-                                index = pWebConfig->pConfigFileContainer->pConfigFileTable[n].InstanceNumber;
+                                WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(n));
+                                index = getInstanceNumberAtIndex(n);
                                 WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
 						        updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
 						        WalInfo("k = %d\n",k);
