@@ -433,8 +433,17 @@ static void *WebConfigTask(void *status)
                 if(!rv)
                 {
                         time(&t);
-			wait_flag=1;
-                        WalInfo("Recieved signal interput to change the sync interval to %d\n",value);
+                        if(getForceSyncCheck())
+                        {
+                                wait_flag=0;
+                                WalInfo("Recieved signal interput to getForceSyncCheck at %s\n",ctime(&t));
+                                setForceSyncCheck();
+                        }
+                        else
+                        {
+                                wait_flag=1;
+                                WalInfo("Recieved signal interput to change the sync interval to %d\n",value);
+                        }
                 }
                 else if (rv == ETIMEDOUT)
                 {

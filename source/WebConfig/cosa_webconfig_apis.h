@@ -115,3 +115,5 @@ CosaDmlGetConfigFileEntry
     (
         ULONG InstanceNumber
     );
+BOOL getForceSyncCheck();
+void setForceSyncCheck();
