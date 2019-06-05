@@ -133,16 +133,5 @@ CosaDmlRemoveConfigFileEntry
         ULONG InstanceNumber
     );
 
-int getConfigNumberOfEntries();
-BOOL getConfigURL(int index,char **configURL);
-int setConfigURL(int index, char *configURL);
-BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime);
-int setPreviousSyncDateTime(int index);
-BOOL getConfigVersion(int index, char **version);
-int setConfigVersion(int index, char *version);
-BOOL getSyncCheckOK(int index);
-int setSyncCheckOK(int index, BOOL status);
-BOOL getForceSyncCheck();
-void setForceSyncCheck();
 
 int initConfigFileWithURL(char *Url, ULONG InstanceNumber);

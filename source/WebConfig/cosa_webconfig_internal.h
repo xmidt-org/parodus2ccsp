@@ -81,9 +81,10 @@ BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime);
 int setPreviousSyncDateTime(int index);
 BOOL getConfigVersion(int index, char **version);
 int setConfigVersion(int index, char *version);
-BOOL getSyncCheckOK(int index);
+BOOL getSyncCheckOK(int index,BOOL *pvalue );
 int setSyncCheckOK(int index, BOOL status);
-BOOL getForceSyncCheck(int index);
+BOOL getForceSyncCheck(int index,BOOL *pvalue );
+BOOL setForceSyncCheck(int index, BOOL pvalue);
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 
 int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );

@@ -180,11 +180,13 @@ static void *WebConfigTask(void *status)
                 if(!rv)
                 {
                         time(&t);
-                        if(getForceSyncCheck())
+			BOOL ForceSyncEnable;
+			getForceSyncCheck(1,&ForceSyncEnable);
+                        if(ForceSyncEnable)
                         {
                                 wait_flag=0;
                                 WalInfo("Recieved signal interput to getForceSyncCheck at %s\n",ctime(&t));
-                                setForceSyncCheck();
+                                setForceSyncCheck(1,false);
                         }
                         else
                         {
