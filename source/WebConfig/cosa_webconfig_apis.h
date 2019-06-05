@@ -21,6 +21,8 @@
 #include "dslh_definitions_tr143.h"
 #include "webpa_adapter.h"
 
+#define MAX_BUFF_SIZE 256
+
 #define  COSA_CONTEXT_WEBCONFIG_LINK_CLASS_CONTENT                                  \
         COSA_CONTEXT_LINK_CLASS_CONTENT                                            \
         BOOL                            bFound;                                    \
@@ -34,6 +36,7 @@
 #define  COSA_DML_RR_NAME_WebConfigAlias                       "Alias"
 #define  COSA_DML_RR_NAME_WebConfigbNew                        "bNew"
 
+#define   COSA_DML_CONFIGFILE_ACCESS_INTERVAL   10 /* seconds*/
 typedef  struct
 _COSA_CONTEXT_WEBCONFIG_LINK_OBJECT
 {
@@ -49,7 +52,7 @@ _COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
     char                            Version[64];
     BOOLEAN                         ForceSyncCheck;
     BOOLEAN                         SyncCheckOK;
-    char                            *PreviousSyncDateTime;
+    char                            PreviousSyncDateTime[64];
 }
 COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY,  *PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY;
 
@@ -66,6 +69,7 @@ COSA_DML_CONFIGFILE_CONTAINER,  *PCOSA_DML_CONFIGFILE_CONTAINER;
     COSA_BASE_CONTENT                                                                       \
 	ULONG                       MaxInstanceNumber;                                    \
 	ULONG                       ulWebConfigNextInstanceNumber;                                    \
+	ULONG                           PreviousVisitTime;                                      \
     BOOL                        RfcEnable;                                         \
     int                     PeriodicSyncCheckInterval;                      \
     SLIST_HEADER                ConfigFileList;                                        \
@@ -115,5 +119,30 @@ CosaDmlGetConfigFileEntry
     (
         ULONG InstanceNumber
     );
+
+
+ANSC_STATUS
+CosaDmlSetConfigFileEntry
+    (
+	    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY configFileEntry
+    );
+
+ANSC_STATUS
+CosaDmlRemoveConfigFileEntry
+    (
+        ULONG InstanceNumber
+    );
+
+int getConfigNumberOfEntries();
+BOOL getConfigURL(int index,char **configURL);
+int setConfigURL(int index, char *configURL);
+BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime);
+int setPreviousSyncDateTime(int index);
+BOOL getConfigVersion(int index, char **version);
+int setConfigVersion(int index, char *version);
+BOOL getSyncCheckOK(int index);
+int setSyncCheckOK(int index, BOOL status);
 BOOL getForceSyncCheck();
 void setForceSyncCheck();
+
+int initConfigFileWithURL(char *Url, ULONG InstanceNumber);
