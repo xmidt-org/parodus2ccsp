@@ -13,9 +13,22 @@
 #   limitations under the License.
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_ANSC_LINUX ")
+set(WEBCONFIG_PATCH "${PATCHES_DIR}/Web_config_XML.patch")
 set(SOURCES broadband/ssp_messagebus_interface.c broadband/ssp_main.c broadband/ssp_action.c broadband/cosa_webpa_dml.c broadband/cosa_webpa_internal.c broadband/cosa_webpa_apis.c broadband/plugin_main.c broadband/plugin_main_apis.c broadband/webpa_adapter.c broadband/webpa_internal.c broadband/webpa_table.c broadband/webpa_replace.c broadband/webpa_parameter.c broadband/webpa_attribute.c broadband/webpa_notification.c app/main.c app/libpd.c)
 if (FEATURE_SUPPORT_WEBCONFIG)
 set(SOURCES ${SOURCES} WebConfig/cosa_apis_util.c WebConfig/cosa_webconfig_dml.c WebConfig/cosa_webconfig_apis.c WebConfig/webconfig_internal.c WebConfig/webconfig_log.c WebConfig/cosa_webconfig_internal.c)
+ execute_process(
+    COMMAND patch -p1 --forward --ignore-whitespace
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/source/arch"
+    INPUT_FILE "${WEBCONFIG_PATCH}"
+    OUTPUT_VARIABLE OUTPUT
+    RESULT_VARIABLE RESULT
+)
+if (RESULT EQUAL 0)
+      message(STATUS "Patch applied: ${WEBCONFIG_PATCH}")
+else()
+    message(STATUS "Failed to apply patch: ${WEBCONFIG_PATCH}")
+endif()
 endif()
 set(HEADERS app/libpd.h)
 add_executable(webpa ${SOURCES} ${HEADERS})

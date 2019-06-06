@@ -72,8 +72,6 @@
 #ifndef  _COSA_WEBCONFIG_INTERNAL_H
 #define  _COSA_WEBCONFIG_INTERNAL_H
 
-#include "webpa_internal.h"
-
 int getConfigNumberOfEntries();
 BOOL getConfigURL(int index,char **configURL);
 int setConfigURL(int index, char *configURL);
