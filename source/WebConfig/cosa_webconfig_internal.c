@@ -20,6 +20,7 @@
 #include "plugin_main_apis.h"
 #include "cosa_webconfig_apis.h"
 #include "cosa_webconfig_dml.h"
+#include "webpa_internal.h"
 #include "cosa_webconfig_internal.h"
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
