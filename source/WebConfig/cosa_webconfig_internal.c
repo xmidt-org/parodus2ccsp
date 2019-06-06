@@ -68,6 +68,29 @@ int getInstanceNumberAtIndex(int index)
     WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
     return 0;
 }
+BOOL isValidInstanceNumber(int instNum)
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
+    PCOSA_CONTEXT_LINK_OBJECT       pCosaContextEntry = (PCOSA_CONTEXT_LINK_OBJECT)NULL;
+    int count , i;
+    WalInfo("----------- %s --------- Enter -----\n",__FUNCTION__);
+    count = getConfigNumberOfEntries();
+    WalInfo("count: %d\n",count);
+    pSLinkEntry = AnscSListGetFirstEntry(&pMyObject->ConfigFileList);
+    for(i = 0; i<count; i++)
+    {
+        pCosaContextEntry = ACCESS_COSA_CONTEXT_LINK_OBJECT(pSLinkEntry);
+        pSLinkEntry       = AnscSListGetNextEntry(pSLinkEntry);
+        if(pCosaContextEntry->InstanceNumber == instNum)
+        {
+            WalInfo("%d instanceNumber is valid\n", instNum);
+            return TRUE;
+        }
+    }
+    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+    return FALSE;
+}
 
 BOOL getConfigURL(int index,char **configURL)
 {
@@ -585,88 +608,107 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                             if(strcmp(restDmlString, CONFIGFILE_PARAM_URL) == 0)
                             {
-                                paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
 								ret = getConfigURL(index, &valueStr);
 								if(ret)
 								{
 									WalInfo("valueStr: %s\n",valueStr);
+									paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
 									paramVal[k]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
+									paramVal[k]->type = ccsp_string;
+                                    k++;
 									WAL_FREE(valueStr);
 								}
 								else
 								{
-									paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+								    WAL_FREE(paramVal[k]);
+									matchFound = 0;
 								}
-								paramVal[k]->type = ccsp_string;
-                                k++;
                             }
                             else if(strcmp(restDmlString, CONFIGFILE_PARAM_VERSION) == 0)
                             {
-                                paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
                                 ret = getConfigVersion(index, &valueStr);
 								if(ret)
 								{
 									WalInfo("valueStr: %s\n",valueStr);
+									paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
 									paramVal[k]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
+									paramVal[k]->type = ccsp_string;
+									k++;
 									WAL_FREE(valueStr);
 								}
 								else
 								{
-									paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+								    WAL_FREE(paramVal[k]);
+									matchFound = 0;
 								}
-								paramVal[k]->type = ccsp_string;
-                                k++;
                             }
                             else if(strcmp(restDmlString, CONFIGFILE_PARAM_FORCE_SYNC) == 0)
                             {
-                                paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
-				BOOL bValue; 
-				getForceSyncCheck(index,&bValue);
-                                WalInfo("ForceSyncCheck is %d\n",bValue);
-                                if(bValue == true)
+                                BOOL bValue; 
+                                ret = getForceSyncCheck(index,&bValue);
+                                if(ret)
                                 {
-                                    paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
+                                    WalInfo("ForceSyncCheck is %d\n",bValue);
+                                    paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
+                                    if(bValue == true)
+                                    {
+                                        paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
+                                    }
+                                    else
+                                    {
+                                        paramVal[k]->parameterValue = strndup("false",MAX_PARAMETERVALUE_LEN);
+                                    }
+                                    paramVal[k]->type = ccsp_boolean;
+                                    k++;
                                 }
                                 else
-                                {
-                                    paramVal[k]->parameterValue = strndup("false",MAX_PARAMETERVALUE_LEN);
-                                }
-                                paramVal[k]->type = ccsp_boolean;
-                                k++;
+								{
+								    WAL_FREE(paramVal[k]);
+									matchFound = 0;
+								}
                             }
                             else if(strcmp(restDmlString, CONFIGFILE_PARAM_SYNC_CHECK_OK) == 0)
                             {
-                                paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
-                                BOOL bValue; 
-				getSyncCheckOK(index,&bValue);
-                                WalInfo("SyncCheckOK is %d\n",bValue);
-                                if(bValue == true)
+                                BOOL bValue;
+                                ret = getSyncCheckOK(index,&bValue);
+                                if(ret)
                                 {
-                                    paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
+                                    WalInfo("SyncCheckOK is %d\n",bValue);
+                                    paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
+                                    if(bValue == true)
+                                    {
+                                        paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
+                                    }
+                                    else
+                                    {
+                                        paramVal[k]->parameterValue = strndup("false",MAX_PARAMETERVALUE_LEN);
+                                    }
+                                    paramVal[k]->type = ccsp_boolean;
+                                    k++;
                                 }
                                 else
-                                {
-                                    paramVal[k]->parameterValue = strndup("false",MAX_PARAMETERVALUE_LEN);
-                                }
-                                paramVal[k]->type = ccsp_boolean;
-                                k++;
+								{
+								    WAL_FREE(paramVal[k]);
+									matchFound = 0;
+								}
                             }
                             else if(strcmp(restDmlString, CONFIGFILE_PARAM_PREV_SYNC_TIME) == 0)
                             {
-                                paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
                                 ret = getPreviousSyncDateTime(index, &valueStr);
 								if(ret)
 								{
 									WalInfo("valueStr: %s\n",valueStr);
+									paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
 									paramVal[k]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
+									paramVal[k]->type = ccsp_string;
+                                    k++;
 									WAL_FREE(valueStr);
 								}
 								else
 								{
-									paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+								    WAL_FREE(paramVal[k]);
+									matchFound = 0;
 								}
-								paramVal[k]->type = ccsp_string;
-                                k++;
                             }
                             else
                             {
@@ -686,11 +728,18 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                     int n = 0, index = 0;
                                     for(n = 0; n<count; n++)
                                     {
-                                        WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(n));
                                         index = getInstanceNumberAtIndex(n);
-                                        WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
-								        updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
-								        WalInfo("k = %d\n",k);
+                                        WalInfo("InstNum: %d\n",index);
+                                        if(index != 0)
+                                        {
+                                            WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
+								            updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
+								            WalInfo("k = %d\n",k);
+							            }
+							            else
+							            {
+							                matchFound = 0;
+							            }
                                     }                    
                                 }
                                 else
@@ -711,10 +760,17 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 sscanf(instNumStart, "%d.", &index);
 								WalInfo("index: %d\n",index);
                                 localCount = localCount+4;
-                                paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
-								WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
-								updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
-								WalInfo("k = %d\n",k);
+                                if(isValidInstanceNumber(index) == TRUE)
+                                {
+                                    paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
+								    WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
+								    updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
+								    WalInfo("k = %d\n",k);
+								}
+								else
+								{
+								    matchFound = 0;
+								}
                             }
                         }
                         break;
@@ -812,11 +868,18 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             int n = 0, index = 0;
                             for(n = 0; n<count; n++)
                             {
-                                WalInfo("InstNum: %d\n",getInstanceNumberAtIndex(n));
                                 index = getInstanceNumberAtIndex(n);
-                                WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
-						        updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
-						        WalInfo("k = %d\n",k);
+                                WalInfo("InstNum: %d\n",index);
+                                if(index != 0)
+                                {
+                                    WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
+					                updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
+					                WalInfo("k = %d\n",k);
+				                }
+				                else
+				                {
+				                    matchFound = 0;
+				                }
                             }
                         }
                         break;
