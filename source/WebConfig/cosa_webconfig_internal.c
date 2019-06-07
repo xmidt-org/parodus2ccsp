@@ -20,7 +20,6 @@
 #include "plugin_main_apis.h"
 #include "cosa_webconfig_apis.h"
 #include "cosa_webconfig_dml.h"
-#include "webpa_internal.h"
 #include "cosa_webconfig_internal.h"
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
@@ -34,6 +33,12 @@
 #define CONFIGFILE_PARAM_PREV_SYNC_TIME     "PreviousSyncDateTime"
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
+
+BOOL Get_RfcEnable()
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    return pMyObject->RfcEnable;
+}
 
 int getConfigNumberOfEntries()
 {
@@ -567,6 +572,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
     paramVal = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t *)*paramCount);
     int i=0, j=0, k=0, isWildcard = 0, matchFound = 0;
     int localCount = paramCount;
+    BOOL RFC_ENABLE;
     WalInfo("*********** %s ***************\n",__FUNCTION__);
 
     PCOSA_DATAMODEL_WEBCONFIG   pWebConfig = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
@@ -593,6 +599,12 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                 {
                     case 0:
                     {
+                        RFC_ENABLE = Get_RfcEnable();
+                        if(!RFC_ENABLE)
+                        {
+                            matchFound = 0;
+                            break;
+                        }
                         if(isWildcard == 0)
                         {
                             char* instNumStart = NULL, *valueStr = NULL;
@@ -865,21 +877,24 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebConfig->PeriodicSyncCheckInterval);
                             paramVal[k]->type = ccsp_int;
                             k++;
-                            int n = 0, index = 0;
-                            for(n = 0; n<count; n++)
+                            if(pWebConfig->RfcEnable)
                             {
-                                index = getInstanceNumberAtIndex(n);
-                                WalInfo("InstNum: %d\n",index);
-                                if(index != 0)
+                                int n = 0, index = 0;
+                                for(n = 0; n<count; n++)
                                 {
-                                    WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
-					                updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
-					                WalInfo("k = %d\n",k);
-				                }
-				                else
-				                {
-				                    matchFound = 0;
-				                }
+                                    index = getInstanceNumberAtIndex(n);
+                                    WalInfo("InstNum: %d\n",index);
+                                    if(index != 0)
+                                    {
+                                        WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
+					                    updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
+					                    WalInfo("k = %d\n",k);
+				                    }
+				                    else
+				                    {
+				                        matchFound = 0;
+				                    }
+                                }
                             }
                         }
                         break;
@@ -890,7 +905,14 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
         }
         if(matchFound == 0)
         {
-            WalError("%s is invalid parameter\n",parameterNames[i]);
+            if(!RFC_ENABLE)
+            {
+                WalError("RFC disabled. Hence not proceeding with GET\n");
+            }
+            else
+            {
+                WalError("%s is invalid parameter\n",parameterNames[i]);
+            }
             *val = NULL;
             *val_size = 0;
             for(k=k-1;k>=0;k--)
@@ -918,6 +940,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 {
     int i=0;
     char *subStr = NULL;
+    BOOL RFC_ENABLE;
     WalInfo("*********** %s ***************\n",__FUNCTION__);
 
     char *webConfigObject = "Device.X_RDK_WebConfig.";
@@ -955,6 +978,12 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
             }
             else if(strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL)
             {
+                RFC_ENABLE = Get_RfcEnable();
+                if(!RFC_ENABLE)
+                {
+                    WalError("RFC disabled. Hence not proceeding with SET\n");
+                    return CCSP_ERR_INVALID_PARAMETER_VALUE;
+                }
                 subStr = val[i].parameterName+strlen(WEBCONFIG_TABLE_CONFIGFILE);
                 int index = 0, ret = 0;
                 char dmlString[128] = {'\0'};

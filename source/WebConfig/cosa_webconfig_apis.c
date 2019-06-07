@@ -194,7 +194,7 @@ CosaWebConfigInitialize
     else
 #endif
     {
-	CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
+        CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
         if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
         {
             pMyObject->RfcEnable = true;
@@ -204,18 +204,19 @@ CosaWebConfigInitialize
             pMyObject->RfcEnable = false;
         }
         WalInfo("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
-	CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
+        CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
         if(tmpbuf != NULL)
         {
             pMyObject->PeriodicSyncCheckInterval = atoi(tmpbuf);
         }
         WalInfo("pMyObject->PeriodicSyncCheckInterval:%d\n",pMyObject->PeriodicSyncCheckInterval);
     }
-    WebConfigLog("B4 CosaDmlGetConfigFile\n");
-    pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
-    WebConfigLog("After CosaDmlGetConfigFile\n");
-
-    CosaDmlGetValueFromDb("WebConfig_NextInstanceNumber",tmpbuf);
+    if(pMyObject->RfcEnable == true)
+    {
+        WebConfigLog("B4 CosaDmlGetConfigFile\n");
+        pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
+        WebConfigLog("After CosaDmlGetConfigFile\n");
+        CosaDmlGetValueFromDb("WebConfig_NextInstanceNumber",tmpbuf);
         if(tmpbuf[0] != '\0')
         {
             pMyObject->ulWebConfigNextInstanceNumber   = atoi(tmpbuf);
@@ -225,23 +226,30 @@ CosaWebConfigInitialize
             pMyObject->ulWebConfigNextInstanceNumber   = 1;
         }
         WebConfigLog("pMyObject->ulWebConfigNextInstanceNumber: %d\n",pMyObject->ulWebConfigNextInstanceNumber);
-
-	WebConfigLog("##### ConfigFile container data #####\n");
-	WebConfigLog("pMyObject->pConfigFileContainer->ConfigFileEntryCount: %d\n",pMyObject->pConfigFileContainer->ConfigFileEntryCount);
-	int i = 0;
-	if(pMyObject->pConfigFileContainer->pConfigFileTable != NULL)
-	{
-		for(i=0; i<pMyObject->pConfigFileContainer->ConfigFileEntryCount; i++)
-		{
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].InstanceNumber = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].InstanceNumber);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].URL = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].URL);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].PreviousSyncDateTime = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime);
-		}
+	    WebConfigLog("##### ConfigFile container data #####\n");
+	    WebConfigLog("pMyObject->pConfigFileContainer->ConfigFileEntryCount: %d\n",pMyObject->pConfigFileContainer->ConfigFileEntryCount);
+	    int i = 0;
+	    if(pMyObject->pConfigFileContainer->pConfigFileTable != NULL)
+	    {
+		    for(i=0; i<pMyObject->pConfigFileContainer->ConfigFileEntryCount; i++)
+		    {
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].InstanceNumber = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].InstanceNumber);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].URL = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].URL);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].PreviousSyncDateTime = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime);
+		    }
+	    }
+	    WebConfigLog("##### ConfigFile container data #####\n");
 	}
-	WebConfigLog("##### ConfigFile container data #####\n");
+	else
+	{
+	    WebConfigLog("RFC disabled. Hence not loading ConfigFile entries\n");
+	    pMyObject->pConfigFileContainer = (PCOSA_DML_CONFIGFILE_CONTAINER)AnscAllocateMemory(sizeof(COSA_DML_CONFIGFILE_CONTAINER));
+	    pMyObject->pConfigFileContainer->ConfigFileEntryCount = 0;
+	    pMyObject->pConfigFileContainer->pConfigFileTable = NULL;
+	}
     WebConfigLog("#### CosaWebConfigInitialize done. return %d\n", returnStatus);
 
     return returnStatus;
