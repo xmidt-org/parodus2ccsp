@@ -21,6 +21,7 @@
 #include "cosa_webconfig_apis.h"
 #include "cosa_webconfig_dml.h"
 #include "cosa_webconfig_internal.h"
+#include "webconfig_log.h"
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_CONFIGFILE_ENTRIES  "Device.X_RDK_WebConfig.ConfigFileNumberOfEntries"
