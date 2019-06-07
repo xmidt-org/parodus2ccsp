@@ -180,7 +180,6 @@ CosaWebConfigInitialize
     ANSC_STATUS                     returnStatus         = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject            = (PCOSA_DATAMODEL_WEBCONFIG )hThisObject;
 	WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
-    AnscSListInitializeHeader( &pMyObject->ConfigFileList );
     pMyObject->MaxInstanceNumber        = 0;
     CHAR tmpbuf[ 128 ] = { 0 };
 #ifdef RDKB_BUILD
@@ -193,29 +192,30 @@ CosaWebConfigInitialize
     }
     else
 #endif
+    CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
+    if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
     {
-	CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
-        if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
-        {
-            pMyObject->RfcEnable = true;
-        }
-        else
-        {
-            pMyObject->RfcEnable = false;
-        }
-        WalInfo("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
-	CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
+        pMyObject->RfcEnable = true;
+    }
+    else
+    {
+        pMyObject->RfcEnable = false;
+    }
+    WalInfo("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
+    if(pMyObject->RfcEnable == true)
+    {
+        CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
         if(tmpbuf != NULL)
         {
             pMyObject->PeriodicSyncCheckInterval = atoi(tmpbuf);
         }
         WalInfo("pMyObject->PeriodicSyncCheckInterval:%d\n",pMyObject->PeriodicSyncCheckInterval);
-    }
-    WebConfigLog("B4 CosaDmlGetConfigFile\n");
-    pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
-    WebConfigLog("After CosaDmlGetConfigFile\n");
-
-    CosaDmlGetValueFromDb("WebConfig_NextInstanceNumber",tmpbuf);
+    
+        AnscSListInitializeHeader( &pMyObject->ConfigFileList );
+        WebConfigLog("B4 CosaDmlGetConfigFile\n");
+        pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
+        WebConfigLog("After CosaDmlGetConfigFile\n");
+        CosaDmlGetValueFromDb("WebConfig_NextInstanceNumber",tmpbuf);
         if(tmpbuf[0] != '\0')
         {
             pMyObject->ulWebConfigNextInstanceNumber   = atoi(tmpbuf);
@@ -225,23 +225,29 @@ CosaWebConfigInitialize
             pMyObject->ulWebConfigNextInstanceNumber   = 1;
         }
         WebConfigLog("pMyObject->ulWebConfigNextInstanceNumber: %d\n",pMyObject->ulWebConfigNextInstanceNumber);
-
-	WebConfigLog("##### ConfigFile container data #####\n");
-	WebConfigLog("pMyObject->pConfigFileContainer->ConfigFileEntryCount: %d\n",pMyObject->pConfigFileContainer->ConfigFileEntryCount);
-	int i = 0;
-	if(pMyObject->pConfigFileContainer->pConfigFileTable != NULL)
-	{
-		for(i=0; i<pMyObject->pConfigFileContainer->ConfigFileEntryCount; i++)
-		{
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].InstanceNumber = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].InstanceNumber);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].URL = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].URL);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
-			WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].PreviousSyncDateTime = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime);
-		}
+	    WebConfigLog("##### ConfigFile container data #####\n");
+	    WebConfigLog("pMyObject->pConfigFileContainer->ConfigFileEntryCount: %d\n",pMyObject->pConfigFileContainer->ConfigFileEntryCount);
+	    int i = 0;
+	    if(pMyObject->pConfigFileContainer->pConfigFileTable != NULL)
+	    {
+		    for(i=0; i<pMyObject->pConfigFileContainer->ConfigFileEntryCount; i++)
+		    {
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].InstanceNumber = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].InstanceNumber);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].URL = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].URL);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
+			    WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].PreviousSyncDateTime = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime);
+		    }
+	    }
+	    WebConfigLog("##### ConfigFile container data #####\n");
 	}
-	WebConfigLog("##### ConfigFile container data #####\n");
+	else
+	{
+	    WebConfigLog("RFC disabled. Hence not loading ConfigFile entries\n");
+	    pMyObject->PeriodicSyncCheckInterval = 0;
+	    pMyObject->pConfigFileContainer = NULL;
+	}
     WebConfigLog("#### CosaWebConfigInitialize done. return %d\n", returnStatus);
 
     return returnStatus;
@@ -396,18 +402,6 @@ CosaDmlGetConfigFileEntry
     WalInfo("Version at %d:%s\n",InstanceNumber,tmpbuf);
 	AnscCopyString( pConfigFileEntry->Version, tmpbuf );
 
-	sprintf(ParamName, "configfile_%d_ForceSyncCheck", InstanceNumber);
-	CosaDmlGetValueFromDb(ParamName, tmpbuf);
-    WalInfo("ForceSyncCheck at %d:%s\n",InstanceNumber,tmpbuf);
-	if(strcmp( tmpbuf, "true" ) == 0)
-    {
-	    pConfigFileEntry->ForceSyncCheck = true;
-    }
-    else
-    {
-        pConfigFileEntry->ForceSyncCheck = false;
-    }
-
 	sprintf(ParamName, "configfile_%d_SyncCheckOk", InstanceNumber);
 	CosaDmlGetValueFromDb(ParamName, tmpbuf);
     WalInfo("SyncCheckOK at %d:%s\n",InstanceNumber,tmpbuf);
@@ -458,15 +452,6 @@ CosaDmlSetConfigFileEntry
 		CosaDmlStoreValueIntoDb(ParamName, "");
 	}
 
-	sprintf(ParamName, "configfile_%d_ForceSyncCheck", configFileEntry->InstanceNumber);
-	if(configFileEntry->ForceSyncCheck == true)
-	{
-		CosaDmlStoreValueIntoDb(ParamName, "true");
-	}
-	else
-	{
-		CosaDmlStoreValueIntoDb(ParamName, "false");
-	}
 	sprintf(ParamName, "configfile_%d_SyncCheckOk", configFileEntry->InstanceNumber);
 	if(configFileEntry->SyncCheckOK == true)
 	{
@@ -520,9 +505,6 @@ CosaDmlRemoveConfigFileEntry
 	CosaDmlRemoveValueFromDb(ParamName);
 
 	sprintf(ParamName, "configfile_%d_Version", InstanceNumber);
-	CosaDmlRemoveValueFromDb(ParamName);
-
-	sprintf(ParamName, "configfile_%d_ForceSyncCheck", InstanceNumber);
 	CosaDmlRemoveValueFromDb(ParamName);
 
 	sprintf(ParamName, "configfile_%d_SyncCheckOk", InstanceNumber);

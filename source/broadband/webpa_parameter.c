@@ -8,10 +8,11 @@
 
 #include <pthread.h>
 
-#include "webpa_internal.h"
 #include "webpa_notification.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include "cosa_webconfig_internal.h"
+#else
+#include "webpa_internal.h"
 #endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */

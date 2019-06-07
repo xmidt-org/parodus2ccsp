@@ -19,6 +19,7 @@
 #include "ansc_platform.h"
 #include "cosa_webconfig_apis.h"
 #include "cosa_webconfig_dml.h"
+#include "cosa_webconfig_internal.h"
 #include "plugin_main_apis.h"
 #include "webconfig_log.h"
 
@@ -98,12 +99,6 @@ X_RDK_WebConfig_SetParamBoolValue
 	}
 	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
 	return FALSE;
-}
-
-BOOL Get_RfcEnable()
-{
-       PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-        return pMyObject->RfcEnable;
 }
 
 BOOL
