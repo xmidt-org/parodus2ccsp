@@ -363,20 +363,27 @@ BOOL getSyncCheckOK(int index,BOOL *pvalue )
 
 int setSyncCheckOK(int index, BOOL status)
 {
-	PCOSA_DATAMODEL_WEBCONFIG  pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = pMyObject->pConfigFileContainer->pConfigFileTable;
-	int i, count, indexFound = 0;
-	char ParamName[MAX_BUFF_SIZE] = { 0 };
-	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
-	count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
-	for(i=0;i<count;i++)
-	{
-		WalInfo("Inside setSyncCheckOK for\n");
-		if(getInstanceNumberAtIndex(i) == index)
-		{
-			pConfigFileEntry[i].SyncCheckOK = status;
-			snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_SyncCheckOk", index);
+    PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
+    PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
+    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
+    int i, count, indexFound = 0;
+    char ParamName[MAX_BUFF_SIZE] = { 0 };
+    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+    count = getConfigNumberOfEntries();
+    WalInfo("count : %d\n",count);
+    for(i=0;i<count;i++)
+    {
+        pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
+        if ( pSListEntry )
+        {
+            pCxtLink      = ACCESS_COSA_CONTEXT_WEBCONFIG_LINK_OBJECT(pSListEntry);
+        }
+        pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pCxtLink->hContext;
+        if(pConfigFileEntry->InstanceNumber == index)
+        {
+            pConfigFileEntry->SyncCheckOK=status;
+            snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_SyncCheckOk", index);
 			if(status == true)
 			{
 				CosaDmlStoreValueIntoDb(ParamName, "true");
@@ -385,10 +392,11 @@ int setSyncCheckOK(int index, BOOL status)
 			{
 				CosaDmlStoreValueIntoDb(ParamName, "false");
 			}
-			indexFound = 1;
-			break;
-		}
-	}
+            indexFound = 1;
+            break;
+        }
+    }
+
 	if(indexFound == 0)
 	{
 		WalError("Table with %d index is not available\n", index);
