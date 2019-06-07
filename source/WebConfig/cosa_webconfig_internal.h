@@ -33,11 +33,19 @@
    limitations under the License.
 **********************************************************************/
 
+
 /**************************************************************************
 
-    module: plugin_main_apis.h
+    module: cosa_webconfig_internal.h
 
         For COSA Data Model Library Development
+
+    -------------------------------------------------------------------
+
+    copyright:
+
+        Cisco Systems, Inc.
+        All Rights Reserved.
 
     -------------------------------------------------------------------
 
@@ -56,69 +64,28 @@
 
     revision:
 
-        01/11/2011    initial revision.
+        01/14/2011    initial revision.
 
 **************************************************************************/
 
 
-#ifndef  _PLUGIN_MAIN_APIS_H
-#define  _PLUGIN_MAIN_APIS_H
+#ifndef  _COSA_WEBCONFIG_INTERNAL_H
+#define  _COSA_WEBCONFIG_INTERNAL_H
 
-#include "ansc_platform.h"
-#include "cosa_apis.h"
-#include "dslh_cpeco_interface.h"
-#include "plugin_main_apis.h"
-#include "cosa_plugin_api.h"
+int getConfigNumberOfEntries();
+BOOL getConfigURL(int index,char **configURL);
+int setConfigURL(int index, char *configURL);
+BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime);
+int setPreviousSyncDateTime(int index);
+BOOL getConfigVersion(int index, char **version);
+int setConfigVersion(int index, char *version);
+BOOL getSyncCheckOK(int index,BOOL *pvalue );
+int setSyncCheckOK(int index, BOOL status);
+BOOL getForceSyncCheck(int index,BOOL *pvalue );
+BOOL setForceSyncCheck(int index, BOOL pvalue);
+BOOL isValidInstanceNumber(int instNum);
+int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 
-extern ANSC_HANDLE                        g_MessageBusHandle;
-extern char*                              g_SubsystemPrefix;
-
-/* The OID for all objects s*/
-#define COSA_DATAMODEL_BASE_OID                                 0
-#define COSA_DATAMODEL_WEBPA_OID                                1
-#ifdef FEATURE_SUPPORT_WEBCONFIG
-#define COSA_DATAMODEL_WEBCONFIG_OID                            2
-#endif
-
-/*
- * This is the cosa datamodel backend manager which is used to manager all backend object
- */
-#define  COSA_BACKEND_MANAGER_CLASS_CONTENT                                                 \
-    /* duplication of the base object class content */                                      \
-    COSA_BASE_CONTENT                                                                       \
-    /* start of NAT object class content */                                                 \
-    ANSC_HANDLE                  hWebpa;                                                      \
-    ANSC_HANDLE                  hWebConfig;                                                     \
-    PCOSA_PLUGIN_INFO            hCosaPluginInfo;								   		
-
-typedef  struct
-_COSA_BACKEND_MANAGER_OBJECT
-{
-    COSA_BACKEND_MANAGER_CLASS_CONTENT
-                                                                                      
-}
-COSA_BACKEND_MANAGER_OBJECT,  *PCOSA_BACKEND_MANAGER_OBJECT;
-
-extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
-
-
-
-ANSC_HANDLE
-CosaBackEndManagerCreate
-    (
-        VOID
-    );
-
-ANSC_STATUS
-CosaBackEndManagerInitialize
-    (
-        ANSC_HANDLE                 hThisObject
-    );
-
-ANSC_STATUS
-CosaBackEndManagerRemove
-    (
-        ANSC_HANDLE                 hThisObject
-    );
+int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
 
 #endif

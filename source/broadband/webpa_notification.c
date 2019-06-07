@@ -54,6 +54,9 @@ static NotifyMsg *notifyMsgQ = NULL;
 void (*notifyCbFn)(NotifyData*) = NULL;
 static WebPaCfg webPaCfg;
 char deviceMAC[32]={'\0'};
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+char *g_systemReadyTime=NULL;
+#endif
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t con=PTHREAD_COND_INITIALIZER;
@@ -157,7 +160,12 @@ void initNotifyTask(int status)
 	}
 }
 
-
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+char *get_global_systemReadyTime()
+{
+	return g_systemReadyTime;
+}
+#endif
 void FactoryResetCloudSyncTask()
 {
 	int err = 0;
@@ -353,7 +361,11 @@ void processDeviceManageableNotification()
     snprintf(systemReadyTime,sizeof(systemReadyTime),"%d",(int)cTime.tv_sec);
     WalInfo("systemReadyTime is %s\n",systemReadyTime);
 
-    ret = setParameterValue("Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification", systemReadyTime, WDMP_STRING);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+	//To access systemReadyTime in webConfig through getter function.
+	g_systemReadyTime = strdup(systemReadyTime);
+#endif
+	ret = setParameterValue("Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification", systemReadyTime, WDMP_STRING);
     if(ret == WDMP_SUCCESS)
     {
         WalInfo("Device manageable notification processed\n");
