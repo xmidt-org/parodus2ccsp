@@ -522,16 +522,7 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	memset(paramVal[valIndex], 0, sizeof(parameterValStruct_t));
 	paramVal[valIndex]->parameterName = (char *)malloc(sizeof(char)*MAX_PARAMETERNAME_LEN);
 	snprintf(paramVal[valIndex]->parameterName, MAX_PARAMETERNAME_LEN, "%s%d.%s",WEBCONFIG_TABLE_CONFIGFILE, index, CONFIGFILE_PARAM_FORCE_SYNC);
-	getForceSyncCheck(index,&bValue);
-    WalInfo("ForceSyncCheck is %d\n",bValue);
-    if(bValue == true)
-    {
-        paramVal[valIndex]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
-    }
-    else
-    {
         paramVal[valIndex]->parameterValue = strndup("false",MAX_PARAMETERVALUE_LEN);
-    }
 	paramVal[valIndex]->type = ccsp_boolean;
 	valIndex++;
 	paramVal[valIndex] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
@@ -666,20 +657,10 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             }
                             else if(strcmp(restDmlString, CONFIGFILE_PARAM_FORCE_SYNC) == 0)
                             {
-                                BOOL bValue; 
-                                ret = getForceSyncCheck(index,&bValue);
-                                if(ret)
+                                if(isValidInstanceNumber(index))
                                 {
-                                    WalInfo("ForceSyncCheck is %d\n",bValue);
                                     paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
-                                    if(bValue == true)
-                                    {
-                                        paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
-                                    }
-                                    else
-                                    {
-                                        paramVal[k]->parameterValue = strndup("false",MAX_PARAMETERVALUE_LEN);
-                                    }
+                                    paramVal[k]->parameterValue = strndup("false",MAX_PARAMETERVALUE_LEN);
                                     paramVal[k]->type = ccsp_boolean;
                                     k++;
                                 }
