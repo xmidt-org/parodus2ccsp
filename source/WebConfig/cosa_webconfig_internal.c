@@ -1034,9 +1034,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
                 }
                 else if(strcmp(dmlString, CONFIGFILE_PARAM_SYNC_CHECK_OK) == 0)
                 {
-                    int syncCheck = 0;
-                    sscanf(val[i].parameterValue, "%d",&syncCheck);
-                    if(syncCheck == 1)
+                    if(strcmp(val[i].parameterValue, "true") == 0)
                     {
                         ret = setSyncCheckOK(index, true);
                     }
