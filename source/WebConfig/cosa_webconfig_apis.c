@@ -404,18 +404,6 @@ CosaDmlGetConfigFileEntry
     WalInfo("Version at %d:%s\n",InstanceNumber,tmpbuf);
 	AnscCopyString( pConfigFileEntry->Version, tmpbuf );
 
-	sprintf(ParamName, "configfile_%d_ForceSyncCheck", InstanceNumber);
-	CosaDmlGetValueFromDb(ParamName, tmpbuf);
-    WalInfo("ForceSyncCheck at %d:%s\n",InstanceNumber,tmpbuf);
-	if(strcmp( tmpbuf, "true" ) == 0)
-    {
-	    pConfigFileEntry->ForceSyncCheck = true;
-    }
-    else
-    {
-        pConfigFileEntry->ForceSyncCheck = false;
-    }
-
 	sprintf(ParamName, "configfile_%d_SyncCheckOk", InstanceNumber);
 	CosaDmlGetValueFromDb(ParamName, tmpbuf);
     WalInfo("SyncCheckOK at %d:%s\n",InstanceNumber,tmpbuf);
@@ -466,15 +454,6 @@ CosaDmlSetConfigFileEntry
 		CosaDmlStoreValueIntoDb(ParamName, "");
 	}
 
-	sprintf(ParamName, "configfile_%d_ForceSyncCheck", configFileEntry->InstanceNumber);
-	if(configFileEntry->ForceSyncCheck == true)
-	{
-		CosaDmlStoreValueIntoDb(ParamName, "true");
-	}
-	else
-	{
-		CosaDmlStoreValueIntoDb(ParamName, "false");
-	}
 	sprintf(ParamName, "configfile_%d_SyncCheckOk", configFileEntry->InstanceNumber);
 	if(configFileEntry->SyncCheckOK == true)
 	{
@@ -528,9 +507,6 @@ CosaDmlRemoveConfigFileEntry
 	CosaDmlRemoveValueFromDb(ParamName);
 
 	sprintf(ParamName, "configfile_%d_Version", InstanceNumber);
-	CosaDmlRemoveValueFromDb(ParamName);
-
-	sprintf(ParamName, "configfile_%d_ForceSyncCheck", InstanceNumber);
 	CosaDmlRemoveValueFromDb(ParamName);
 
 	sprintf(ParamName, "configfile_%d_SyncCheckOk", InstanceNumber);
