@@ -180,7 +180,6 @@ CosaWebConfigInitialize
     ANSC_STATUS                     returnStatus         = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject            = (PCOSA_DATAMODEL_WEBCONFIG )hThisObject;
 	WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
-    AnscSListInitializeHeader( &pMyObject->ConfigFileList );
     pMyObject->MaxInstanceNumber        = 0;
     CHAR tmpbuf[ 128 ] = { 0 };
 #ifdef RDKB_BUILD
@@ -193,26 +192,26 @@ CosaWebConfigInitialize
     }
     else
 #endif
+    CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
+    if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
     {
-        CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
-        if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
-        {
-            pMyObject->RfcEnable = true;
-        }
-        else
-        {
-            pMyObject->RfcEnable = false;
-        }
-        WalInfo("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
+        pMyObject->RfcEnable = true;
+    }
+    else
+    {
+        pMyObject->RfcEnable = false;
+    }
+    WalInfo("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
+    if(pMyObject->RfcEnable == true)
+    {
         CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
         if(tmpbuf != NULL)
         {
             pMyObject->PeriodicSyncCheckInterval = atoi(tmpbuf);
         }
         WalInfo("pMyObject->PeriodicSyncCheckInterval:%d\n",pMyObject->PeriodicSyncCheckInterval);
-    }
-    if(pMyObject->RfcEnable == true)
-    {
+    
+        AnscSListInitializeHeader( &pMyObject->ConfigFileList );
         WebConfigLog("B4 CosaDmlGetConfigFile\n");
         pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
         WebConfigLog("After CosaDmlGetConfigFile\n");
@@ -246,9 +245,8 @@ CosaWebConfigInitialize
 	else
 	{
 	    WebConfigLog("RFC disabled. Hence not loading ConfigFile entries\n");
-	    pMyObject->pConfigFileContainer = (PCOSA_DML_CONFIGFILE_CONTAINER)AnscAllocateMemory(sizeof(COSA_DML_CONFIGFILE_CONTAINER));
-	    pMyObject->pConfigFileContainer->ConfigFileEntryCount = 0;
-	    pMyObject->pConfigFileContainer->pConfigFileTable = NULL;
+	    pMyObject->PeriodicSyncCheckInterval = 0;
+	    pMyObject->pConfigFileContainer = NULL;
 	}
     WebConfigLog("#### CosaWebConfigInitialize done. return %d\n", returnStatus);
 

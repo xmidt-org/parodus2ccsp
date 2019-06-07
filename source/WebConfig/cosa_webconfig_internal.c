@@ -578,15 +578,18 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
     int objSize = sizeof(objects)/sizeof(objects[0]);
     parameterValStruct_t **paramVal = NULL;
     paramVal = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t *)*paramCount);
-    int i=0, j=0, k=0, isWildcard = 0, matchFound = 0;
+    int i=0, j=0, k=0, isWildcard = 0, matchFound = 0, count = 0;
     int localCount = paramCount;
     BOOL RFC_ENABLE;
     WalInfo("*********** %s ***************\n",__FUNCTION__);
 
     PCOSA_DATAMODEL_WEBCONFIG   pWebConfig = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-
+    RFC_ENABLE = Get_RfcEnable();
     WalInfo("paramCount = %d\n",paramCount);
-    int count = getConfigNumberOfEntries();
+    if(RFC_ENABLE)
+    {
+        count = getConfigNumberOfEntries();
+    }
     WalInfo("count: %d\n",count);
     for(i=0; i<paramCount; i++)
     {
@@ -607,7 +610,6 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                 {
                     case 0:
                     {
-                        RFC_ENABLE = Get_RfcEnable();
                         if(!RFC_ENABLE)
                         {
                             matchFound = 0;
@@ -817,7 +819,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->type = ccsp_boolean;
                                 k++;
                             }
-                            else if(strcmp(parameterNames[i], WEBCONFIG_PARAM_CONFIGFILE_ENTRIES) == 0)
+                            else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_CONFIGFILE_ENTRIES) == 0) && (RFC_ENABLE == true))
                             {
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_CONFIGFILE_ENTRIES, MAX_PARAMETERNAME_LEN);
                                 int count = getConfigNumberOfEntries();
@@ -827,7 +829,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->type = ccsp_unsignedInt;
                                 k++;
                             }
-                            else if(strcmp(parameterNames[i], WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0)
+                            else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0) && (RFC_ENABLE == true))
                             {
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_PERIODIC_INTERVAL, MAX_PARAMETERNAME_LEN);
                                 WalInfo("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
@@ -844,13 +846,9 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                         }
                         else
                         {
-                            if(count > 0)
+                            if(RFC_ENABLE)
                             {
                                 localCount = localCount+2+(count*5);
-                            }
-                            else
-                            {
-                                localCount= localCount+2;
                             }
                             paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
                             paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
@@ -868,25 +866,25 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             }
                             paramVal[k]->type = ccsp_boolean;
                             k++;
-                            paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
-                            memset(paramVal[k], 0, sizeof(parameterValStruct_t));
-                            paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_CONFIGFILE_ENTRIES, MAX_PARAMETERNAME_LEN);
-                            WalInfo("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
-                            paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
-                            WalInfo("count is %d\n",count);
-                            snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",count);
-                            paramVal[k]->type = ccsp_unsignedInt;
-                            k++;
-                            paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
-                            memset(paramVal[k], 0, sizeof(parameterValStruct_t));
-                            paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_PERIODIC_INTERVAL, MAX_PARAMETERNAME_LEN);
-                            WalInfo("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
-                            paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
-                            snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebConfig->PeriodicSyncCheckInterval);
-                            paramVal[k]->type = ccsp_int;
-                            k++;
-                            if(pWebConfig->RfcEnable)
+                            if(RFC_ENABLE)
                             {
+                                paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_CONFIGFILE_ENTRIES, MAX_PARAMETERNAME_LEN);
+                                WalInfo("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
+                                paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
+                                WalInfo("count is %d\n",count);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",count);
+                                paramVal[k]->type = ccsp_unsignedInt;
+                                k++;
+                                paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_PERIODIC_INTERVAL, MAX_PARAMETERNAME_LEN);
+                                WalInfo("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
+                                paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebConfig->PeriodicSyncCheckInterval);
+                                paramVal[k]->type = ccsp_int;
+                                k++;
                                 int n = 0, index = 0;
                                 for(n = 0; n<count; n++)
                                 {
@@ -952,6 +950,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
     WalInfo("*********** %s ***************\n",__FUNCTION__);
 
     char *webConfigObject = "Device.X_RDK_WebConfig.";
+    RFC_ENABLE = Get_RfcEnable();
     PCOSA_DATAMODEL_WEBCONFIG   pWebConfig = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 
     WalInfo("paramCount = %d\n",paramCount);
@@ -971,7 +970,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 					pWebConfig->RfcEnable = false;
 				}
             }
-            else if(strcmp(val[i].parameterName, WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0)
+            else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0) && (RFC_ENABLE == true))
             {
                 subStr = val[i].parameterName+strlen(webConfigObject);
 				CosaDmlStoreValueIntoDb( subStr, val[i].parameterValue );
@@ -984,14 +983,8 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 					pWebConfig->PeriodicSyncCheckInterval = 0;
 				}
             }
-            else if(strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL)
+            else if((strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL) && (RFC_ENABLE == true))
             {
-                RFC_ENABLE = Get_RfcEnable();
-                if(!RFC_ENABLE)
-                {
-                    WalError("RFC disabled. Hence not proceeding with SET\n");
-                    return CCSP_ERR_INVALID_PARAMETER_VALUE;
-                }
                 subStr = val[i].parameterName+strlen(WEBCONFIG_TABLE_CONFIGFILE);
                 int index = 0, ret = 0;
                 char dmlString[128] = {'\0'};
@@ -1048,6 +1041,11 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
                         return CCSP_FAILURE;
                     }
                 }
+            }
+            else if(!RFC_ENABLE)
+            {
+                WalError("RFC disabled. Hence not proceeding with SET\n");
+                return CCSP_ERR_INVALID_PARAMETER_VALUE;
             }
         }
         else
