@@ -6,10 +6,14 @@
 #include <stdint.h>
 #include <cimplog.h>
 
-#define LOGGING_MODULE                     "WEBCONFIG"
+#define WEBCFG_LOGGING_MODULE                     "WEBCONFIG"
 /**
  * @brief Enables or disables debug logs.
  */
-#define WebConfigLog(...)                   __cimplog_generic(LOGGING_MODULE, __VA_ARGS__)
+#define WebConfigLog(...)       __cimplog_generic(LOGGING_MODULE, __VA_ARGS__)
+
+#define WebcfgError(...)	cimplog_error(WEBCFG_LOGGING_MODULE, __VA_ARGS__)
+#define WebcfgInfo(...)		cimplog_info(WEBCFG_LOGGING_MODULE, __VA_ARGS__)
+#define WebcfgDebug(...)	cimplog_debug(WEBCFG_LOGGING_MODULE, __VA_ARGS__)
 
 #endif /* _WEBCONFIG_LOG_H_ */

@@ -166,7 +166,6 @@ CosaBackEndManagerInitialize
     /* Create all object */
     pMyObject->hWebpa           = (ANSC_HANDLE)CosaWebpaCreate();
     AnscTraceWarning(("  CosaWebpaCreate done!\n"));
-	WalInfo("  CosaWebpaCreate done!\n");
 #ifdef FEATURE_SUPPORT_WEBCONFIG
     pMyObject->hWebConfig  = (ANSC_HANDLE)CosaWebConfigCreate();
     AnscTraceWarning(("  CosaWebConfigCreate done!\n"));

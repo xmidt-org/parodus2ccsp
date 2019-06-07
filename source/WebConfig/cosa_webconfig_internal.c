@@ -43,9 +43,9 @@ BOOL Get_RfcEnable()
 int getConfigNumberOfEntries()
 {
 	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-	WalInfo("----------- %s --------- Enter -----\n",__FUNCTION__);
+	WebcfgDebug("----------- %s --------- Enter -----\n",__FUNCTION__);
 	int count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
 	return count;
 }
 
@@ -55,10 +55,10 @@ int getInstanceNumberAtIndex(int index)
     PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
     PCOSA_CONTEXT_LINK_OBJECT       pCosaContextEntry = (PCOSA_CONTEXT_LINK_OBJECT)NULL;
     int count , i;
-    WalInfo("----------- %s --------- Enter -----\n",__FUNCTION__);
-    WalInfo("index: %d\n",index);
+    WebcfgDebug("----------- %s --------- Enter -----\n",__FUNCTION__);
+    WebcfgDebug("index: %d\n",index);
     count = getConfigNumberOfEntries();
-    WalInfo("count: %d\n",count);
+    WebcfgDebug("count: %d\n",count);
     pSLinkEntry = AnscSListGetFirstEntry(&pMyObject->ConfigFileList);
     for(i = 0; i<count; i++)
     {
@@ -66,11 +66,11 @@ int getInstanceNumberAtIndex(int index)
         pSLinkEntry       = AnscSListGetNextEntry(pSLinkEntry);
         if(index == i)
         {
-            WalInfo("InstanceNumber at %d is: %d\n",i, pCosaContextEntry->InstanceNumber);
+            WebcfgDebug("InstanceNumber at %d is: %d\n",i, pCosaContextEntry->InstanceNumber);
             return pCosaContextEntry->InstanceNumber;
         }
     }
-    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+    WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
     return 0;
 }
 BOOL isValidInstanceNumber(int instNum)
@@ -79,9 +79,9 @@ BOOL isValidInstanceNumber(int instNum)
     PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
     PCOSA_CONTEXT_LINK_OBJECT       pCosaContextEntry = (PCOSA_CONTEXT_LINK_OBJECT)NULL;
     int count , i;
-    WalInfo("----------- %s --------- Enter -----\n",__FUNCTION__);
+    WebcfgDebug("----------- %s --------- Enter -----\n",__FUNCTION__);
     count = getConfigNumberOfEntries();
-    WalInfo("count: %d\n",count);
+    WebcfgDebug("count: %d\n",count);
     pSLinkEntry = AnscSListGetFirstEntry(&pMyObject->ConfigFileList);
     for(i = 0; i<count; i++)
     {
@@ -89,11 +89,11 @@ BOOL isValidInstanceNumber(int instNum)
         pSLinkEntry       = AnscSListGetNextEntry(pSLinkEntry);
         if(pCosaContextEntry->InstanceNumber == instNum)
         {
-            WalInfo("%d instanceNumber is valid\n", instNum);
+            WebcfgDebug("%d instanceNumber is valid\n", instNum);
             return TRUE;
         }
     }
-    WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+    WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
     return FALSE;
 }
 
@@ -104,9 +104,9 @@ BOOL getConfigURL(int index,char **configURL)
         PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
         int i, count, indexFound = 0;
-	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
+	WebcfgDebug("count : %d\n",count);
 
         for(i=0;i<count;i++)
         {
@@ -125,11 +125,11 @@ BOOL getConfigURL(int index,char **configURL)
         }
 	if(indexFound == 0)
 	{
-		WalError("Table with %d index is not available\n", index);
+		WebConfigLog("Table with %d index is not available\n", index);
 		return FALSE;
 	}
         
-	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
         return TRUE;
 }
 
@@ -141,9 +141,9 @@ int setConfigURL(int index, char *configURL)
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
 	char ParamName[MAX_BUFF_SIZE] = { 0 };
         int i, count, indexFound = 0;
-	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
+	WebcfgDebug("count : %d\n",count);
         
         for(i=0;i<count;i++)
         {
@@ -164,10 +164,10 @@ int setConfigURL(int index, char *configURL)
         }
         if(indexFound == 0)
 	{
-		WalError("Table with %d index is not available\n", index);
+		WebConfigLog("Table with %d index is not available\n", index);
 		return 1;
 	}
-	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
         return 0;
 }
 
@@ -179,9 +179,9 @@ BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime)
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
 
         int i, count, indexFound = 0;
-	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
+	WebcfgDebug("count : %d\n",count);
 
         for(i=0;i<count;i++)
         {
@@ -200,10 +200,10 @@ BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime)
         }
 	if(indexFound == 0)
 	{
-		WalError("Table with %d index is not available\n", index);
+		WebConfigLog("Table with %d index is not available\n", index);
 		return FALSE;
 	}
-	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
         
         return TRUE;
 
@@ -216,9 +216,9 @@ int setPreviousSyncDateTime(int index)
         PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
         int i, count, indexFound = 0;
-        WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = getConfigNumberOfEntries();
-        WalInfo("count : %d\n",count);
+        WebcfgDebug("count : %d\n",count);
 	char str[MAX_BUFF_SIZE]={0};
         for(i=0;i<count;i++)
         {
@@ -239,10 +239,10 @@ int setPreviousSyncDateTime(int index)
 
         if(indexFound == 0)
         {
-                WalError("Table with %d index is not available\n", index);
+                WebConfigLog("Table with %d index is not available\n", index);
                 return 1;
         }
-        WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
 	return 0;
 
 
@@ -256,9 +256,9 @@ BOOL getConfigVersion(int index, char **version)
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
 
         int i, count, indexFound = 0;
-	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
+	WebcfgDebug("count : %d\n",count);
 
         for(i=0;i<count;i++)
         {
@@ -277,10 +277,10 @@ BOOL getConfigVersion(int index, char **version)
         }
 	if(indexFound == 0)
 	{
-		WalError("Table with %d index is not available\n", index);
+		WebConfigLog("Table with %d index is not available\n", index);
 		return FALSE;
 	}
-	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
         
         return TRUE;
 
@@ -295,9 +295,9 @@ int setConfigVersion(int index, char *version)
         char ParamName[MAX_BUFF_SIZE] = { 0 };
 	
 	int i, count, indexFound = 0;
-	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
+	WebcfgDebug("count : %d\n",count);
 
         for(i=0;i<count;i++)
         {
@@ -318,10 +318,10 @@ int setConfigVersion(int index, char *version)
         }
         if(indexFound == 0)
 	{
-		WalError("Table with %d index is not available\n", index);
+		WebConfigLog("Table with %d index is not available\n", index);
 		return 1;
 	}
-	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
         return 0;
 
 }
@@ -333,9 +333,9 @@ BOOL getSyncCheckOK(int index,BOOL *pvalue )
         PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
         int i, count, indexFound = 0;
-        WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = getConfigNumberOfEntries();
-        WalInfo("count : %d\n",count);
+        WebcfgDebug("count : %d\n",count);
         for(i=0;i<count;i++)
         {
                 pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
@@ -354,10 +354,10 @@ BOOL getSyncCheckOK(int index,BOOL *pvalue )
 
         if(indexFound == 0)
         {
-                WalError("Table with %d index is not available\n", index);
+                WebConfigLog("Table with %d index is not available\n", index);
                 return FALSE;
         }
-        WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
         return TRUE;
 }
 
@@ -369,9 +369,9 @@ int setSyncCheckOK(int index, BOOL status)
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
     int i, count, indexFound = 0;
     char ParamName[MAX_BUFF_SIZE] = { 0 };
-    WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+    WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
     count = getConfigNumberOfEntries();
-    WalInfo("count : %d\n",count);
+    WebcfgDebug("count : %d\n",count);
     for(i=0;i<count;i++)
     {
         pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
@@ -399,10 +399,10 @@ int setSyncCheckOK(int index, BOOL status)
 
 	if(indexFound == 0)
 	{
-		WalError("Table with %d index is not available\n", index);
+		WebConfigLog("Table with %d index is not available\n", index);
 		return 1;
 	}
-	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
 	return 0;
 }
 
@@ -413,9 +413,9 @@ BOOL getForceSyncCheck(int index,BOOL *pvalue )
         PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
         int i, count, indexFound = 0;
-        WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
+	WebcfgDebug("count : %d\n",count);
         for(i=0;i<count;i++)
         {
                 pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
@@ -434,10 +434,10 @@ BOOL getForceSyncCheck(int index,BOOL *pvalue )
 
         if(indexFound == 0)
         {
-                WalError("Table with %d index is not available\n", index);
+                WebConfigLog("Table with %d index is not available\n", index);
                 return FALSE;
         }
-        WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
 
         return TRUE;
 }
@@ -449,9 +449,9 @@ BOOL setForceSyncCheck(int index, BOOL pvalue)
         PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
         int i, count, indexFound = 0;
-        WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	count = getConfigNumberOfEntries();
-	WalInfo("count : %d\n",count);
+	WebcfgDebug("count : %d\n",count);
         for(i=0;i<count;i++)
         {
                 pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
@@ -470,10 +470,10 @@ BOOL setForceSyncCheck(int index, BOOL pvalue)
 
         if(indexFound == 0)
         {
-                WalError("Table with %d index is not available\n", index);
+                WebConfigLog("Table with %d index is not available\n", index);
                 return FALSE;
         }
-        WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+        WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
         return TRUE;
 
 }
@@ -483,7 +483,7 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	int ret = 0;
 	char *valueStr = NULL;
 	BOOL bValue = false;
-	WalInfo("--------- %s ------ ENter -----\n",__FUNCTION__);
+	WebcfgDebug("--------- %s ------ ENter -----\n",__FUNCTION__);
 	paramVal[valIndex] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
 	memset(paramVal[valIndex], 0, sizeof(parameterValStruct_t));
 	paramVal[valIndex]->parameterName = (char *)malloc(sizeof(char)*MAX_PARAMETERNAME_LEN);
@@ -491,7 +491,7 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	ret = getConfigURL(index, &valueStr); 
 	if(ret)
 	{
-		WalInfo("valueStr: %s\n",valueStr);
+		WebcfgDebug("valueStr: %s\n",valueStr);
 		paramVal[valIndex]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
 		WAL_FREE(valueStr);
 	}
@@ -508,7 +508,7 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	ret = getConfigVersion(index, &valueStr); 
 	if(ret)
 	{
-		WalInfo("valueStr: %s\n",valueStr);
+		WebcfgDebug("valueStr: %s\n",valueStr);
 		paramVal[valIndex]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
 		WAL_FREE(valueStr);
 	}
@@ -530,7 +530,7 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	paramVal[valIndex]->parameterName = (char *)malloc(sizeof(char)*MAX_PARAMETERNAME_LEN);
 	snprintf(paramVal[valIndex]->parameterName, MAX_PARAMETERNAME_LEN, "%s%d.%s",WEBCONFIG_TABLE_CONFIGFILE, index, CONFIGFILE_PARAM_SYNC_CHECK_OK);
 	getSyncCheckOK(index,&bValue);
-    WalInfo("SyncCheckOK is %d\n",bValue);
+    WebcfgDebug("SyncCheckOK is %d\n",bValue);
     if(bValue == true)
     {
         paramVal[valIndex]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
@@ -548,7 +548,7 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	ret = getPreviousSyncDateTime(index, &valueStr); 
 	if(ret)
 	{
-		WalInfo("valueStr: %s\n",valueStr);
+		WebcfgDebug("valueStr: %s\n",valueStr);
 		paramVal[valIndex]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
 		WAL_FREE(valueStr);
 	}
@@ -559,8 +559,8 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	paramVal[valIndex]->type = ccsp_string;
 	valIndex++;
 	*finalIndex = valIndex;
-	WalInfo("*finalIndex: %d\n",*finalIndex);
-	WalInfo("--------- %s ------ EXIT -----\n",__FUNCTION__);
+	WebcfgDebug("*finalIndex: %d\n",*finalIndex);
+	WebcfgDebug("--------- %s ------ EXIT -----\n",__FUNCTION__);
 }
 
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
@@ -572,16 +572,16 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
     int i=0, j=0, k=0, isWildcard = 0, matchFound = 0, count = 0;
     int localCount = paramCount;
     BOOL RFC_ENABLE;
-    WalInfo("*********** %s ***************\n",__FUNCTION__);
+    WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 
     PCOSA_DATAMODEL_WEBCONFIG   pWebConfig = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     RFC_ENABLE = Get_RfcEnable();
-    WalInfo("paramCount = %d\n",paramCount);
+    WebcfgDebug("paramCount = %d\n",paramCount);
     if(RFC_ENABLE)
     {
         count = getConfigNumberOfEntries();
     }
-    WalInfo("count: %d\n",count);
+    WebcfgDebug("count: %d\n",count);
     for(i=0; i<paramCount; i++)
     {
         if(parameterNames[i][strlen(parameterNames[i])-1] == '.')
@@ -611,11 +611,11 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             char* instNumStart = NULL, *valueStr = NULL;
                             char restDmlString[128] = {'\0'};
                             int index = 0, ret = 0;
-                            WalInfo("parameterNames[%d]: %s\n",i,parameterNames[i]);
+                            WebcfgDebug("parameterNames[%d]: %s\n",i,parameterNames[i]);
                             instNumStart = parameterNames[i]+strlen(WEBCONFIG_TABLE_CONFIGFILE);
-                            WalInfo("instNumStart: %s\n",instNumStart);
+                            WebcfgDebug("instNumStart: %s\n",instNumStart);
                             sscanf(instNumStart, "%d.%s", &index, restDmlString);
-                            WalInfo("index: %d restDmlString: %s\n",index,restDmlString);
+                            WebcfgDebug("index: %d restDmlString: %s\n",index,restDmlString);
                             
                             paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                             memset(paramVal[k], 0, sizeof(parameterValStruct_t));
@@ -624,7 +624,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 								ret = getConfigURL(index, &valueStr);
 								if(ret)
 								{
-									WalInfo("valueStr: %s\n",valueStr);
+									WebcfgDebug("valueStr: %s\n",valueStr);
 									paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
 									paramVal[k]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
 									paramVal[k]->type = ccsp_string;
@@ -642,7 +642,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 ret = getConfigVersion(index, &valueStr);
 								if(ret)
 								{
-									WalInfo("valueStr: %s\n",valueStr);
+									WebcfgDebug("valueStr: %s\n",valueStr);
 									paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
 									paramVal[k]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
 									paramVal[k]->type = ccsp_string;
@@ -676,7 +676,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 ret = getSyncCheckOK(index,&bValue);
                                 if(ret)
                                 {
-                                    WalInfo("SyncCheckOK is %d\n",bValue);
+                                    WebcfgDebug("SyncCheckOK is %d\n",bValue);
                                     paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
                                     if(bValue == true)
                                     {
@@ -700,7 +700,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 ret = getPreviousSyncDateTime(index, &valueStr);
 								if(ret)
 								{
-									WalInfo("valueStr: %s\n",valueStr);
+									WebcfgDebug("valueStr: %s\n",valueStr);
 									paramVal[k]->parameterName = strndup(parameterNames[i], MAX_PARAMETERNAME_LEN);
 									paramVal[k]->parameterValue = strndup(valueStr,MAX_PARAMETERVALUE_LEN);
 									paramVal[k]->type = ccsp_string;
@@ -732,12 +732,12 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                     for(n = 0; n<count; n++)
                                     {
                                         index = getInstanceNumberAtIndex(n);
-                                        WalInfo("InstNum: %d\n",index);
+                                        WebcfgDebug("InstNum: %d\n",index);
                                         if(index != 0)
                                         {
-                                            WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
+                                            WebcfgDebug("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
 								            updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
-								            WalInfo("k = %d\n",k);
+								            WebcfgDebug("k = %d\n",k);
 							            }
 							            else
 							            {
@@ -757,18 +757,18 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             else
                             {
                                 char* instNumStart = NULL;
-                                WalInfo("parameterNames[%d]: %s\n",i, parameterNames[i]);
+                                WebcfgDebug("parameterNames[%d]: %s\n",i, parameterNames[i]);
                                 instNumStart = parameterNames[i]+strlen(WEBCONFIG_TABLE_CONFIGFILE);
-                                WalInfo("instNumStart: %s\n",instNumStart);
+                                WebcfgDebug("instNumStart: %s\n",instNumStart);
                                 sscanf(instNumStart, "%d.", &index);
-								WalInfo("index: %d\n",index);
+								WebcfgDebug("index: %d\n",index);
                                 localCount = localCount+4;
                                 if(isValidInstanceNumber(index) == TRUE)
                                 {
                                     paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
-								    WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
+								    WebcfgDebug("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
 								    updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
-								    WalInfo("k = %d\n",k);
+								    WebcfgDebug("k = %d\n",k);
 								}
 								else
 								{
@@ -787,8 +787,8 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             if((strcmp(parameterNames[i], WEBCONFIG_PARAM_RFC_ENABLE) == 0))
                             {
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_RFC_ENABLE, MAX_PARAMETERNAME_LEN);
-                                WalInfo("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
-                                WalInfo("pWebConfig->RfcEnable is %d\n",pWebConfig->RfcEnable);
+                                WebcfgDebug("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
+                                WebcfgDebug("pWebConfig->RfcEnable is %d\n",pWebConfig->RfcEnable);
                                 if(pWebConfig->RfcEnable == true)
                                 {
                                     paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
@@ -804,7 +804,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             {
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_CONFIGFILE_ENTRIES, MAX_PARAMETERNAME_LEN);
                                 int count = getConfigNumberOfEntries();
-                                WalInfo("count is %d\n",count);
+                                WebcfgDebug("count is %d\n",count);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
                                 snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",count);
                                 paramVal[k]->type = ccsp_unsignedInt;
@@ -813,7 +813,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0) && (RFC_ENABLE == true))
                             {
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_PERIODIC_INTERVAL, MAX_PARAMETERNAME_LEN);
-                                WalInfo("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
+                                WebcfgDebug("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
                                 snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebConfig->PeriodicSyncCheckInterval);
                                 paramVal[k]->type = ccsp_int;
@@ -835,8 +835,8 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                             memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                             paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_RFC_ENABLE, MAX_PARAMETERNAME_LEN);
-                            WalInfo("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
-                            WalInfo("pWebConfig->RfcEnable is %d\n",pWebConfig->RfcEnable);
+                            WebcfgDebug("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
+                            WebcfgDebug("pWebConfig->RfcEnable is %d\n",pWebConfig->RfcEnable);
                             if(pWebConfig->RfcEnable == true)
                             {
                                 paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
@@ -852,16 +852,16 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_CONFIGFILE_ENTRIES, MAX_PARAMETERNAME_LEN);
-                                WalInfo("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
+                                WebcfgDebug("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
-                                WalInfo("count is %d\n",count);
+                                WebcfgDebug("count is %d\n",count);
                                 snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",count);
                                 paramVal[k]->type = ccsp_unsignedInt;
                                 k++;
                                 paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_PERIODIC_INTERVAL, MAX_PARAMETERNAME_LEN);
-                                WalInfo("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
+                                WebcfgDebug("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
                                 snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebConfig->PeriodicSyncCheckInterval);
                                 paramVal[k]->type = ccsp_int;
@@ -870,12 +870,12 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 for(n = 0; n<count; n++)
                                 {
                                     index = getInstanceNumberAtIndex(n);
-                                    WalInfo("InstNum: %d\n",index);
+                                    WebcfgDebug("InstNum: %d\n",index);
                                     if(index != 0)
                                     {
-                                        WalInfo("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
+                                        WebcfgDebug("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
 					                    updateParamValStructWIthConfigFileDataAtIndex(paramVal, index, k, &k);
-					                    WalInfo("k = %d\n",k);
+					                    WebcfgDebug("k = %d\n",k);
 				                    }
 				                    else
 				                    {
@@ -894,11 +894,11 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
         {
             if(!RFC_ENABLE)
             {
-                WalError("RFC disabled. Hence not proceeding with GET\n");
+                WebConfigLog("RFC disabled. Hence not proceeding with GET\n");
             }
             else
             {
-                WalError("%s is invalid parameter\n",parameterNames[i]);
+                WebConfigLog("%s is invalid parameter\n",parameterNames[i]);
             }
             *val = NULL;
             *val_size = 0;
@@ -915,11 +915,11 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
     *val = paramVal;
     for(i=0; i<k; i++)
     {
-        WalInfo("Final-> %s %s %d\n",(*val)[i]->parameterName, (*val)[i]->parameterValue, (*val)[i]->type);
+        WebcfgDebug("Final-> %s %s %d\n",(*val)[i]->parameterName, (*val)[i]->parameterValue, (*val)[i]->type);
     }
     *val_size = k;
-    WalInfo("Final count is %d\n",*val_size);
-    WalInfo("*********** %s ***************\n",__FUNCTION__);
+    WebcfgDebug("Final count is %d\n",*val_size);
+    WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
     return CCSP_SUCCESS;
 }
 
@@ -928,13 +928,13 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
     int i=0;
     char *subStr = NULL;
     BOOL RFC_ENABLE;
-    WalInfo("*********** %s ***************\n",__FUNCTION__);
+    WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 
     char *webConfigObject = "Device.X_RDK_WebConfig.";
     RFC_ENABLE = Get_RfcEnable();
     PCOSA_DATAMODEL_WEBCONFIG   pWebConfig = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 
-    WalInfo("paramCount = %d\n",paramCount);
+    WebcfgDebug("paramCount = %d\n",paramCount);
     for(i=0; i<paramCount; i++)
     {
         if(strstr(val[i].parameterName, webConfigObject) != NULL)
@@ -970,7 +970,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
                 int index = 0, ret = 0;
                 char dmlString[128] = {'\0'};
                 sscanf(subStr, "%d.%s",&index, dmlString);
-				WalInfo("index: %d dmlString:%s\n",index, dmlString);
+				WebcfgDebug("index: %d dmlString:%s\n",index, dmlString);
                 if(strcmp(dmlString, CONFIGFILE_PARAM_URL) == 0)
                 {
                     if(isValidUrl(val[i].parameterValue) == TRUE)
@@ -978,13 +978,13 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
                         ret = setConfigURL(index, val[i].parameterValue);
                         if(ret != 0)
                         {
-                            WalError("SET failed\n");
+                            WebConfigLog("setConfigURL failed\n");
                             return CCSP_FAILURE;
                         }
                     }
                     else
                     {
-                        WalError("URL validation failed\n");
+                        WebConfigLog("URL validation failed\n");
                         return CCSP_FAILURE;
                     }
                 }
@@ -993,7 +993,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
                     ret = setConfigVersion(index, val[i].parameterValue);
                     if(ret != 0)
                     {
-                        WalError("SET failed\n");
+                        WebConfigLog("setConfigVersion failed\n");
                         return CCSP_FAILURE;
                     }
                 }
@@ -1002,7 +1002,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
                     ret = setPreviousSyncDateTime(index);
                     if(ret != 0)
                     {
-                        WalError("SET failed\n");
+                        WebConfigLog("setPreviousSyncDateTime failed\n");
                         return CCSP_FAILURE;
                     }
                 }
@@ -1018,24 +1018,24 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
                     }
                     if(ret != 0)
                     {
-                        WalError("SET failed\n");
+                        WebConfigLog("setSyncCheckOK failed\n");
                         return CCSP_FAILURE;
                     }
                 }
             }
             else if(!RFC_ENABLE)
             {
-                WalError("RFC disabled. Hence not proceeding with SET\n");
+                WebConfigLog("RFC disabled. Hence not proceeding with SET\n");
                 return CCSP_ERR_INVALID_PARAMETER_VALUE;
             }
         }
         else
         {
-            WalError("%s is not writable\n",val[i].parameterName);
+            WebConfigLog("%s is not writable\n",val[i].parameterName);
             *faultParam = strdup(val[i].parameterName);
             return CCSP_ERR_NOT_WRITABLE;
         }
     }
-    WalInfo("*********** %s ***************\n",__FUNCTION__);
+    WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
     return CCSP_SUCCESS;
 }
