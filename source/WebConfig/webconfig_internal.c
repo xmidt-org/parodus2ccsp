@@ -54,7 +54,6 @@ typedef struct _notify_params
 static char deviceMAC[32]={'\0'};
 static char g_systemReadyTime[64]={'\0'};
 static char g_interface[32]={'\0'};
-//char *ETAG="NONE";
 char serialNum[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -440,12 +439,11 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			//Replace {mac} string from default init url with actual deviceMAC
 			webConfigURL = replaceMacWord(configURL, c, deviceMAC);
 			WalInfo("webConfigURL is %s\n", webConfigURL);
+			// Store {mac} replaced/updated config URL to DB
 			setConfigURL(1, webConfigURL);
-			//webConfigURL = getParameterValue(URL_param, &paramType);
 			WalInfo("setConfigURL done\n");
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
 			WalInfo("free ing configURL\n");
-			//WAL_FREE(configURL);
 			WalInfo("no free done for configURL\n");
 		}
 		else
@@ -733,14 +731,12 @@ int validateConfigFormat(cJSON *json, char **eTag)
 			version = cJSON_GetObjectItem( json, "version" )->valuestring;
 			if(version !=NULL)
 			{
-				//version & eTag validation is not doing for phase 1 (Assuming both are matching)
+				//version & eTag header validation is not done for phase 1 (Assuming both are matching)
 				//if(strcmp(version, eTag) == 0) 
 				//{
 				WalInfo("Copying version to eTag value\n"); //free eTag
 					*eTag = strdup(version);
 					WalInfo("eTag is %s\n", *eTag);
-					//WAL_FREE(version);
-					//WalInfo("free version done\n");
 					//check parameters
 					paramArray = cJSON_GetObjectItem( json, "parameters" );
 					if( paramArray != NULL )
@@ -857,7 +853,6 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	version_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 	if(version_header !=NULL)
 	{
-		//snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ETAG);
 		WalInfo("calling getConfigVersion\n");
 		getConfigVersion(1, &version);
 		WalInfo("createCurlheader version fetched is %s\n", version);
@@ -1371,13 +1366,13 @@ char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW)
 	int macWlen = strlen(macW);
 	WalInfo("Inside replaceMacWord\n");
 	WalInfo("deviceMACWlen:%d macWlen:%d\n", deviceMACWlen, macWlen);
-	// Counting the number of times old word occur in the string
+	// Counting the number of times mac word occur in the string
 	for (i = 0; s[i] != '\0'; i++)
 	{
 		if (strstr(&s[i], macW) == &s[i])
 		{
 		    cnt++;
-		    // Jumping to index after the old word.
+		    // Jumping to index after the mac word.
 		    i += macWlen - 1;
 		}
 	}
@@ -1386,7 +1381,6 @@ char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW)
 	i = 0;
 	while (*s)
 	{
-		// compare the substring with the result
 		if (strstr(s, macW) == s)
 		{
 			strcpy(&result[i], deviceMACW);
