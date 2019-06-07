@@ -54,7 +54,6 @@ typedef struct _notify_params
 static char deviceMAC[32]={'\0'};
 static char g_systemReadyTime[64]={'\0'};
 static char g_interface[32]={'\0'};
-//char *ETAG="NONE";
 char serialNum[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -81,6 +80,7 @@ static void loadInitURLFromFile(char **url);
 void* processWebConfigNotification(void* pValue);
 void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version);
 void free_notify_params_struct(notify_params_t *param);
+char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -126,7 +126,6 @@ static void *WebConfigTask(void *status)
         time_t t;
 	int wait_flag=0;
         int value =Get_PeriodicSyncCheckInterval();
-	//index = getConfigNumberOfEntries(); //:TODO local api implementation
 
        while(1)
       {
@@ -135,17 +134,13 @@ static void *WebConfigTask(void *status)
 	while(1)
 	{
 		//iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud. 
-		//for(i = 0; i < index; i++)
-		//{
 			if(retry_count >3)
 			{
 				WalError("retry_count has reached max limit. Exiting.\n");
+				retry_count=0;
 				break;
 			}
-			WalInfo("calling requestWebConfigData\n");
 			configRet = requestWebConfigData(&webConfigData, r_count, index,(int)status, &res_code);
-			WalInfo("requestWebConfigData done\n");
-			//WAL_FREE(status);
 			WalInfo("configRet is %d\n", configRet);
 			if(configRet == 0)
 			{
@@ -164,7 +159,6 @@ static void *WebConfigTask(void *status)
 			sleep(BACKOFF_SLEEP_DELAY_SEC);
 			retry_count++;
 			WalInfo("Webconfig retry_count is %d\n", retry_count);
-		//}
 	}
       }
 
@@ -173,10 +167,18 @@ static void *WebConfigTask(void *status)
                 ts.tv_sec = tp.tv_sec;
                 ts.tv_nsec = tp.tv_usec * 1000;
                 ts.tv_sec += value;
+
+		if (g_shutdown)
+		{
+			WalInfo("g_shutdown is %d, proceeding to kill webconfig thread\n", g_shutdown);
+			pthread_mutex_unlock (&periodicsync_mutex);
+			break;
+		}
+
                 rv = pthread_cond_timedwait(&periodicsync_condition, &periodicsync_mutex, &ts);
 		value=Get_PeriodicSyncCheckInterval();
-                if(!rv)
-                {
+                if(!rv && !g_shutdown)
+		{
                         time(&t);
 			BOOL ForceSyncEnable;
 			getForceSyncCheck(1,&ForceSyncEnable);
@@ -192,15 +194,24 @@ static void *WebConfigTask(void *status)
                                 WalInfo("Recieved signal interput to change the sync interval to %d\n",value);
                         }
                 }
-                else if (rv == ETIMEDOUT)
+                else if (rv == ETIMEDOUT && !g_shutdown)
                 {
                         time(&t);
 			wait_flag=0;
                         WalInfo("Periodic Sync Interval %d sec and syncing at %s\n",value,ctime(&t));
                 }
+		else if(g_shutdown)
+		{
+			WalInfo("Received signal interupt to RFC disable. g_shutdown is %d, proceeding to kill webconfig thread\n", g_shutdown);
+			pthread_mutex_unlock (&periodicsync_mutex);
+			break;
+		}
 			pthread_mutex_unlock(&periodicsync_mutex);
 
      }
+	WalInfo("B4 pthread_exit\n");
+	pthread_exit(0);
+	WalInfo("After pthread_exit\n");
 	return NULL;
 }
 
@@ -218,7 +229,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	if(response_code == 304)
 	{
 		WalInfo("webConfig is in sync with cloud. response_code:%d\n", response_code); //do sync check OK
-		setSyncCheckOK(1, TRUE); //TODO: local api implementation
+		setSyncCheckOK(1, TRUE);
 		return 1;
 	}
 	else if(response_code == 200)
@@ -246,17 +257,6 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 			{
 				WalError("getConfigURL failed\n");
 			}
-
-			/*getRet = getConfigVersion(1, &version);
-			WalInfo("getConfigVersion . getRet is %d\n", getRet);
-			if(getRet)
-			{
-				WalInfo("After processJsonDocument: version is %s\n", version);
-			}
-			else
-			{
-				WalError("getConfigVersion failed\n");
-			}*/
 
 			ret = setPreviousSyncDateTime(1);
 			WalInfo("setPreviousSyncDateTime ret is %d\n", ret);
@@ -319,7 +319,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 			else
 			{
 				WalError("Failure in processJsonDocument\n");
-				ret = setSyncCheckOK(1, FALSE); //TODO: local api implementation
+				ret = setSyncCheckOK(1, FALSE);
 				WalInfo("setSyncCheckOK ret is %d\n", ret);
 				if(ret == 0)
 				{
@@ -414,6 +414,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 	char * configURL = NULL;
 	int ret =0, count = 0;
 	char *url = NULL;
+	char c[] = "{mac}";
 
 	curl = curl_easy_init();
 	if(curl)
@@ -429,20 +430,20 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		createCurlheader(list, &headers_list, status, index);
 		
 		WalInfo("getConfigURL \n");
-		getConfigURL(1, &configURL); //TODO: local api implementation
+		getConfigURL(1, &configURL);
 		WalInfo("configURL fetched is %s\n", configURL);
 
-		webConfigURL = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(configURL !=NULL)
 		{
 			WalInfo("forming webConfigURL\n");
-			snprintf(webConfigURL, MAX_BUF_SIZE, configURL , deviceMAC);
+			//Replace {mac} string from default init url with actual deviceMAC
+			webConfigURL = replaceMacWord(configURL, c, deviceMAC);
 			WalInfo("webConfigURL is %s\n", webConfigURL);
+			// Store {mac} replaced/updated config URL to DB
 			setConfigURL(1, webConfigURL);
-			//webConfigURL = getParameterValue(URL_param, &paramType);
+			WalInfo("setConfigURL done\n");
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
 			WalInfo("free ing configURL\n");
-			//WAL_FREE(configURL);
 			WalInfo("no free done for configURL\n");
 		}
 		else
@@ -514,8 +515,6 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		WalInfo("free headers_list\n");
 		curl_slist_free_all(headers_list);
-		//WalInfo("free URL_param\n");
-		//WAL_FREE(URL_param);
 		WalInfo("free webConfigURL\n");
 		WAL_FREE(webConfigURL);
 		WalInfo("free done\n");
@@ -732,14 +731,12 @@ int validateConfigFormat(cJSON *json, char **eTag)
 			version = cJSON_GetObjectItem( json, "version" )->valuestring;
 			if(version !=NULL)
 			{
-				//version & eTag validation is not doing for phase 1 (Assuming both are matching)
+				//version & eTag header validation is not done for phase 1 (Assuming both are matching)
 				//if(strcmp(version, eTag) == 0) 
 				//{
 				WalInfo("Copying version to eTag value\n"); //free eTag
 					*eTag = strdup(version);
 					WalInfo("eTag is %s\n", *eTag);
-					//WAL_FREE(version);
-					//WalInfo("free version done\n");
 					//check parameters
 					paramArray = cJSON_GetObjectItem( json, "parameters" );
 					if( paramArray != NULL )
@@ -856,9 +853,8 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	version_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 	if(version_header !=NULL)
 	{
-		//snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ETAG);
 		WalInfo("calling getConfigVersion\n");
-		getConfigVersion(1, &version); //TODO: local api implementation
+		getConfigVersion(1, &version);
 		WalInfo("createCurlheader version fetched is %s\n", version);
 		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "V1.0-NONE"));
 		WalInfo("version_header formed %s\n", version_header);
@@ -1360,4 +1356,41 @@ void free_notify_params_struct(notify_params_t *param)
         WAL_FREE(param);
     }
     WalInfo("End of free_notify_params_struct\n");
+}
+
+char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW)
+{
+	char *result;
+	int i, cnt = 0;
+	int deviceMACWlen = strlen(deviceMACW);
+	int macWlen = strlen(macW);
+	WalInfo("Inside replaceMacWord\n");
+	WalInfo("deviceMACWlen:%d macWlen:%d\n", deviceMACWlen, macWlen);
+	// Counting the number of times mac word occur in the string
+	for (i = 0; s[i] != '\0'; i++)
+	{
+		if (strstr(&s[i], macW) == &s[i])
+		{
+		    cnt++;
+		    // Jumping to index after the mac word.
+		    i += macWlen - 1;
+		}
+	}
+
+	result = (char *)malloc(i + cnt * (deviceMACWlen - macWlen) + 1);
+	i = 0;
+	while (*s)
+	{
+		if (strstr(s, macW) == s)
+		{
+			strcpy(&result[i], deviceMACW);
+			i += deviceMACWlen;
+			s += macWlen;
+		}
+		else
+		    result[i++] = *s++;
+	}
+	result[i] = '\0';
+	WalInfo("End replaceMacWord. result is %s\n", result);
+	return result;
 }

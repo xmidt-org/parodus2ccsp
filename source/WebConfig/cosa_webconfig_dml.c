@@ -23,6 +23,7 @@
 #include "plugin_main_apis.h"
 #include "webconfig_log.h"
 
+bool g_shutdown  = false;
 /***********************************************************************
 
  APIs for Object:
@@ -72,11 +73,21 @@ X_RDK_WebConfig_SetParamBoolValue
 	{
 		if(bValue == TRUE)
 		{
-			sprintf(buf, "%s", "true");	 
+			sprintf(buf, "%s", "true");
+			WalInfo("Received RFC enable. updating g_shutdown\n");
+			pthread_mutex_lock (get_global_periodicsync_mutex());
+			g_shutdown  = false;
+			pthread_mutex_unlock(get_global_periodicsync_mutex());
 		}
 		else
 		{
-			sprintf(buf, "%s", "false");	 
+			sprintf(buf, "%s", "false");
+			WalInfo("Received RFC disable. updating g_shutdown\n");
+			/* sending signal to kill WebConfigTask thread*/
+	               pthread_mutex_lock (get_global_periodicsync_mutex());
+		       g_shutdown  = true;
+	               pthread_cond_signal(get_global_periodicsync_condition());
+	               pthread_mutex_unlock(get_global_periodicsync_mutex());
 		}  
 #ifdef RDKB_BUILD
 		if(syscfg_set(NULL, "WebConfigRfcEnabled", buf) != 0)
