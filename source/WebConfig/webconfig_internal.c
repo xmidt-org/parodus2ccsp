@@ -81,6 +81,7 @@ static void loadInitURLFromFile(char **url);
 void* processWebConfigNotification(void* pValue);
 void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version);
 void free_notify_params_struct(notify_params_t *param);
+char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -414,6 +415,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 	char * configURL = NULL;
 	int ret =0, count = 0;
 	char *url = NULL;
+	char c[] = "{mac}";
 
 	curl = curl_easy_init();
 	if(curl)
@@ -432,14 +434,19 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		getConfigURL(1, &configURL); //TODO: local api implementation
 		WalInfo("configURL fetched is %s\n", configURL);
 
-		webConfigURL = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
+		//webConfigURL = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(configURL !=NULL)
 		{
 			WalInfo("forming webConfigURL\n");
-			snprintf(webConfigURL, MAX_BUF_SIZE, configURL , deviceMAC);
+			//snprintf(webConfigURL, MAX_BUF_SIZE, configURL , deviceMAC);
+			//Replace {mac} string from default init url with actual deviceMAC
+
+			WalInfo("c is %s\n", c);
+			webConfigURL = replaceMacWord(configURL, c, deviceMAC);
 			WalInfo("webConfigURL is %s\n", webConfigURL);
 			setConfigURL(1, webConfigURL);
 			//webConfigURL = getParameterValue(URL_param, &paramType);
+			WalInfo("setConfigURL done\n");
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
 			WalInfo("free ing configURL\n");
 			//WAL_FREE(configURL);
@@ -1360,4 +1367,42 @@ void free_notify_params_struct(notify_params_t *param)
         WAL_FREE(param);
     }
     WalInfo("End of free_notify_params_struct\n");
+}
+
+char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW)
+{
+	char *result;
+	int i, cnt = 0;
+	int deviceMACWlen = strlen(deviceMACW);
+	int macWlen = strlen(macW);
+	WalInfo("Inside replaceMacWord\n");
+	WalInfo("deviceMACWlen:%d macWlen:%d\n", deviceMACWlen, macWlen);
+	// Counting the number of times old word occur in the string
+	for (i = 0; s[i] != '\0'; i++)
+	{
+		if (strstr(&s[i], macW) == &s[i])
+		{
+		    cnt++;
+		    // Jumping to index after the old word.
+		    i += macWlen - 1;
+		}
+	}
+
+	result = (char *)malloc(i + cnt * (deviceMACWlen - macWlen) + 1);
+	i = 0;
+	while (*s)
+	{
+		// compare the substring with the result
+		if (strstr(s, macW) == s)
+		{
+			strcpy(&result[i], deviceMACW);
+			i += deviceMACWlen;
+			s += macWlen;
+		}
+		else
+		    result[i++] = *s++;
+	}
+	result[i] = '\0';
+	WalInfo("End replaceMacWord. result is %s\n", result);
+	return result;
 }
