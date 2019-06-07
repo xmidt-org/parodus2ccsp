@@ -92,6 +92,8 @@
 
 **********************************************************************/
 
+bool FillDefaultConfigFileEntryToDB();
+
 ANSC_HANDLE
 CosaWebConfigCreate
     (
@@ -192,17 +194,7 @@ CosaWebConfigInitialize
     else
 #endif
     {
-        CosaDmlGetValueFromDb("WebConfig_NextInstanceNumber",tmpbuf);
-        if(tmpbuf[0] != '\0')
-        {
-            pMyObject->ulWebConfigNextInstanceNumber   = atoi(tmpbuf);
-        }
-        else
-        {
-            pMyObject->ulWebConfigNextInstanceNumber   = 1;
-        }
-        WebConfigLog("pMyObject->ulWebConfigNextInstanceNumber: %d\n",pMyObject->ulWebConfigNextInstanceNumber);
-		CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
+	CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
         if( tmpbuf != NULL && AnscEqualString(tmpbuf, "true", TRUE))
         {
             pMyObject->RfcEnable = true;
@@ -212,7 +204,7 @@ CosaWebConfigInitialize
             pMyObject->RfcEnable = false;
         }
         WalInfo("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
-		CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
+	CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
         if(tmpbuf != NULL)
         {
             pMyObject->PeriodicSyncCheckInterval = atoi(tmpbuf);
@@ -222,6 +214,18 @@ CosaWebConfigInitialize
     WebConfigLog("B4 CosaDmlGetConfigFile\n");
     pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
     WebConfigLog("After CosaDmlGetConfigFile\n");
+
+    CosaDmlGetValueFromDb("WebConfig_NextInstanceNumber",tmpbuf);
+        if(tmpbuf[0] != '\0')
+        {
+            pMyObject->ulWebConfigNextInstanceNumber   = atoi(tmpbuf);
+        }
+        else
+        {
+            pMyObject->ulWebConfigNextInstanceNumber   = 1;
+        }
+        WebConfigLog("pMyObject->ulWebConfigNextInstanceNumber: %d\n",pMyObject->ulWebConfigNextInstanceNumber);
+
 	WebConfigLog("##### ConfigFile container data #####\n");
 	WebConfigLog("pMyObject->pConfigFileContainer->ConfigFileEntryCount: %d\n",pMyObject->pConfigFileContainer->ConfigFileEntryCount);
 	int i = 0;
@@ -302,7 +306,7 @@ CosaDmlGetConfigFile(
 	PCOSA_DATAMODEL_WEBCONFIG      pMyObject            = (PCOSA_DATAMODEL_WEBCONFIG)hThisObject;
 	PCOSA_DML_CONFIGFILE_CONTAINER    pConfigFileContainer            = (PCOSA_DML_CONFIGFILE_CONTAINER)NULL;
     PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry = NULL;
-    int configFileCount = 0;
+    int configFileCount = -1;
     char strInstance[516] = { 0 };
     int index = 0, i = 0, j = 0;
 
@@ -317,12 +321,18 @@ CosaDmlGetConfigFile(
         configFileCount = atoi(tmpbuf);
         WalInfo("configFileCount: %d\n",configFileCount);
     }
+    // Check number of entries and if 0, add default row directly to DB 
+    if((configFileCount == 0) && FillDefaultConfigFileEntryToDB())
+    {
+		configFileCount = 1;
+    }
+
     pConfigFileContainer->ConfigFileEntryCount = configFileCount;
     if(configFileCount > 0)
     {
         pConfigFileContainer->pConfigFileTable = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)AnscAllocateMemory(sizeof(COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)*(configFileCount));
         memset(pConfigFileContainer->pConfigFileTable, 0, sizeof(COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)*(configFileCount));
-		CosaDmlGetValueFromDb("WebConfig_IndexesList", strInstance);
+	CosaDmlGetValueFromDb("WebConfig_IndexesList", strInstance);
         if(strInstance != NULL)
         {
             WalInfo("strInstance: %s\n",strInstance);
@@ -683,4 +693,71 @@ int initConfigFileWithURL(char *Url, ULONG InstanceNumber)
 	return 1;
 }
 
+//loadInitURLFromFile
+static void loadInitURLFromFile(char **url)
+{
+	FILE *fp = fopen(DEVICE_PROPS_FILE, "r");
 
+	if (NULL != fp)
+	{
+		char str[255] = {'\0'};
+		while(fscanf(fp,"%s", str) != EOF)
+		{
+		    char *value = NULL;
+
+		    if(NULL != (value = strstr(str, "WEBCONFIG_INIT_URL=")))
+		    {
+			value = value + strlen("WEBCONFIG_INIT_URL=");
+			*url = strdup(value);
+		    }
+
+		}
+		fclose(fp);
+	}
+	else
+	{
+		WalError("Failed to open device.properties file:%s\n", DEVICE_PROPS_FILE);
+	}
+
+	if (NULL == *url)
+	{
+		WalError("WebConfig url is not present in device.properties\n");
+	}
+	else
+	{
+		WalInfo("url fetched is %s\n", *url);
+	}
+}
+
+
+bool FillDefaultConfigFileEntryToDB()
+{
+	char *url = NULL;
+
+	WalInfo("-------- %s ----- Enter ------\n",__FUNCTION__);
+
+	loadInitURLFromFile(&url);
+
+	if(url[0] != '\0')
+	{
+		CosaDmlStoreValueIntoDb("configfile_1_Url", url);
+	}
+	else
+	{
+		WalError("Could not load default url into DB\n");
+		return false;
+	}
+	
+	CosaDmlStoreValueIntoDb("configfile_1_Version", "");
+	
+	CosaDmlStoreValueIntoDb("configfile_1_SyncCheckOk", "false");
+	
+	CosaDmlStoreValueIntoDb("configfile_1_SyncDateTime", "");
+
+	updateConfigFileNumberOfEntries(1);
+	updateConfigFileIndexsList(1);
+	updateConfigFileNextInstanceNumber(2);
+
+	WalInfo("-------- %s ----- Exit ------\n",__FUNCTION__);
+	return true;
+}

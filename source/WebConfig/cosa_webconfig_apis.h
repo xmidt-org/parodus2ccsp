@@ -37,6 +37,9 @@
 #define  COSA_DML_RR_NAME_WebConfigbNew                        "bNew"
 
 #define   COSA_DML_CONFIGFILE_ACCESS_INTERVAL   10 /* seconds*/
+
+#define DEVICE_PROPS_FILE          "/etc/device.properties"
+
 typedef  struct
 _COSA_CONTEXT_WEBCONFIG_LINK_OBJECT
 {

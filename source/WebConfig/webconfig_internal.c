@@ -22,7 +22,6 @@
 #define CURL_TIMEOUT_SEC	   25L
 #define CLIENT_CERT_PATH  	   "/etc/clientcert.crt"
 #define CA_CERT_PATH 		   "/etc/ssl/certs/ca-certificates.crt"
-#define DEVICE_PROPS_FILE          "/etc/device.properties"
 #define WEBCFG_INTERFACE_DEFAULT   "erouter0"
 #define MAX_BUF_SIZE	           256
 #define WEB_CFG_FILE		      "/nvram/webConfig.json"
@@ -57,7 +56,6 @@ static char g_systemReadyTime[64]={'\0'};
 static char g_interface[32]={'\0'};
 //char *ETAG="NONE";
 char serialNum[64]={'\0'};
-int initURL=0;
 char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
@@ -429,47 +427,18 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		data.data[0] = '\0';
 		createCurlheader(list, &headers_list, status, index);
-		if(initURL==0)
-		{
-			WalInfo("loadInitURLFromFile first case\n");
-			loadInitURLFromFile(&url);
-			if(url !=NULL)
-			{
-				WalInfo("Init url fetched from device.properties file is %s\n", url);
-				configURL = (char *) malloc(sizeof(char)*MAX_BUF_SIZE); //free this.
-				if(configURL !=NULL)
-				{
-					snprintf(configURL, MAX_BUF_SIZE, url, deviceMAC);
-					WalInfo("configURL is %s\n", configURL);
-					count = getConfigNumberOfEntries();
-					WalInfo("count = %d\n",count);
-					//ret = setConfigURL(1, configURL); //TODO: local api implementation
-					if(count == 0)
-					{
-				        WalInfo("calling initConfigFileWithURL\n");
-				        ret = initConfigFileWithURL(configURL, 1);
-				        WalInfo("initConfigFileWithURL done ret %d\n", ret);
-				        if(ret == 0)
-				        {
-					        WalInfo("setConfigURL done\n");
-				        }
-				        initURL=1;
-			        }
-				}
-			}
-		}
-		else
-		{
-			WalInfo("getConfigURL second case\n");
-			getConfigURL(1, &configURL); //TODO: local api implementation
-			WalInfo("configURL fetched is %s\n", configURL);
-		}
+		
+		WalInfo("getConfigURL \n");
+		getConfigURL(1, &configURL); //TODO: local api implementation
+		WalInfo("configURL fetched is %s\n", configURL);
+
 		webConfigURL = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(configURL !=NULL)
 		{
 			WalInfo("forming webConfigURL\n");
 			snprintf(webConfigURL, MAX_BUF_SIZE, configURL , deviceMAC);
 			WalInfo("webConfigURL is %s\n", webConfigURL);
+			setConfigURL(1, webConfigURL);
 			//webConfigURL = getParameterValue(URL_param, &paramType);
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
 			WalInfo("free ing configURL\n");
@@ -846,41 +815,6 @@ static void get_webCfg_interface(char **interface)
 	else
 	{
 		WalPrint("interface fetched is %s\n", *interface);
-	}
-}
-//loadInitURLFromFile
-static void loadInitURLFromFile(char **url)
-{
-	FILE *fp = fopen(DEVICE_PROPS_FILE, "r");
-
-	if (NULL != fp)
-	{
-		char str[255] = {'\0'};
-		while(fscanf(fp,"%s", str) != EOF)
-		{
-		    char *value = NULL;
-
-		    if(NULL != (value = strstr(str, "WEBCONFIG_INIT_URL=")))
-		    {
-			value = value + strlen("WEBCONFIG_INIT_URL=");
-			*url = strdup(value);
-		    }
-
-		}
-		fclose(fp);
-	}
-	else
-	{
-		WalError("Failed to open device.properties file:%s\n", DEVICE_PROPS_FILE);
-	}
-
-	if (NULL == *url)
-	{
-		WalError("WebConfig url is not present in device.properties\n");
-	}
-	else
-	{
-		WalInfo("url fetched is %s\n", *url);
 	}
 }
 
