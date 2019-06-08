@@ -10,6 +10,10 @@
 
 #include "webpa_internal.h"
 
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+#include "webconfig_log.h"
+#endif
+
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -69,6 +73,9 @@ char *objectList[] ={
 "Device.NotifyComponent.",
 "Device.LogAgent.",
 "Device.X_RDKCENTRAL-COM_Webpa.",
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+"Device.X_RDK_WebConfig.",
+#endif
 "Device.Webpa."
 };
  
@@ -91,6 +98,9 @@ char *subObjectList[] =
 "Device.X_RDKCENTRAL-COM_Report.RadioInterfaceStatistics.",
 "Device.X_RDKCENTRAL-COM_Report.NeighboringAP.",
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesStatus.",
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+"Device.X_RDK_WebConfig.ConfigFile.",
+#endif
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic."
 }; 
 
@@ -131,18 +141,18 @@ static void waitUntilSystemReady();
 static void ccspSystemReadySignalCB(void* user_data);
 static int checkIfSystemReady();
 extern ANSC_HANDLE bus_handle;
-static void *WALInit();
+static void *WALInit(void *status);
 static void retryFailedComponentCaching();
 
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
-void initComponentCaching()
+void initComponentCaching(int status)
 {
         int err = 0;
 	pthread_t threadId;
 
-	err = pthread_create(&threadId, NULL, WALInit, NULL);
+	err = pthread_create(&threadId, NULL, WALInit, (void *) status);
 	if (err != 0)
 	{
 		WalError("Error creating WALInit thread :[%s]\n", strerror(err));
@@ -214,7 +224,7 @@ void walStrncpy(char *destStr, const char *srcStr, size_t destSize)
     destStr[destSize-1] = '\0';
 }
 
-static void *WALInit()
+static void *WALInit(void *status)
 {
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
@@ -226,6 +236,33 @@ static void *WALInit()
 	WalPrint("------------ WALInit ----------\n");
 	pthread_detach(pthread_self());
 	waitUntilSystemReady();
+	
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+	//Function to start webConfig operation after system ready.
+	WebcfgInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
+	char RfcEnable[64];
+	memset(RfcEnable, 0, sizeof(RfcEnable));
+#ifdef RDKB_BUILD
+	if(0 == syscfg_init())
+	{
+	    syscfg_get( NULL, "WebConfigRfcEnabled", RfcEnable, sizeof(RfcEnable));
+            WebcfgDebug("RfcEnable is %s\n", RfcEnable);
+	}
+	else
+	{
+	    WebcfgError("syscfg_init failed\n");
+	}
+#endif
+	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
+	{
+	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigTask\n");
+	    initWebConfigTask((int)status);
+	}
+	else
+	{
+		WebcfgError("WebConfig Rfc Flag is not enabled\n");
+	}
+#endif
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif

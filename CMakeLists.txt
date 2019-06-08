@@ -53,6 +53,12 @@ include_directories(
                      source/include
                      source/broadband/include
 		   )
+if (FEATURE_SUPPORT_WEBCONFIG)
+include_directories(
+		     ${INCLUDE_DIR}/curl
+                     source/WebConfig
+                    )
+endif (FEATURE_SUPPORT_WEBCONFIG)
 include_directories (SYSTEM /usr/include)
 
 # pthread external dependency
@@ -78,6 +84,10 @@ if (BUILD_EMULATOR)
 add_definitions(-DRDKB_EMU)
 endif (BUILD_EMULATOR)
 
+if (FEATURE_SUPPORT_WEBCONFIG)
+add_definitions(-DFEATURE_SUPPORT_WEBCONFIG)
+endif (FEATURE_SUPPORT_WEBCONFIG)
+
 if (NOT BUILD_YOCTO)
 # cJSON external dependency
 #-------------------------------------------------------------------------------
@@ -96,7 +106,7 @@ add_dependencies(libcJSON cJSON)
 ExternalProject_Add(cimplog
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/cimplog
     GIT_REPOSITORY https://github.com/Comcast/cimplog.git
-    GIT_TAG "8a5fb3c2f182241d17f5342bea5b7688c28cd1fd"
+    GIT_TAG "5ca3d60b58b58370e6ac8e1d8a5896a0078959ea"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libcimplog STATIC SHARED IMPORTED)
@@ -124,6 +134,19 @@ ExternalProject_Add(wdmp-c
 )
 add_library(libwdmp-c STATIC SHARED IMPORTED)
 add_dependencies(libwdmp-c wdmp-c)
+
+if (FEATURE_SUPPORT_WEBCONFIG)
+# curl external dependency
+#-------------------------------------------------------------------------------
+ExternalProject_Add(curl
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/curl
+    GIT_REPOSITORY https://github.com/curl/curl.git
+    GIT_TAG "curl-7_63_0"
+    CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DBUILD_TESTING=OFF
+)
+add_library(libcurl STATIC SHARED IMPORTED)
+add_dependencies(libcurl curl)
+endif (FEATURE_SUPPORT_WEBCONFIG)
 
 # nanoMsg external dependency
 #-------------------------------------------------------------------------------
