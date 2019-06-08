@@ -10,6 +10,10 @@
 
 #include "webpa_internal.h"
 
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+#include "webconfig_log.h"
+#endif
+
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -235,28 +239,28 @@ static void *WALInit(void *status)
 	
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	//Function to start webConfig operation after system ready.
-	WalInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
+	WebcfgInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
 	char RfcEnable[64];
 	memset(RfcEnable, 0, sizeof(RfcEnable));
 #ifdef RDKB_BUILD
 	if(0 == syscfg_init())
 	{
 	    syscfg_get( NULL, "WebConfigRfcEnabled", RfcEnable, sizeof(RfcEnable));
-            WalInfo("RfcEnable is %s\n", RfcEnable);
+            WebcfgDebug("RfcEnable is %s\n", RfcEnable);
 	}
 	else
 	{
-	    WalError("syscfg_init failed\n");
+	    WebcfgError("syscfg_init failed\n");
 	}
 #endif
 	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
 	{
-	    WalInfo("WebConfig Rfc is enabled, starting WebConfigTask\n");
+	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigTask\n");
 	    initWebConfigTask((int)status);
 	}
 	else
 	{
-		WalError("WebConfig Rfc Flag is not enabled\n");
+		WebcfgError("WebConfig Rfc Flag is not enabled\n");
 	}
 #endif
 #if !defined(RDKB_EMU)
