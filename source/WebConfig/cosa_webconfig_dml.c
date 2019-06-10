@@ -74,10 +74,15 @@ X_RDK_WebConfig_SetParamBoolValue
 		if(bValue == TRUE)
 		{
 			sprintf(buf, "%s", "true");
-			WebConfigLog("Received RFC enable. updating g_shutdown\n");
-			pthread_mutex_lock (get_global_periodicsync_mutex());
-			g_shutdown  = false;
-			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			WebcfgDebug("Received RFC enable. updating g_shutdown\n");
+                        if(pMyObject->RfcEnable == false)
+			{
+				pthread_mutex_lock (get_global_periodicsync_mutex());
+				g_shutdown  = false;
+				pthread_mutex_unlock(get_global_periodicsync_mutex());
+				WebConfigLog("RfcEnable dynamic change from false to true. start WebConfigTask.\n");
+				initWebConfigTask(0);
+			}
 		}
 		else
 		{

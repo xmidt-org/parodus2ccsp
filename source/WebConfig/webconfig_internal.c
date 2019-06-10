@@ -61,6 +61,7 @@ char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t periodicsync_condition=PTHREAD_COND_INITIALIZER;
+static pthread_t NotificationThreadId=0;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
@@ -121,47 +122,59 @@ static void *WebConfigTask(void *status)
 	int r_count=0;
 	long res_code;
 	int index=0, i=0;
+	int ret = 0;
 	int json_status=-1;
 	int retry_count=0, rv=0, rc=0;
         struct timeval tp;
         struct timespec ts;
         time_t t;
+	int count=0;
 	int wait_flag=0;
         int value =Get_PeriodicSyncCheckInterval();
+
+	count = getConfigNumberOfEntries();
+	WebConfigLog("count returned from getConfigNumberOfEntries:%d\n", count);
 
        while(1)
       {
 	if(!wait_flag)
 	{
-	while(1)
-	{
-		//iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud. 
-			if(retry_count >3)
+        for(i = 0; i < count; i++)
+        {
+		index = getInstanceNumberAtIndex(i);
+		WebConfigLog("index returned from getInstanceNumberAtIndex:%d\n", index);
+		if(index != 0)
+		{
+			while(1)
 			{
-				WebConfigLog("retry_count has reached max limit. Exiting.\n");
-				retry_count=0;
-				break;
-			}
-			configRet = requestWebConfigData(&webConfigData, r_count, index,(int)status, &res_code);
-			WebcfgDebug("configRet is %d\n", configRet);
-			if(configRet == 0)
-			{
-				rv = handleHttpResponse(res_code, webConfigData, retry_count, index);
-				if(rv ==1)
+				//iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud. 
+				if(retry_count >3)
 				{
-					WebcfgDebug("No retries are required. Exiting..\n");
+					WebConfigLog("retry_count has reached max limit. Exiting.\n");
+					retry_count=0;
 					break;
 				}
+				configRet = requestWebConfigData(&webConfigData, r_count, index,(int)status, &res_code);
+				if(configRet == 0)
+				{
+					rv = handleHttpResponse(res_code, webConfigData, retry_count, index);
+					if(rv ==1)
+					{
+						WebcfgDebug("No retries are required. Exiting..\n");
+						break;
+					}
+				}
+				else
+				{
+					WebConfigLog("Failed to get webConfigData from cloud\n");
+				}
+				WebConfigLog("requestWebConfigData BACKOFF_SLEEP_DELAY_SEC is %d seconds\n", BACKOFF_SLEEP_DELAY_SEC);
+				sleep(BACKOFF_SLEEP_DELAY_SEC);
+				retry_count++;
+				WebcfgDebug("Webconfig retry_count is %d\n", retry_count);
 			}
-			else
-			{
-				WebConfigLog("Failed to get webConfigData from cloud\n");
-			}
-			WebConfigLog("requestWebConfigData BACKOFF_SLEEP_DELAY_SEC is %d seconds\n", BACKOFF_SLEEP_DELAY_SEC);
-			sleep(BACKOFF_SLEEP_DELAY_SEC);
-			retry_count++;
-			WebcfgDebug("Webconfig retry_count is %d\n", retry_count);
-	}
+		}
+        }
       }
 
                  pthread_mutex_lock (&periodicsync_mutex);
@@ -183,7 +196,7 @@ static void *WebConfigTask(void *status)
 		{
                         time(&t);
 			BOOL ForceSyncEnable;
-			getForceSyncCheck(1,&ForceSyncEnable);
+			getForceSyncCheck(1,&ForceSyncEnable); //TODO: Iterate through all indexes and check which index needs ForceSync
                         if(ForceSyncEnable)
                         {
                                 wait_flag=0;
@@ -211,7 +224,19 @@ static void *WebConfigTask(void *status)
 			pthread_mutex_unlock(&periodicsync_mutex);
 
      }
-	WebcfgDebug("B4 pthread_exit\n");
+	if(NotificationThreadId)
+	{
+		ret = pthread_join (NotificationThreadId, NULL);
+		if(ret ==0)
+		{
+			WebConfigLog("pthread_join returns success\n");
+		}
+		else
+		{
+			WebConfigLog("Error joining thread\n");
+		}
+	}
+	WebConfigLog("B4 pthread_exit\n");
 	pthread_exit(0);
 	WebcfgDebug("After pthread_exit\n");
 	return NULL;
@@ -231,7 +256,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	if(response_code == 304)
 	{
 		WebConfigLog("webConfig is in sync with cloud. response_code:%d\n", response_code); //do sync check OK
-		setSyncCheckOK(1, TRUE);
+		setSyncCheckOK(index, TRUE);
 		return 1;
 	}
 	else if(response_code == 200)
@@ -247,10 +272,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 
 			//get common items for success and failure cases to send notification.
 
-			//for loop with i 0 to index value for future cases when more config entries.
-
-			getRet = getConfigURL(1, &configURL);
-			WebcfgDebug("getConfigURL .. getRet is %d\n", getRet);
+			getRet = getConfigURL(index, &configURL);
 			if(getRet)
 			{
 				WebcfgDebug("After processJsonDocument: configURL is %s\n", configURL);
@@ -260,15 +282,15 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 				WebConfigLog("getConfigURL failed\n");
 			}
 
-			ret = setPreviousSyncDateTime(1);
+			ret = setPreviousSyncDateTime(index);
 			WebcfgDebug("setPreviousSyncDateTime ret is %d\n", ret);
 			if(ret == 0)
 			{
-				WebcfgDebug("PreviousSyncDateTime set successfully for index 1\n");
+				WebcfgDebug("PreviousSyncDateTime set successfully for index %d\n", index);
 			}
 			else
 			{
-				WebConfigLog("Failed to set PreviousSyncDateTime for index 1\n");
+				WebConfigLog("Failed to set PreviousSyncDateTime for index %d\n", index);
 			}
 	
 			if(json_status == 1)
@@ -280,37 +302,37 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 				}
 
 				WebcfgDebug("set version and syncCheckOK for success\n");
-				ret = setConfigVersion(1, newDocVersion);//get new version from json
+				ret = setConfigVersion(index, newDocVersion);//get new version from json
 				WebcfgDebug("setConfigVersion ret is %d\n", ret);
 				if(ret == 0)
 				{
-					WebcfgDebug("Config Version %s set successfully for index 1\n", newDocVersion);
+					WebcfgDebug("Config Version %s set successfully for index %d\n", newDocVersion, index);
 				}
 				else
 				{
-					WebConfigLog("Failed to set Config version %s for index 1\n", newDocVersion);
+					WebConfigLog("Failed to set Config version %s for index %d\n", newDocVersion, index);
 				}
 
-				ret = setSyncCheckOK(1, TRUE );
+				ret = setSyncCheckOK(index, TRUE );
 				WebcfgDebug("setSyncCheckOK ret is %d\n", ret);
 				if(ret == 0)
 				{
-					WebcfgDebug("SyncCheckOK set successfully for index 1\n");
+					WebcfgDebug("SyncCheckOK set successfully for index %d\n", index);
 				}
 				else
 				{
-					WebConfigLog("Failed to set SyncCheckOK for index 1\n");
+					WebConfigLog("Failed to set SyncCheckOK for index %d\n", index);
 				}
 
-				getRet = getPreviousSyncDateTime(1, &PreviousSyncDateTime);
+				getRet = getPreviousSyncDateTime(index, &PreviousSyncDateTime);
 				WebcfgDebug("getPreviousSyncDateTime getRet is %d\n", getRet);
 				if(getRet)
 				{
-					WebConfigLog("After processJsonDocument: PreviousSyncDateTime is %s\n", PreviousSyncDateTime);
+					WebConfigLog("After processJsonDocument: PreviousSyncDateTime is %s for index %d\n", PreviousSyncDateTime, index);
 				}
 				else
 				{
-					WebConfigLog("PreviousSyncDateTime get failed\n");
+					WebConfigLog("PreviousSyncDateTime get failed for index %d\n", index);
 				}
 
 				WebcfgDebug("B4 Send_Notification_Task success case\n");
@@ -321,31 +343,31 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 			else
 			{
 				WebConfigLog("Failure in processJsonDocument\n");
-				ret = setSyncCheckOK(1, FALSE);
+				ret = setSyncCheckOK(index, FALSE);
 				WebcfgDebug("setSyncCheckOK ret is %d\n", ret);
 				if(ret == 0)
 				{
-					WebcfgDebug("SyncCheckOK set to FALSE successfully for index 1\n");
+					WebcfgDebug("SyncCheckOK set to FALSE for index %d\n", index);
 				}
 				else
 				{
-					WebConfigLog("Failed to set SyncCheckOK to FALSE for 1\n");
+					WebConfigLog("Failed to set SyncCheckOK to FALSE for index %d\n", index);
 				}
 
 				if(retry_count == 3)
 				{
 					WebcfgDebug("retry_count is %d\n", retry_count);
-					getRet = getPreviousSyncDateTime(1, &PreviousSyncDateTime);
+					getRet = getPreviousSyncDateTime(index, &PreviousSyncDateTime);
 					WebcfgDebug("getPreviousSyncDateTime getRet is %d\n", getRet);
 					if(getRet)
 					{
-						WebConfigLog("After processJsonDocument failure: PreviousSyncDateTime is %s\n", PreviousSyncDateTime);
+						WebConfigLog("After processJsonDocument failure: PreviousSyncDateTime is %s for index %d\n", PreviousSyncDateTime, index);
 					}
 					else
 					{
-						WebConfigLog("PreviousSyncDateTime get failed\n");
+						WebConfigLog("PreviousSyncDateTime get failed for index %d\n", index);
 					}
-
+					WebConfigLog("Configuration settings from %s version %s FAILED\n", configURL, newDocVersion );
 					WebConfigLog("Sending Failure Notification after 3 retry attempts\n");
 					Send_Notification_Task(configURL, response_code, "failed", setRet, PreviousSyncDateTime , newDocVersion);
 					WebcfgDebug("After Send_Notification_Task failure case\n");
@@ -431,8 +453,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		data.data[0] = '\0';
 		createCurlheader(list, &headers_list, status, index);
 		
-		WebcfgDebug("getConfigURL \n");
-		getConfigURL(1, &configURL);
+		getConfigURL(index, &configURL);
 		WebConfigLog("configURL fetched is %s\n", configURL);
 
 		if(configURL !=NULL)
@@ -442,11 +463,9 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			webConfigURL = replaceMacWord(configURL, c, deviceMAC);
 			WebConfigLog("webConfigURL is %s\n", webConfigURL);
 			// Store {mac} replaced/updated config URL to DB
-			setConfigURL(1, webConfigURL);
+			setConfigURL(index, webConfigURL);
 			WebcfgDebug("setConfigURL done\n");
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
-			WebcfgDebug("free ing configURL\n");
-			WebcfgDebug("no free done for configURL\n");
 		}
 		else
 		{
@@ -472,11 +491,9 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 
 		// set callback for writing received data
-		WebcfgDebug("setting CURLOPT_WRITEFUNCTION\n");
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_fn);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
 
-		WebcfgDebug("setting headers_list\n");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers_list);
 
 		// setting curl resolve option as default mode.
@@ -515,11 +532,8 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		{
 			WebConfigLog("curl response Time: %.1f seconds\n", total);
 		}
-		WebcfgDebug("free headers_list\n");
 		curl_slist_free_all(headers_list);
-		WebcfgDebug("free webConfigURL\n");
 		WAL_FREE(webConfigURL);
-		WebcfgDebug("free done\n");
 		if(res != 0)
 		{
 			WebConfigLog("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
@@ -606,9 +620,7 @@ int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersio
 		*docVersion = strdup(version);
 		WebcfgDebug("docVersion is %s\n", *docVersion);
 		WAL_FREE(version);
-		WebcfgDebug("free for version done\n");
 	}
-	WebcfgDebug("checking parseStatus\n");
 	if(parseStatus ==1)
 	{
 		WebcfgDebug("Request:> Type : %d\n",reqObj->reqType);
@@ -645,11 +657,8 @@ int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersio
 		}
 		if(NULL != reqObj)
 		{
-			WebcfgDebug("free for reqObj\n");
 		        wdmp_free_req_struct(reqObj);
-			WebcfgDebug("free for reqObj done.\n");
 		}
-		WebcfgDebug("checked for reqObj free\n");
 	}
 	else
 	{
@@ -689,7 +698,6 @@ int parseJsonData(char* jsonData, req_struct **req_obj, char **version)
 				*version = strdup(ETAG);
 				WebcfgDebug("version copied from ETAG is %s\n", *version);
 				WAL_FREE(ETAG);
-				WebcfgDebug("After ETAG free\n");
 			}
 			if(!isValid)// testing purpose. make it to !isValid
 			{
@@ -856,7 +864,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	if(version_header !=NULL)
 	{
 		WebcfgDebug("calling getConfigVersion\n");
-		getConfigVersion(1, &version);
+		getConfigVersion(index, &version);
 		WebcfgDebug("createCurlheader version fetched is %s\n", version);
 		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "V1.0-NONE"));
 		WebConfigLog("version_header formed %s\n", version_header);
@@ -1224,7 +1232,7 @@ static void macToLowerCase(char macValue[])
 void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version)
 {
 	int err = 0;
-	pthread_t NotificationThreadId;
+	//pthread_t NotificationThreadId;
 	notify_params_t *args = NULL;
 
 	args = (notify_params_t *)malloc(sizeof(notify_params_t));
@@ -1282,7 +1290,7 @@ void* processWebConfigNotification(void* pValue)
     char *source = NULL;
     cJSON * reports, *one_report;
 
-    pthread_detach(pthread_self());
+    //pthread_detach(pthread_self());
     if(pValue)
     {
 		msg = (notify_params_t *) pValue;
@@ -1332,6 +1340,7 @@ void* processWebConfigNotification(void* pValue)
 		free_notify_params_struct(msg);
 	}
    }
+   return NULL;
 }
 
 void free_notify_params_struct(notify_params_t *param)
