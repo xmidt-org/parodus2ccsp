@@ -202,7 +202,8 @@ CosaWebConfigInitialize
         pMyObject->RfcEnable = false;
     }
     WebcfgDebug("pMyObject->RfcEnable : %d\n",pMyObject->RfcEnable);
-    if(pMyObject->RfcEnable == true)
+	/*Removing RFC check for now as data re-load is not yet implemented*/
+    //if(pMyObject->RfcEnable == true)
     {
         CosaDmlGetValueFromDb("PeriodicSyncCheckInterval", tmpbuf);
         if(tmpbuf != NULL)
@@ -242,12 +243,12 @@ CosaWebConfigInitialize
 	    }
 	    WebcfgDebug("##### ConfigFile container data #####\n");
 	}
-	else
+/*	else
 	{
 	    WebConfigLog("RFC disabled. Hence not loading ConfigFile entries\n");
 	    pMyObject->PeriodicSyncCheckInterval = 0;
 	    pMyObject->pConfigFileContainer = NULL;
-	}
+	}*/
     WebcfgDebug("#### CosaWebConfigInitialize done. return %d\n", returnStatus);
 
     return returnStatus;

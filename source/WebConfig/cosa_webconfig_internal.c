@@ -943,7 +943,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
             if(strcmp(val[i].parameterName, WEBCONFIG_PARAM_RFC_ENABLE) == 0)
             {
 				CosaDmlStoreValueIntoDb( "WebConfigRfcEnabled", val[i].parameterValue );
-				if(val[i].parameterValue != NULL && atoi(val[i].parameterValue) == 1)
+				if((val[i].parameterValue != NULL) && (strcmp(val[i].parameterValue, "true") == 0))
 				{
 					pWebConfig->RfcEnable = true;
 				}
