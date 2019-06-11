@@ -578,25 +578,20 @@ ConfigFile_SetParamBoolValue
 	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
 	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
 	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
-        RFC_ENABLE=Get_RfcEnable();
-        if(!RFC_ENABLE)
-        {
-              WebConfigLog("%s RfcEnable is disabled so, %s SET failed\n",__FUNCTION__,ParamName);
-              return FALSE;
-        }
-	/* check the parameter name and set the corresponding value */
-	if( AnscEqualString(ParamName, "SyncCheckOK", TRUE))
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
 	{
-		pConfigFileEntry->SyncCheckOK = bValue;   // update in memory and commit to syscfg in commit func after validate
-		return TRUE;
+		WebConfigLog("%s RfcEnable is disabled so, %s SET failed\n",__FUNCTION__,ParamName);
+		return FALSE;
 	}
-	else if(AnscEqualString(ParamName, "ForceSyncCheck", TRUE)) 
+	/* check the parameter name and set the corresponding value */
+	if(AnscEqualString(ParamName, "ForceSyncCheck", TRUE)) 
 	{
-                //trigger sync by sending pthread condition signal
-                pConfigFileEntry->ForceSyncCheck = bValue;
-                pthread_mutex_lock (get_global_periodicsync_mutex());
-                pthread_cond_signal(get_global_periodicsync_condition());
-                pthread_mutex_unlock(get_global_periodicsync_mutex());
+		//trigger sync by sending pthread condition signal
+		pConfigFileEntry->ForceSyncCheck = bValue;
+		pthread_mutex_lock (get_global_periodicsync_mutex());
+		pthread_cond_signal(get_global_periodicsync_condition());
+		pthread_mutex_unlock(get_global_periodicsync_mutex());
 		return TRUE;
 	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
@@ -626,18 +621,6 @@ ConfigFile_SetParamStringValue
     {
 	/* save update to backup */
         AnscCopyString( pConfigFileEntry->URL, strValue );
-        return TRUE;
-    }
-    else if (AnscEqualString(ParamName, "Version", TRUE))
-    {
-	/* save update to backup */
-        AnscCopyString( pConfigFileEntry->Version, strValue );
-	return TRUE;
-    }
-    else if( AnscEqualString(ParamName, "PreviousSyncDateTime", TRUE))
-    {
-	/* save update to backup */
-        AnscCopyString( pConfigFileEntry->PreviousSyncDateTime, strValue );
         return TRUE;
     }
     WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );

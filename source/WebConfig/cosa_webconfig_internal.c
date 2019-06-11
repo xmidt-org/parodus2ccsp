@@ -445,38 +445,40 @@ BOOL getForceSyncCheck(int index,BOOL *pvalue )
 
 BOOL setForceSyncCheck(int index, BOOL pvalue)
 {
-        PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-        PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
-        PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
-        PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
-        int i, count, indexFound = 0;
-        WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
+	PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
+	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
+	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
+	int i, count, indexFound = 0;
+	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	count = getConfigNumberOfEntries();
 	WebcfgDebug("count : %d\n",count);
-        for(i=0;i<count;i++)
-        {
-                pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
-                if ( pSListEntry )
-                {
-                        pCxtLink      = ACCESS_COSA_CONTEXT_WEBCONFIG_LINK_OBJECT(pSListEntry);
-                }
-                pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pCxtLink->hContext;
-                if(pConfigFileEntry->InstanceNumber==index)
-                {
+	for(i=0;i<count;i++)
+	{
+		pSListEntry       = AnscSListGetEntryByIndex(&pMyObject->ConfigFileList, i);
+		if ( pSListEntry )
+		{
+			pCxtLink      = ACCESS_COSA_CONTEXT_WEBCONFIG_LINK_OBJECT(pSListEntry);
+		}
+		pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pCxtLink->hContext;
+		if(pConfigFileEntry->InstanceNumber==index)
+		{
 			pConfigFileEntry->ForceSyncCheck=pvalue;
+			pthread_mutex_lock (get_global_periodicsync_mutex());
+			pthread_cond_signal(get_global_periodicsync_condition());
+			pthread_mutex_unlock(get_global_periodicsync_mutex());
 			indexFound = 1;
-                        break;
-                }
-        }
+			break;
+		}
+	}
 
-        if(indexFound == 0)
-        {
-                WebConfigLog("Table with %d index is not available\n", index);
-                return FALSE;
-        }
-        WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
-        return TRUE;
-
+	if(indexFound == 0)
+	{
+		WebConfigLog("Table with %d index is not available\n", index);
+		return FALSE;
+	}
+	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
+	return TRUE;
 }
 
 void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramVal, int index, int valIndex, int *finalIndex)
@@ -926,22 +928,22 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 
 int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
 {
-    int i=0;
-    char *subStr = NULL;
-    BOOL RFC_ENABLE;
-    WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
+	int i=0;
+	char *subStr = NULL;
+	BOOL RFC_ENABLE;
+	WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 
-    char *webConfigObject = "Device.X_RDK_WebConfig.";
-    RFC_ENABLE = Get_RfcEnable();
-    PCOSA_DATAMODEL_WEBCONFIG   pWebConfig = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	char *webConfigObject = "Device.X_RDK_WebConfig.";
+	RFC_ENABLE = Get_RfcEnable();
+	PCOSA_DATAMODEL_WEBCONFIG   pWebConfig = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 
-    WebcfgDebug("paramCount = %d\n",paramCount);
-    for(i=0; i<paramCount; i++)
-    {
-        if(strstr(val[i].parameterName, webConfigObject) != NULL)
-        {
-            if(strcmp(val[i].parameterName, WEBCONFIG_PARAM_RFC_ENABLE) == 0)
-            {
+	WebcfgDebug("paramCount = %d\n",paramCount);
+	for(i=0; i<paramCount; i++)
+	{
+		if(strstr(val[i].parameterName, webConfigObject) != NULL)
+		{
+			if(strcmp(val[i].parameterName, WEBCONFIG_PARAM_RFC_ENABLE) == 0)
+			{
 				CosaDmlStoreValueIntoDb( "WebConfigRfcEnabled", val[i].parameterValue );
 				if((val[i].parameterValue != NULL) && (strcmp(val[i].parameterValue, "true") == 0))
 				{
@@ -951,92 +953,80 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				{
 					pWebConfig->RfcEnable = false;
 				}
-            }
-            else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0) && (RFC_ENABLE == true))
-            {
-                subStr = val[i].parameterName+strlen(webConfigObject);
+			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0) && (RFC_ENABLE == true))
+			{
+				subStr = val[i].parameterName+strlen(webConfigObject);
 				CosaDmlStoreValueIntoDb( subStr, val[i].parameterValue );
 				if(val[i].parameterValue != NULL)
 				{
-                	pWebConfig->PeriodicSyncCheckInterval = atoi(val[i].parameterValue);
+					pWebConfig->PeriodicSyncCheckInterval = atoi(val[i].parameterValue);
 				}
 				else
 				{
 					pWebConfig->PeriodicSyncCheckInterval = 0;
 				}
-            }
-            else if((strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL) && (RFC_ENABLE == true))
-            {
-                subStr = val[i].parameterName+strlen(WEBCONFIG_TABLE_CONFIGFILE);
-                int index = 0, ret = 0;
-                char dmlString[128] = {'\0'};
-                sscanf(subStr, "%d.%s",&index, dmlString);
+			}
+			else if((strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL) && (RFC_ENABLE == true))
+			{
+				subStr = val[i].parameterName+strlen(WEBCONFIG_TABLE_CONFIGFILE);
+				int index = 0, ret = 0;
+				char dmlString[128] = {'\0'};
+				sscanf(subStr, "%d.%s",&index, dmlString);
 				WebcfgDebug("index: %d dmlString:%s\n",index, dmlString);
-                if(strcmp(dmlString, CONFIGFILE_PARAM_URL) == 0)
-                {
-                    if(isValidUrl(val[i].parameterValue) == TRUE)
-                    {
-                        ret = setConfigURL(index, val[i].parameterValue);
-                        if(ret != 0)
-                        {
-                            WebConfigLog("setConfigURL failed\n");
-                            return CCSP_FAILURE;
-                        }
-                    }
-                    else
-                    {
-                        WebConfigLog("URL validation failed\n");
-                        return CCSP_FAILURE;
-                    }
-                }
-                else if(strcmp(dmlString, CONFIGFILE_PARAM_VERSION) == 0)
-                {
-                    ret = setConfigVersion(index, val[i].parameterValue);
-                    if(ret != 0)
-                    {
-                        WebConfigLog("setConfigVersion failed\n");
-                        return CCSP_FAILURE;
-                    }
-                }
-                else if(strcmp(dmlString, CONFIGFILE_PARAM_PREV_SYNC_TIME) == 0)
-                {
-                    ret = setPreviousSyncDateTime(index);
-                    if(ret != 0)
-                    {
-                        WebConfigLog("setPreviousSyncDateTime failed\n");
-                        return CCSP_FAILURE;
-                    }
-                }
-                else if(strcmp(dmlString, CONFIGFILE_PARAM_SYNC_CHECK_OK) == 0)
-                {
-                    if(strcmp(val[i].parameterValue, "true") == 0)
-                    {
-                        ret = setSyncCheckOK(index, true);
-                    }
-                    else
-                    {
-                        ret = setSyncCheckOK(index, false);
-                    }
-                    if(ret != 0)
-                    {
-                        WebConfigLog("setSyncCheckOK failed\n");
-                        return CCSP_FAILURE;
-                    }
-                }
-            }
-            else if(!RFC_ENABLE)
-            {
-                WebConfigLog("RFC disabled. Hence not proceeding with SET\n");
-                return CCSP_ERR_INVALID_PARAMETER_VALUE;
-            }
-        }
-        else
-        {
-            WebConfigLog("%s is not writable\n",val[i].parameterName);
-            *faultParam = strdup(val[i].parameterName);
-            return CCSP_ERR_NOT_WRITABLE;
-        }
-    }
-    WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
-    return CCSP_SUCCESS;
+				if(strcmp(dmlString, CONFIGFILE_PARAM_URL) == 0)
+				{
+					if(isValidUrl(val[i].parameterValue) == TRUE)
+					{
+						ret = setConfigURL(index, val[i].parameterValue);
+						if(ret != 0)
+						{
+							WebConfigLog("setConfigURL failed\n");
+							return CCSP_FAILURE;
+						}
+					}
+					else
+					{
+						WebConfigLog("URL validation failed\n");
+						return CCSP_FAILURE;
+					}
+				}
+				else if(strcmp(dmlString, CONFIGFILE_PARAM_FORCE_SYNC) == 0)
+				{
+					if(strcmp(val[i].parameterValue, "true") == 0)
+					{
+						ret = setForceSyncCheck(index, true);
+					}
+					else
+					{
+						ret = setForceSyncCheck(index, false);
+					}
+					if(!ret)
+					{
+						WebConfigLog("setForceSyncCheck failed\n");
+						return CCSP_FAILURE;
+					}
+				}
+				else
+				{
+					WebConfigLog("%s is not writable\n",val[i].parameterName);
+					*faultParam = strdup(val[i].parameterName);
+					return CCSP_ERR_NOT_WRITABLE;
+				}
+			}
+			else if(!RFC_ENABLE)
+			{
+				WebConfigLog("RFC disabled. Hence not proceeding with SET\n");
+				return CCSP_ERR_INVALID_PARAMETER_VALUE;
+			}
+		}
+		else
+		{
+			WebConfigLog("%s is not writable\n",val[i].parameterName);
+			*faultParam = strdup(val[i].parameterName);
+			return CCSP_ERR_NOT_WRITABLE;
+		}
+	}
+	WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
+	return CCSP_SUCCESS;
 }
