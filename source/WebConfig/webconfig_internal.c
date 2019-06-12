@@ -846,23 +846,18 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	WebConfigLog("Start of createCurlheader\n");
 	//Fetch auth JWT token from cloud.
 	getAuthToken();
-	WebcfgDebug("After getAuthToken\n");
 	
 	auth_header = (char *) malloc(sizeof(char)*MAX_HEADER_LEN);
 	if(auth_header !=NULL)
 	{
-		WebcfgDebug("forming auth_header\n");
 		snprintf(auth_header, MAX_HEADER_LEN, "Authorization:Bearer %s", (0 < strlen(webpa_auth_token) ? webpa_auth_token : NULL));
 		list = curl_slist_append(list, auth_header);
 		WAL_FREE(auth_header);
 	}
-	WebcfgDebug("B4 version header\n");
 	version_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 	if(version_header !=NULL)
 	{
-		WebcfgDebug("calling getConfigVersion\n");
 		getConfigVersion(index, &version);
-		WebcfgDebug("createCurlheader version fetched is %s\n", version);
 		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "V1.0-NONE"));
 		WebConfigLog("version_header formed %s\n", version_header);
 		list = curl_slist_append(list, version_header);
@@ -986,7 +981,6 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		WebConfigLog("Failed to generate transaction_uuid\n");
 	}
 	*header_list = list;
-	WebcfgDebug("End of createCurlheader\n");
 }
 
 static char* generate_trans_uuid()
@@ -1043,9 +1037,7 @@ void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_seria
 	if (strlen(output)>0  && strcmp(output,"SUCCESS")==0)
 	{
 		//Call read script
-		WebcfgDebug("calling read script\n");
 		execute_token_script(newToken,WEBPA_READ_HEADER,len,hw_mac,hw_serial_number);
-		WebcfgDebug("after read script\n");
 	}
 	else
 	{
@@ -1068,7 +1060,7 @@ void getAuthToken()
 	if( strlen(WEBPA_READ_HEADER) !=0 && strlen(WEBPA_CREATE_HEADER) !=0)
 	{
                 getDeviceMac();
-                WebConfigLog("get_global_deviceMAC(). deviceMAC: %s\n",get_global_deviceMAC());
+                WebConfigLog("deviceMAC: %s\n",get_global_deviceMAC());
 
 		if( get_global_deviceMAC() != NULL && strlen(get_global_deviceMAC()) !=0 )
 		{
@@ -1092,11 +1084,10 @@ void getAuthToken()
 					WebConfigLog("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
 					//Call create/acquisition script
 					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_global_deviceMAC(), serialNum );
-					WebcfgDebug("After createNewAuthToken\n");
 				}
 				else
 				{
-					WebcfgDebug("update webpa_auth_token in success case\n");
+					WebConfigLog("update webpa_auth_token in success case\n");
 					walStrncpy(webpa_auth_token, output, sizeof(webpa_auth_token));
 				}
 			}
@@ -1129,34 +1120,25 @@ void Send_Notification_Task(char *url, long status_code, char *application_statu
 	if(args != NULL)
 	{
 		memset(args, 0, sizeof(notify_params_t));
-		WebcfgDebug("Send_Notification_Task: start processing\n");
 		if(url != NULL)
 		{
 			args->url = strdup(url);
-			WebcfgDebug("args->url: %s\n", args->url);
 		}
 		args->status_code = status_code;
-		WebcfgDebug("args->status_code: %d\n", args->status_code);
 		if(application_status != NULL)
 		{
 			args->application_status = strdup(application_status);
-			WebcfgDebug("args->application_status: %s\n", args->application_status);
 		}
 		args->application_details = application_details;
-		WebcfgDebug("args->application_details: %d\n", args->application_details);
 		if(previous_sync_time != NULL)
 		{
 			args->previous_sync_time = strdup(previous_sync_time);
-			WebcfgDebug("args->previous_sync_time: %s\n", args->previous_sync_time);
 		}
 		if(version != NULL)
 		{
 			args->version = strdup(version);
-			WebcfgDebug("args->version: %s\n", args->version);
 		}
-		WebcfgDebug("args values are printing\n");
-		WebConfigLog("args->url:%s args->status_code:%d args->application_status:%s args->application_details:%d args->previous_sync_time:%s args->version:%s\n", args->url, args->status_code, args->application_status, args->application_details, args->previous_sync_time, args->version );
-		WebcfgDebug("creating processWebConfigNotification thread\n");
+		WebcfgDebug("args->url:%s args->status_code:%d args->application_status:%s args->application_details:%d args->previous_sync_time:%s args->version:%s\n", args->url, args->status_code, args->application_status, args->application_details, args->previous_sync_time, args->version );
 		err = pthread_create(&NotificationThreadId, NULL, processWebConfigNotification, (void *) args);
 		if (err != 0)
 		{
@@ -1223,7 +1205,6 @@ void* processWebConfigNotification(void* pValue)
 
 		sendNotification(stringifiedNotifyPayload, source, dest);
 	}
-	WebConfigLog("After sendNotification\n");
 	if(msg != NULL)
 	{
 		free_notify_params_struct(msg);
@@ -1234,7 +1215,6 @@ void* processWebConfigNotification(void* pValue)
 
 void free_notify_params_struct(notify_params_t *param)
 {
-    WebcfgDebug("Inside free_notify_params_struct\n");
     if(param != NULL)
     {
         if(param->url != NULL)
@@ -1255,7 +1235,6 @@ void free_notify_params_struct(notify_params_t *param)
         }
         WAL_FREE(param);
     }
-    WebcfgDebug("End of free_notify_params_struct\n");
 }
 
 char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW)
@@ -1264,8 +1243,6 @@ char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW)
 	int i, cnt = 0;
 	int deviceMACWlen = strlen(deviceMACW);
 	int macWlen = strlen(macW);
-	WebcfgDebug("Inside replaceMacWord\n");
-	WebcfgDebug("deviceMACWlen:%d macWlen:%d\n", deviceMACWlen, macWlen);
 	// Counting the number of times mac word occur in the string
 	for (i = 0; s[i] != '\0'; i++)
 	{
@@ -1291,6 +1268,5 @@ char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW)
 		    result[i++] = *s++;
 	}
 	result[i] = '\0';
-	WebcfgDebug("End replaceMacWord. result is %s\n", result);
 	return result;
 }

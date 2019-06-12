@@ -674,7 +674,6 @@ static void *notifyTask(void *status)
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 char* get_global_deviceMAC()
 {
-    WalInfo("Inside get_global_deviceMAC: deviceMAC is %s\n", deviceMAC);
     return deviceMAC;
 }
 #endif
@@ -687,10 +686,8 @@ void getDeviceMac()
     int backoffRetryTime = 0;  
     int c=2;
 
-    WalInfo("Start of getDeviceMac\n");
     if(strlen(deviceMAC) == 0)
     {
-	WalInfo("deviceMAC is empty. Fetching DeviceMac\n");
         do
         {
 	    pthread_mutex_lock(&device_mac_mutex);
@@ -726,13 +723,11 @@ void getDeviceMac()
             }
 	    else
 	    {
-		WalInfo("Fetched deviceMAC. unlocking mutex and exit.\n");
 		pthread_mutex_unlock(&device_mac_mutex);
 		break;
 	    }
         }while((retryCount >= 1) && (retryCount <= 5));
     }
-    WalInfo("End of getDeviceMac\n");
 }
 /*
  * @brief notifyCallback is to check if notification event needs to be sent
