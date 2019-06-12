@@ -57,7 +57,6 @@ static char g_systemReadyTime[64]={'\0'};
 static char g_interface[32]={'\0'};
 char serialNum[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
-pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t periodicsync_condition=PTHREAD_COND_INITIALIZER;
 static pthread_t NotificationThreadId=0;
