@@ -53,7 +53,6 @@ typedef struct _notify_params
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
-static char deviceMAC[32]={'\0'};
 static char g_systemReadyTime[64]={'\0'};
 static char g_interface[32]={'\0'};
 char serialNum[64]={'\0'};
@@ -77,7 +76,6 @@ void getAuthToken();
 void createNewAuthToken(char *newToken, size_t len, char *hw_mac, char* hw_serial_number);
 int handleHttpResponse(long response_code, char *webConfigData, int retry_count, int index );
 static char* generate_trans_uuid();
-static void getDeviceMac();
 static void macToLowerCase(char macValue[]);
 static void loadInitURLFromFile(char **url);
 void* processWebConfigNotification(void* pValue);
@@ -387,7 +385,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	else if(response_code == 403)
 	{
 		WebConfigLog("Token is expired, fetch new token. response_code:%d\n", response_code);
-		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
+		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_global_deviceMAC(), serialNum );
 		WebcfgDebug("createNewAuthToken done in 403 case\n");
 	}
 	else if(response_code == 429)
@@ -460,7 +458,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		{
 			WebcfgDebug("forming webConfigURL\n");
 			//Replace {mac} string from default init url with actual deviceMAC
-			webConfigURL = replaceMacWord(configURL, c, deviceMAC);
+			webConfigURL = replaceMacWord(configURL, c, get_global_deviceMAC());
 			WebConfigLog("webConfigURL is %s\n", webConfigURL);
 			// Store {mac} replaced/updated config URL to DB
 			setConfigURL(index, webConfigURL);
@@ -1071,9 +1069,9 @@ void getAuthToken()
 	if( strlen(WEBPA_READ_HEADER) !=0 && strlen(WEBPA_CREATE_HEADER) !=0)
 	{
                 getDeviceMac();
-                WebConfigLog("deviceMAC: %s\n",deviceMAC);
+                WebConfigLog("get_global_deviceMAC(). deviceMAC: %s\n",get_global_deviceMAC());
 
-		if( deviceMAC != NULL && strlen(deviceMAC) !=0 )
+		if( get_global_deviceMAC() != NULL && strlen(get_global_deviceMAC()) !=0 )
 		{
 			serial_number = getParameterValue(SERIAL_NUMBER);
                         if(serial_number !=NULL)
@@ -1085,7 +1083,7 @@ void getAuthToken()
 
 			if( serialNum != NULL && strlen(serialNum)>0 )
 			{
-				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), deviceMAC, serialNum);
+				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), get_global_deviceMAC(), serialNum);
 				if ((strlen(output) == 0))
 				{
 					WebConfigLog("Unable to get auth token\n");
@@ -1094,7 +1092,7 @@ void getAuthToken()
 				{
 					WebConfigLog("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
 					//Call create/acquisition script
-					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), deviceMAC, serialNum );
+					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_global_deviceMAC(), serialNum );
 					WebcfgDebug("After createNewAuthToken\n");
 				}
 				else
@@ -1120,114 +1118,6 @@ void getAuthToken()
 }
 
 
-static void getDeviceMac()
-{
-    int retryCount = 0;
-
-    while(!strlen(deviceMAC))
-    {
-	pthread_mutex_lock(&device_mac_mutex);
-
-        int ret = -1, size =0, val_size =0,cnt =0;
-        char compName[MAX_PARAMETERNAME_LENGTH/2] = { '\0' };
-        char dbusPath[MAX_PARAMETERNAME_LENGTH/2] = { '\0' };
-        parameterValStruct_t **parameterval = NULL;
-        char *getList[] = {DEVICE_MAC};
-        componentStruct_t **        ppComponents = NULL;
-        char dst_pathname_cr[256] = {0};
-
-	if (strlen(deviceMAC))
-	{
-	        pthread_mutex_unlock(&device_mac_mutex);
-	        break;
-	}
-        sprintf(dst_pathname_cr, "%s%s", "eRT.", CCSP_DBUS_INTERFACE_CR);
-        ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle, dst_pathname_cr, DEVICE_MAC, "", &ppComponents, &size);
-        if ( ret == CCSP_SUCCESS && size >= 1)
-        {
-                strncpy(compName, ppComponents[0]->componentName, sizeof(compName)-1);
-                strncpy(dbusPath, ppComponents[0]->dbusPath, sizeof(compName)-1);
-        }
-        else
-        {
-                WebConfigLog("Failed to get component for %s ret: %d\n",DEVICE_MAC,ret);
-                retryCount++;
-        }
-        free_componentStruct_t(bus_handle, size, ppComponents);
-        if(strlen(compName) != 0 && strlen(dbusPath) != 0)
-        {
-                ret = CcspBaseIf_getParameterValues(bus_handle,
-                        compName, dbusPath,
-                        getList,
-                        1, &val_size, &parameterval);
-                if(ret == CCSP_SUCCESS)
-                {
-                    for (cnt = 0; cnt < val_size; cnt++)
-                    {
-                        WebcfgDebug("parameterval[%d]->parameterName : %s\n",cnt,parameterval[cnt]->parameterName);
-                        WebcfgDebug("parameterval[%d]->parameterValue : %s\n",cnt,parameterval[cnt]->parameterValue);
-                        WebcfgDebug("parameterval[%d]->type :%d\n",cnt,parameterval[cnt]->type);
-                    }
-                    macToLowerCase(parameterval[0]->parameterValue);
-                    retryCount = 0;
-                }
-                else
-                {
-                        WebConfigLog("Failed to get values for %s ret: %d\n",getList[0],ret);
-                        retryCount++;
-                }
-                free_parameterValStruct_t(bus_handle, val_size, parameterval);
-        }
-        if(retryCount == 0)
-        {
-                WebcfgDebug("deviceMAC is %s\n",deviceMAC);
-                pthread_mutex_unlock(&device_mac_mutex);
-                break;
-        }
-        else
-        {
-                if(retryCount > 5 )
-                {
-                        WebConfigLog("Unable to get CM Mac after %d retry attempts..\n", retryCount);
-                        pthread_mutex_unlock(&device_mac_mutex);
-                        break;
-                }
-                else
-                {
-                        WebConfigLog("Failed to GetValue for MAC. Retrying...retryCount %d\n", retryCount);
-                        pthread_mutex_unlock(&device_mac_mutex);
-                        sleep(10);
-                }
-        }
-    }
-}
-
-static void macToLowerCase(char macValue[])
-{
-    int i = 0;
-    int j;
-    char *token[32]={'\0'};
-    char tmp[32]={'\0'};
-    strncpy(tmp, macValue,sizeof(tmp)-1);
-    token[i] = strtok(tmp, ":");
-    if(token[i]!=NULL)
-    {
-        strncpy(deviceMAC, token[i],sizeof(deviceMAC)-1);
-        deviceMAC[31]='\0';
-        i++;
-    }
-    while ((token[i] = strtok(NULL, ":")) != NULL)
-    {
-        strncat(deviceMAC, token[i],sizeof(deviceMAC)-1);
-        deviceMAC[31]='\0';
-        i++;
-    }
-    deviceMAC[31]='\0';
-    for(j = 0; deviceMAC[j]; j++)
-    {
-        deviceMAC[j] = tolower(deviceMAC[j]);
-    }
-}
 
 void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version)
 {
@@ -1295,13 +1185,13 @@ void* processWebConfigNotification(void* pValue)
     {
 		msg = (notify_params_t *) pValue;
     }
-    if(strlen(deviceMAC) == 0)
+    if(strlen(get_global_deviceMAC()) == 0)
     {
 		WebConfigLog("deviceMAC is NULL, failed to send Webconfig Notification\n");
     }
     else
     {
-	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
+	snprintf(device_id, sizeof(device_id), "mac:%s", get_global_deviceMAC());
 	WebcfgDebug("webconfig Device_id %s\n", device_id);
 
 	if(notifyPayload != NULL)

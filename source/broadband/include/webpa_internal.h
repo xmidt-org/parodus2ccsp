@@ -245,6 +245,11 @@ WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
 char *get_global_systemReadyTime();
 
 /*
+ * @brief webConfig getter function to get deviceMAC
+ * @return MAC value.
+ */
+char* get_global_deviceMAC();
+/*
  * @brief To initiate webConfig Task handling
  */
 void initWebConfigTask();
@@ -254,3 +259,5 @@ BOOL get_eth_wan_status();
 WDMP_STATUS check_ethernet_wan_status();
 
 void processDeviceManageableNotification();
+
+void getDeviceMac();

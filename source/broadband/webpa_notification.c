@@ -115,7 +115,6 @@ const char * notifyparameters[]={
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 void loadCfgFile();
-static void getDeviceMac();
 static int writeToJson(char *data);
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
 static void *notifyTask(void *status);
@@ -671,7 +670,15 @@ static void *notifyTask(void *status)
 	return NULL;
 }
 
-static void getDeviceMac()
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+char* get_global_deviceMAC()
+{
+    WalInfo("Inside get_global_deviceMAC: deviceMAC is %s\n", deviceMAC);
+    return deviceMAC;
+}
+#endif
+
+void getDeviceMac()
 {
     char *macID = NULL;
     char deviceMACValue[32] = { '\0' };
@@ -679,8 +686,10 @@ static void getDeviceMac()
     int backoffRetryTime = 0;  
     int c=2;
 
+    WalInfo("Start of getDeviceMac\n");
     if(strlen(deviceMAC) == 0)
     {
+	WalInfo("deviceMAC is empty. Fetching DeviceMac\n");
         do
         {
             backoffRetryTime = (int) pow(2, c) -1;
@@ -714,6 +723,7 @@ static void getDeviceMac()
             }
         }while((retryCount >= 1) && (retryCount <= 5));
     }
+    WalInfo("End of getDeviceMac\n");
 }
 /*
  * @brief notifyCallback is to check if notification event needs to be sent
