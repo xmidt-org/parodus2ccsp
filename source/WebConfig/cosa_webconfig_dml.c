@@ -589,9 +589,12 @@ ConfigFile_SetParamBoolValue
 	{
 		//trigger sync by sending pthread condition signal
 		pConfigFileEntry->ForceSyncCheck = bValue;
-		pthread_mutex_lock (get_global_periodicsync_mutex());
-		pthread_cond_signal(get_global_periodicsync_condition());
-		pthread_mutex_unlock(get_global_periodicsync_mutex());
+		if(bValue)
+		{
+			pthread_mutex_lock (get_global_periodicsync_mutex());
+			pthread_cond_signal(get_global_periodicsync_condition());
+			pthread_mutex_unlock(get_global_periodicsync_mutex());
+		}
 		return TRUE;
 	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
