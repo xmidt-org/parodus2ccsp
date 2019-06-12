@@ -60,6 +60,7 @@ char *g_systemReadyTime=NULL;
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t con=PTHREAD_COND_INITIALIZER;
+pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 const char * notifyparameters[]={
 "Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client",
@@ -115,7 +116,6 @@ const char * notifyparameters[]={
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 void loadCfgFile();
-static void getDeviceMac();
 static int writeToJson(char *data);
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
 static void *notifyTask(void *status);
@@ -671,7 +671,14 @@ static void *notifyTask(void *status)
 	return NULL;
 }
 
-static void getDeviceMac()
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+char* get_global_deviceMAC()
+{
+    return deviceMAC;
+}
+#endif
+
+void getDeviceMac()
 {
     char *macID = NULL;
     char deviceMACValue[32] = { '\0' };
@@ -683,6 +690,7 @@ static void getDeviceMac()
     {
         do
         {
+	    pthread_mutex_lock(&device_mac_mutex);
             backoffRetryTime = (int) pow(2, c) -1;
 #ifdef RDKB_BUILD
             token_t  token;
@@ -707,11 +715,17 @@ static void getDeviceMac()
             if(strlen(deviceMAC) == 0)
             {
                 WalError("Failed to GetValue for MAC. Retrying...\n");
+		pthread_mutex_unlock(&device_mac_mutex);
                 WalInfo("backoffRetryTime %d seconds\n", backoffRetryTime);
                 sleep(backoffRetryTime);
                 c++;
                 retryCount++;
             }
+	    else
+	    {
+		pthread_mutex_unlock(&device_mac_mutex);
+		break;
+	    }
         }while((retryCount >= 1) && (retryCount <= 5));
     }
 }

@@ -829,7 +829,7 @@ void macToLower(char macValue[],char macConverted[])
 	token[i] = strtok(tmp, ":");
 	if(token[i]!=NULL)
 	{
-	    strncat(macConverted, token[i],31);
+	    strncpy(macConverted, token[i],31);
 	    macConverted[31]='\0';
 	    i++;
 	}
