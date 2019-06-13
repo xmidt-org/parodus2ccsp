@@ -203,7 +203,7 @@ void *FactoryResetCloudSync()
 			}
 			else
 			{
-				backoffRetryTime = (int) (pow(base, (double)retryCount) + c)  + 1;
+				backoffRetryTime = (int) (pow(base, (double)retryCount)*c)  + 1;
 				//wait for backoff delay for retransmission
 				WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
 				sleep(backoffRetryTime);
