@@ -796,6 +796,7 @@ WDMP_STATUS setParameterValue(char *paramName, char* value, DATA_TYPE type)
 	WDMP_STATUS ret = WDMP_FAILURE;
 	param_t *parametervalArr = (param_t *) malloc(sizeof(param_t) * paramCount);
 	bool error = false;
+	int ccspStatus = 0;
 
 	parametervalArr[0].name = paramName;
 	parametervalArr[0].type = type;
@@ -803,7 +804,7 @@ WDMP_STATUS setParameterValue(char *paramName, char* value, DATA_TYPE type)
 	walStrncpy(paramValue, value,sizeof(paramValue));
 	parametervalArr[0].value = paramValue;
 
-	setValues(parametervalArr, paramCount, WEBPA_SET, NULL, NULL, &ret);
+	setValues(parametervalArr, paramCount, WEBPA_SET, NULL, NULL, &ret, &ccspStatus);
 
 	if (ret == WDMP_SUCCESS)
 	{

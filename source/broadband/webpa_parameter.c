@@ -134,7 +134,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
     free_ParamCompList(ParamGroup, compCount);		
 }
 
-void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType,char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
+void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType,char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus, int *ccspRetStatus)
 {
         int cnt = 0, ret = 0, cnt1 =0, i = 0, count = 0, error = 0, compCount = 0, cnt2= 0, j = 0;
         int index = 0,retCount = 0,checkSetstatus = 0,rev=0,indexWifi= -1,getFlag=0;
@@ -361,6 +361,8 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
         WalPrint("------ Free for ParamGroup ------\n");
         free_ParamCompList(ParamGroup, compCount);
         
+	*ccspRetStatus = ret;
+	WalInfo("ccspRetStatus is %d\n", *ccspRetStatus);
         *retStatus = mapStatus(ret);
 
         WalPrint("=============== End of setValues =============\n");

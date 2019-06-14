@@ -64,7 +64,7 @@ static pthread_t NotificationThreadId=0;
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 static void *WebConfigTask(void *status);
-int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersion);
+int processJsonDocument(char *jsonData, int *retStatus, char **docVersion);
 int validateConfigFormat(cJSON *json, char **eTag);
 int requestWebConfigData(char **configData, int r_count, int index, int status, long *code);
 static void get_webCfg_interface(char **interface);
@@ -157,7 +157,7 @@ static void *WebConfigTask(void *status)
 					rv = handleHttpResponse(res_code, webConfigData, retry_count, index);
 					if(rv ==1)
 					{
-						WebcfgDebug("No retries are required. Exiting..\n");
+						WebConfigLog("No retries are required. Exiting..\n");
 						break;
 					}
 				}
@@ -168,7 +168,7 @@ static void *WebConfigTask(void *status)
 				WebConfigLog("requestWebConfigData BACKOFF_SLEEP_DELAY_SEC is %d seconds\n", BACKOFF_SLEEP_DELAY_SEC);
 				sleep(BACKOFF_SLEEP_DELAY_SEC);
 				retry_count++;
-				WebcfgDebug("Webconfig retry_count is %d\n", retry_count);
+				WebConfigLog("Webconfig retry_count is %d\n", retry_count);
 			}
 		}
         }
@@ -235,7 +235,7 @@ static void *WebConfigTask(void *status)
 	}
 	WebConfigLog("B4 pthread_exit\n");
 	pthread_exit(0);
-	WebcfgDebug("After pthread_exit\n");
+	WebConfigLog("After pthread_exit\n");
 	return NULL;
 }
 
@@ -243,7 +243,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 {
 	int first_digit=0;
 	int json_status=0;
-	WDMP_STATUS setRet = WDMP_FAILURE;
+	int setRet = 0;
 	int ret=0, getRet = 0;
 	char *configURL = NULL;
 	char *version = NULL;
@@ -262,7 +262,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 
 		if(webConfigData !=NULL)
 		{
-			WebcfgDebug("webConfigData fetched successfully\n");
+			WebConfigLog("webConfigData fetched successfully\n");
 			json_status = processJsonDocument(webConfigData, &setRet, &newDocVersion);
 			WebConfigLog("setRet after process Json is %d\n", setRet);
 			WebConfigLog("newDocVersion is %s\n", newDocVersion);
@@ -272,7 +272,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 			getRet = getConfigURL(index, &configURL);
 			if(getRet)
 			{
-				WebcfgDebug("After processJsonDocument: configURL is %s\n", configURL);
+				WebConfigLog("After processJsonDocument: configURL is %s\n", configURL);
 			}
 			else
 			{
@@ -280,10 +280,10 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 			}
 
 			ret = setPreviousSyncDateTime(index);
-			WebcfgDebug("setPreviousSyncDateTime ret is %d\n", ret);
+			WebConfigLog("setPreviousSyncDateTime ret is %d\n", ret);
 			if(ret == 0)
 			{
-				WebcfgDebug("PreviousSyncDateTime set successfully for index %d\n", index);
+				WebConfigLog("PreviousSyncDateTime set successfully for index %d\n", index);
 			}
 			else
 			{
@@ -292,18 +292,18 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	
 			if(json_status == 1)
 			{
-				WebcfgDebug("processJsonDocument success\n");
+				WebConfigLog("processJsonDocument success\n");
 				if(configURL!=NULL && newDocVersion !=NULL)
 				{
 					WebConfigLog("Configuration settings from %s version %s were applied successfully\n", configURL, newDocVersion );
 				}
 
-				WebcfgDebug("set version and syncCheckOK for success\n");
+				WebConfigLog("set version and syncCheckOK for success\n");
 				ret = setConfigVersion(index, newDocVersion);//get new version from json
-				WebcfgDebug("setConfigVersion ret is %d\n", ret);
+				WebConfigLog("setConfigVersion ret is %d\n", ret);
 				if(ret == 0)
 				{
-					WebcfgDebug("Config Version %s set successfully for index %d\n", newDocVersion, index);
+					WebConfigLog("Config Version %s set successfully for index %d\n", newDocVersion, index);
 				}
 				else
 				{
@@ -311,10 +311,10 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 				}
 
 				ret = setSyncCheckOK(index, TRUE );
-				WebcfgDebug("setSyncCheckOK ret is %d\n", ret);
+				WebConfigLog("setSyncCheckOK ret is %d\n", ret);
 				if(ret == 0)
 				{
-					WebcfgDebug("SyncCheckOK set successfully for index %d\n", index);
+					WebConfigLog("SyncCheckOK set successfully for index %d\n", index);
 				}
 				else
 				{
@@ -322,7 +322,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 				}
 
 				getRet = getPreviousSyncDateTime(index, &PreviousSyncDateTime);
-				WebcfgDebug("getPreviousSyncDateTime getRet is %d\n", getRet);
+				WebConfigLog("getPreviousSyncDateTime getRet is %d\n", getRet);
 				if(getRet)
 				{
 					WebConfigLog("After processJsonDocument: PreviousSyncDateTime is %s for index %d\n", PreviousSyncDateTime, index);
@@ -332,19 +332,19 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 					WebConfigLog("PreviousSyncDateTime get failed for index %d\n", index);
 				}
 
-				WebcfgDebug("B4 Send_Notification_Task success case\n");
+				WebConfigLog("B4 Send_Notification_Task success case\n");
 				Send_Notification_Task(configURL, response_code, "success", setRet, PreviousSyncDateTime , newDocVersion);
-				WebcfgDebug("After Send_Notification_Task for success case\n");
+				WebConfigLog("After Send_Notification_Task for success case\n");
 				return 1;
 			}
 			else
 			{
 				WebConfigLog("Failure in processJsonDocument\n");
 				ret = setSyncCheckOK(index, FALSE);
-				WebcfgDebug("setSyncCheckOK ret is %d\n", ret);
+				WebConfigLog("setSyncCheckOK ret is %d\n", ret);
 				if(ret == 0)
 				{
-					WebcfgDebug("SyncCheckOK set to FALSE for index %d\n", index);
+					WebConfigLog("SyncCheckOK set to FALSE for index %d\n", index);
 				}
 				else
 				{
@@ -353,9 +353,9 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 
 				if(retry_count == 3)
 				{
-					WebcfgDebug("retry_count is %d\n", retry_count);
+					WebConfigLog("retry_count is %d\n", retry_count);
 					getRet = getPreviousSyncDateTime(index, &PreviousSyncDateTime);
-					WebcfgDebug("getPreviousSyncDateTime getRet is %d\n", getRet);
+					WebConfigLog("getPreviousSyncDateTime getRet is %d\n", getRet);
 					if(getRet)
 					{
 						WebConfigLog("After processJsonDocument failure: PreviousSyncDateTime is %s for index %d\n", PreviousSyncDateTime, index);
@@ -367,7 +367,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 					WebConfigLog("Configuration settings from %s version %s FAILED\n", configURL, newDocVersion );
 					WebConfigLog("Sending Failure Notification after 3 retry attempts\n");
 					Send_Notification_Task(configURL, response_code, "failed", setRet, PreviousSyncDateTime , newDocVersion);
-					WebcfgDebug("After Send_Notification_Task failure case\n");
+					WebConfigLog("After Send_Notification_Task failure case\n");
 				}
 			}
 		}
@@ -385,7 +385,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	{
 		WebConfigLog("Token is expired, fetch new token. response_code:%d\n", response_code);
 		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_global_deviceMAC(), serialNum );
-		WebcfgDebug("createNewAuthToken done in 403 case\n");
+		WebConfigLog("createNewAuthToken done in 403 case\n");
 	}
 	else if(response_code == 429)
 	{
@@ -455,13 +455,13 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 
 		if(configURL !=NULL)
 		{
-			WebcfgDebug("forming webConfigURL\n");
+			WebConfigLog("forming webConfigURL\n");
 			//Replace {mac} string from default init url with actual deviceMAC
 			webConfigURL = replaceMacWord(configURL, c, get_global_deviceMAC());
 			WebConfigLog("webConfigURL is %s\n", webConfigURL);
 			// Store {mac} replaced/updated config URL to DB
 			setConfigURL(index, webConfigURL);
-			WebcfgDebug("setConfigURL done\n");
+			WebConfigLog("setConfigURL done\n");
 			curl_easy_setopt(curl, CURLOPT_URL, webConfigURL );
 		}
 		else
@@ -469,21 +469,21 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			WebConfigLog("Failed to get configURL\n");
 		}
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, CURL_TIMEOUT_SEC);
-		WebcfgDebug("fetching interface from device.properties\n");
+		WebConfigLog("fetching interface from device.properties\n");
 		if(strlen(g_interface) == 0)
 		{
 			get_webCfg_interface(&interface);
 			if(interface !=NULL)
 		        {
 		               strncpy(g_interface, interface, sizeof(g_interface));
-		               WebcfgDebug("g_interface copied is %s\n", g_interface);
+		               WebConfigLog("g_interface copied is %s\n", g_interface);
 		               WAL_FREE(interface);
 		        }
 		}
 		WebConfigLog("g_interface fetched is %s\n", g_interface);
 		if(strlen(g_interface) > 0)
 		{
-			WebcfgDebug("setting interface %s\n", g_interface);
+			WebConfigLog("setting interface %s\n", g_interface);
 			curl_easy_setopt(curl, CURLOPT_INTERFACE, g_interface);
 		}
 
@@ -537,7 +537,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		else
 		{
-                        WebcfgDebug("checking content type\n");
+                        WebConfigLog("checking content type\n");
 			content_res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
 			if(!content_res && ct)
 			{
@@ -598,7 +598,7 @@ size_t write_callback_fn(void *buffer, size_t size, size_t nmemb, struct token_d
     return size * nmemb;
 }
 
-int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersion)
+int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 {
 	cJSON *paramArray = NULL;
 	int parseStatus = 0;
@@ -607,20 +607,21 @@ int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersio
 	int paramCount =0;
 	WDMP_STATUS valid_ret = WDMP_FAILURE;
 	WDMP_STATUS ret = WDMP_FAILURE;
+	int ccspStatus=0;
 	char *version = NULL;
 
 	parseStatus = parseJsonData(jsonData, &reqObj, &version);
 	WebConfigLog("After parseJsonData version is %s\n", version);
 	if(version!=NULL)
 	{
-		WebcfgDebug("copying to docVersion\n");
+		WebConfigLog("copying to docVersion\n");
 		*docVersion = strdup(version);
-		WebcfgDebug("docVersion is %s\n", *docVersion);
+		WebConfigLog("docVersion is %s\n", *docVersion);
 		WAL_FREE(version);
 	}
 	if(parseStatus ==1)
 	{
-		WebcfgDebug("Request:> Type : %d\n",reqObj->reqType);
+		WebConfigLog("Request:> Type : %d\n",reqObj->reqType);
 		WebConfigLog("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
 		paramCount = (int)reqObj->u.setReq->paramCnt;
 		for (i = 0; i < paramCount; i++) 
@@ -634,18 +635,19 @@ int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersio
 
 		if(valid_ret == WDMP_SUCCESS)
 		{
-			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret);
-			WebcfgDebug("Assigning retStatus\n");
-			*retStatus = ret;
-			WebcfgDebug("*retStatus is %d\n", *retStatus);
+			WebcfgInfo("WebConfig SET Request\n");
+			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret, &ccspStatus);
+			WebcfgInfo("Processed WebConfig SET Request\n");
+			*retStatus = ccspStatus;
+			WebConfigLog("*retStatus is %d\n", *retStatus);
                         if(ret == WDMP_SUCCESS)
                         {
-                                WebConfigLog("setValues success. ret : %d\n", ret);
+                                WebConfigLog("setValues success. ccspStatus : %d\n", ccspStatus);
                                 rv= 1;
                         }
                         else
                         {
-                              WebConfigLog("setValues Failed. ret : %d\n", ret);
+                              WebConfigLog("setValues Failed. ccspStatus : %d\n", ccspStatus);
                         }
 		}
 		else
@@ -693,7 +695,7 @@ int parseJsonData(char* jsonData, req_struct **req_obj, char **version)
 			if(ETAG !=NULL)
 			{
 				*version = strdup(ETAG);
-				WebcfgDebug("version copied from ETAG is %s\n", *version);
+				WebConfigLog("version copied from ETAG is %s\n", *version);
 				WAL_FREE(ETAG);
 			}
 			if(!isValid)// testing purpose. make it to !isValid
@@ -741,9 +743,9 @@ int validateConfigFormat(cJSON *json, char **eTag)
 				//version & eTag header validation is not done for phase 1 (Assuming both are matching)
 				//if(strcmp(version, eTag) == 0) 
 				//{
-				WebcfgDebug("Copying version to eTag value\n"); //free eTag
+				WebConfigLog("Copying version to eTag value\n"); //free eTag
 					*eTag = strdup(version);
-					WebcfgDebug("eTag is %s\n", *eTag);
+					WebConfigLog("eTag is %s\n", *eTag);
 					//check parameters
 					paramArray = cJSON_GetObjectItem( json, "parameters" );
 					if( paramArray != NULL )
@@ -942,7 +944,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
                 if(systemReadyTime !=NULL)
                 {
                        strncpy(g_systemReadyTime, systemReadyTime, sizeof(g_systemReadyTime));
-                       WebcfgDebug("g_systemReadyTime fetched is %s\n", g_systemReadyTime);
+                       WebConfigLog("g_systemReadyTime fetched is %s\n", g_systemReadyTime);
                        WAL_FREE(systemReadyTime);
                 }
         }
@@ -1138,7 +1140,7 @@ void Send_Notification_Task(char *url, long status_code, char *application_statu
 		{
 			args->version = strdup(version);
 		}
-		WebcfgDebug("args->url:%s args->status_code:%d args->application_status:%s args->application_details:%d args->previous_sync_time:%s args->version:%s\n", args->url, args->status_code, args->application_status, args->application_details, args->previous_sync_time, args->version );
+		WebConfigLog("args->url:%s args->status_code:%d args->application_status:%s args->application_details:%d args->previous_sync_time:%s args->version:%s\n", args->url, args->status_code, args->application_status, args->application_details, args->previous_sync_time, args->version );
 		err = pthread_create(&NotificationThreadId, NULL, processWebConfigNotification, (void *) args);
 		if (err != 0)
 		{
@@ -1173,7 +1175,7 @@ void* processWebConfigNotification(void* pValue)
     else
     {
 	snprintf(device_id, sizeof(device_id), "mac:%s", get_global_deviceMAC());
-	WebcfgDebug("webconfig Device_id %s\n", device_id);
+	WebConfigLog("webconfig Device_id %s\n", device_id);
 
 	if(notifyPayload != NULL)
 	{
@@ -1195,13 +1197,13 @@ void* processWebConfigNotification(void* pValue)
 	}
 
 	snprintf(dest,sizeof(dest),"event:config-version-report/%s",device_id);
-	WebcfgDebug("dest is %s\n", dest);
+	WebConfigLog("dest is %s\n", dest);
 
 	if (stringifiedNotifyPayload != NULL && strlen(device_id) != 0)
         {
 		source = (char*) malloc(sizeof(char) * sizeof(device_id));
 		strncpy(source, device_id, sizeof(device_id));
-		WebcfgDebug("source is %s\n", source);
+		WebConfigLog("source is %s\n", source);
 
 		sendNotification(stringifiedNotifyPayload, source, dest);
 	}
