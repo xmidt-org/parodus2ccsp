@@ -44,6 +44,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         char *payload = NULL;
         WDMP_STATUS ret = WDMP_FAILURE, setRet = WDMP_FAILURE;
         int paramCount = 0, i = 0, wildcardParamCount = 0,nonWildcardParamCount = 0, retCount=0, index = 0, error = 0;
+	int ccspStatus = 0;
         const char *getParamList[MAX_PARAMETERNAME_LEN];
         const char *wildcardGetParamList[MAX_PARAMETERNAME_LEN];
         WDMP_STATUS setCidStatus = WDMP_SUCCESS, setCmcStatus = WDMP_SUCCESS;
@@ -234,7 +235,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 {
                                         if(reqObj->reqType == SET)
                                         {
-                                                setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, transactionId, resObj->timeSpan, &ret);
+                                                setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, transactionId, resObj->timeSpan, &ret, &ccspStatus);
                                         }
                                         else
                                         {
@@ -314,7 +315,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                         WalPrint("ret : %d\n",ret);
                                                         if(ret == WDMP_SUCCESS)
 	                                                {
-	                                                        setValues(reqObj->u.setReq->param, paramCount, WEBPA_ATOMIC_SET_XPC, transactionId, resObj->timeSpan, &ret);
+	                                                        setValues(reqObj->u.setReq->param, paramCount, WEBPA_ATOMIC_SET_XPC, transactionId, resObj->timeSpan, &ret, &ccspStatus);
 	                                                        WalPrint("SPV ret : %d\n",ret);
 	                                                        if(ret == WDMP_SUCCESS)
 	                                                        {
@@ -660,6 +661,7 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 	
 	WDMP_STATUS retReason = WDMP_FAILURE;
 	param_t *rebootParam = NULL;
+	int ccspStatus = 0;
 	// Detect device reboot through WEBPA and log message for device reboot through webpa
 	if(param.name != NULL && strcmp(param.name, WEBPA_DEVICE_REBOOT_PARAM) == 0 && param.value != NULL && strcmp(param.value, WEBPA_DEVICE_REBOOT_VALUE) == 0)
 	{
@@ -672,7 +674,7 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 		rebootParam[0].value = "webpa-reboot";
 		rebootParam[0].type = WDMP_STRING;
 
-		setValues(rebootParam, 1, setType, NULL, NULL, &retReason);
+		setValues(rebootParam, 1, setType, NULL, NULL, &retReason, &ccspStatus);
 
 		if(retReason != WDMP_SUCCESS)
 		{

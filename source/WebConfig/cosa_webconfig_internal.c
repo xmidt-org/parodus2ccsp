@@ -216,6 +216,7 @@ int setPreviousSyncDateTime(int index)
         PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
         PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCxtLink          = NULL;
         PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry    = NULL;
+	char ParamName[MAX_BUFF_SIZE] = { 0 };
         int i, count, indexFound = 0;
         WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
         count = getConfigNumberOfEntries();
@@ -233,6 +234,8 @@ int setPreviousSyncDateTime(int index)
                 {
        			snprintf(str,sizeof(str),"%ld",(unsigned long)time(NULL));
        			AnscCopyString(pConfigFileEntry->PreviousSyncDateTime,str);
+			snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_SyncDateTime", pConfigFileEntry->InstanceNumber);
+			CosaDmlStoreValueIntoDb(ParamName, pConfigFileEntry->PreviousSyncDateTime);
 			indexFound = 1;
                         break;
                 }

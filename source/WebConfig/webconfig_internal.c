@@ -64,7 +64,7 @@ static pthread_t NotificationThreadId=0;
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 static void *WebConfigTask(void *status);
-int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersion);
+int processJsonDocument(char *jsonData, int *retStatus, char **docVersion);
 int validateConfigFormat(cJSON *json, char **eTag);
 int requestWebConfigData(char **configData, int r_count, int index, int status, long *code);
 static void get_webCfg_interface(char **interface);
@@ -243,7 +243,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 {
 	int first_digit=0;
 	int json_status=0;
-	WDMP_STATUS setRet = WDMP_FAILURE;
+	int setRet = 0;
 	int ret=0, getRet = 0;
 	char *configURL = NULL;
 	char *version = NULL;
@@ -598,7 +598,7 @@ size_t write_callback_fn(void *buffer, size_t size, size_t nmemb, struct token_d
     return size * nmemb;
 }
 
-int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersion)
+int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 {
 	cJSON *paramArray = NULL;
 	int parseStatus = 0;
@@ -607,6 +607,7 @@ int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersio
 	int paramCount =0;
 	WDMP_STATUS valid_ret = WDMP_FAILURE;
 	WDMP_STATUS ret = WDMP_FAILURE;
+	int ccspStatus=0;
 	char *version = NULL;
 
 	parseStatus = parseJsonData(jsonData, &reqObj, &version);
@@ -634,18 +635,19 @@ int processJsonDocument(char *jsonData, WDMP_STATUS *retStatus, char **docVersio
 
 		if(valid_ret == WDMP_SUCCESS)
 		{
-			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret);
-			WebcfgDebug("Assigning retStatus\n");
-			*retStatus = ret;
+			WebcfgInfo("WebConfig SET Request\n");
+			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret, &ccspStatus);
+			WebcfgInfo("Processed WebConfig SET Request\n");
+			*retStatus = ccspStatus;
 			WebcfgDebug("*retStatus is %d\n", *retStatus);
                         if(ret == WDMP_SUCCESS)
                         {
-                                WebConfigLog("setValues success. ret : %d\n", ret);
+                                WebConfigLog("setValues success. ccspStatus : %d\n", ccspStatus);
                                 rv= 1;
                         }
                         else
                         {
-                              WebConfigLog("setValues Failed. ret : %d\n", ret);
+                              WebConfigLog("setValues Failed. ccspStatus : %d\n", ccspStatus);
                         }
 		}
 		else
