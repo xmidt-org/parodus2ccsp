@@ -75,7 +75,10 @@
 #include "webpa_internal.h"
 
 BOOL Get_RfcEnable();
+int setRfcEnable(BOOL bValue);
 int getConfigNumberOfEntries();
+int Get_PeriodicSyncCheckInterval();
+int setPeriodicSyncCheckInterval(int iValue);
 BOOL getConfigURL(int index,char **configURL);
 int setConfigURL(int index, char *configURL);
 BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime);
