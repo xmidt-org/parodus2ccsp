@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <errno.h>
-#include "cosa_webconfig_apis.h"
 #include "plugin_main_apis.h"
 
 #if defined(_COSA_BCM_MIPS_)

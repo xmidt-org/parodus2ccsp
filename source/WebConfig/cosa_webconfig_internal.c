@@ -22,6 +22,7 @@
 #include "cosa_webconfig_dml.h"
 #include "cosa_webconfig_internal.h"
 #include "webconfig_log.h"
+#include "webconfig_internal.h"
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_CONFIGFILE_ENTRIES  "Device.X_RDK_WebConfig.ConfigFileNumberOfEntries"
@@ -467,9 +468,12 @@ BOOL setForceSyncCheck(int index, BOOL pvalue)
 		if(pConfigFileEntry->InstanceNumber==index)
 		{
 			pConfigFileEntry->ForceSyncCheck=pvalue;
-			pthread_mutex_lock (get_global_periodicsync_mutex());
-			pthread_cond_signal(get_global_periodicsync_condition());
-			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			if(pvalue)
+			{
+				pthread_mutex_lock (get_global_periodicsync_mutex());
+				pthread_cond_signal(get_global_periodicsync_condition());
+				pthread_mutex_unlock(get_global_periodicsync_mutex());
+			}
 			indexFound = 1;
 			break;
 		}

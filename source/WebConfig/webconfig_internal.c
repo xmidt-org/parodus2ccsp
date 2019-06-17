@@ -16,6 +16,7 @@
 #include "ansc_platform.h"
 #include "ccsp_base_api.h"
 #include "webconfig_log.h"
+#include "cosa_webconfig_apis.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
