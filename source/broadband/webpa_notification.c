@@ -189,7 +189,7 @@ void *FactoryResetCloudSync()
 	int retryCount = 0;
 	int status = 0;
 	int backoffRetryTime = 0;
-	int c=2;
+	int c=120;
 
 	while(FOREVER())
 	{
@@ -202,7 +202,7 @@ void *FactoryResetCloudSync()
 			}
 			else
 			{
-				backoffRetryTime = (int) pow(2, c) -1;
+				backoffRetryTime = (int) (1 << retryCount)*c+1;
 				//wait for backoff delay for retransmission
 				WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
 				sleep(backoffRetryTime);
@@ -230,7 +230,6 @@ void *FactoryResetCloudSync()
 					memset(notifyData,0,sizeof(NotifyData));
 						notifyData->type = FACTORY_RESET;
 					processNotification(notifyData);
-					c++;
 					retryCount++;
 				}
 				else
