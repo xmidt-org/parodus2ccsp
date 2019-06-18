@@ -56,7 +56,9 @@ typedef struct _notify_params
 /*----------------------------------------------------------------------------*/
 static char g_systemReadyTime[64]={'\0'};
 static char g_interface[32]={'\0'};
-char serialNum[64]={'\0'};
+static char serialNum[64]={'\0'};
+static char g_FirmwareVersion[64]={'\0'};
+static char g_bootTime[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t periodicsync_condition=PTHREAD_COND_INITIALIZER;
@@ -875,36 +877,55 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		list = curl_slist_append(list, schema_header);
 		WAL_FREE(schema_header);
 	}
-	bootTime = getParameterValue(DEVICE_BOOT_TIME);
-	if(bootTime !=NULL)
+
+	if(strlen(g_bootTime) ==0)
+	{
+		bootTime = getParameterValue(DEVICE_BOOT_TIME);
+		if(bootTime !=NULL)
+		{
+		       strncpy(g_bootTime, bootTime, sizeof(g_bootTime));
+		       WebcfgDebug("g_bootTime fetched is %s\n", g_bootTime);
+		       WAL_FREE(bootTime);
+		}
+	}
+
+	if(strlen(g_bootTime))
 	{
 		bootTime_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(bootTime_header !=NULL)
 		{
-			snprintf(bootTime_header, MAX_BUF_SIZE, "X-System-Boot-Time: %s", bootTime);
+			snprintf(bootTime_header, MAX_BUF_SIZE, "X-System-Boot-Time: %s", g_bootTime);
 			WebConfigLog("bootTime_header formed %s\n", bootTime_header);
 			list = curl_slist_append(list, bootTime_header);
 			WAL_FREE(bootTime_header);
 		}
-		WAL_FREE(bootTime);
 	}
 	else
 	{
 		WebConfigLog("Failed to get bootTime\n");
 	}
 
-	FwVersion = getParameterValue(FIRMWARE_VERSION);
-	if(FwVersion !=NULL)
+	if(strlen(g_FirmwareVersion) ==0)
+	{
+		FwVersion = getParameterValue(FIRMWARE_VERSION);
+		if(FwVersion !=NULL)
+		{
+		       strncpy(g_FirmwareVersion, FwVersion, sizeof(g_FirmwareVersion));
+		       WebcfgDebug("g_FirmwareVersion fetched is %s\n", g_FirmwareVersion);
+		       WAL_FREE(FwVersion);
+		}
+	}
+
+	if(strlen(g_FirmwareVersion))
 	{
 		FwVersion_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(FwVersion_header !=NULL)
 		{
-			snprintf(FwVersion_header, MAX_BUF_SIZE, "X-System-Firmware-Version: %s", FwVersion);
+			snprintf(FwVersion_header, MAX_BUF_SIZE, "X-System-Firmware-Version: %s", g_FirmwareVersion);
 			WebConfigLog("FwVersion_header formed %s\n", FwVersion_header);
 			list = curl_slist_append(list, FwVersion_header);
 			WAL_FREE(FwVersion_header);
 		}
-		WAL_FREE(FwVersion);
 	}
 	else
 	{
@@ -1067,13 +1088,16 @@ void getAuthToken()
 
 		if( get_global_deviceMAC() != NULL && strlen(get_global_deviceMAC()) !=0 )
 		{
-			serial_number = getParameterValue(SERIAL_NUMBER);
-                        if(serial_number !=NULL)
-                        {
-			        strncpy(serialNum ,serial_number, sizeof(serialNum));
-			        WebConfigLog("serialNum: %s\n", serialNum);
-			        WAL_FREE(serial_number);
-                        }
+			if(strlen(serialNum) ==0)
+			{
+				serial_number = getParameterValue(SERIAL_NUMBER);
+		                if(serial_number !=NULL)
+		                {
+					strncpy(serialNum ,serial_number, sizeof(serialNum));
+					WebConfigLog("serialNum: %s\n", serialNum);
+					WAL_FREE(serial_number);
+		                }
+			}
 
 			if( serialNum != NULL && strlen(serialNum)>0 )
 			{
