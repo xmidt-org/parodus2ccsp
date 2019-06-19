@@ -138,7 +138,7 @@ CosaWebConfigCreate
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
-				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].PreviousSyncDateTime = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime);
+				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].RequestTimeStamp = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].RequestTimeStamp);
 			}
 		}
 	}
@@ -238,7 +238,7 @@ CosaWebConfigInitialize
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
-			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].PreviousSyncDateTime = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime);
+			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].RequestTimeStamp = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].RequestTimeStamp);
 		    }
 	    }
 	    WebcfgDebug("##### ConfigFile container data #####\n");
@@ -365,8 +365,8 @@ CosaDmlGetConfigFile(
                 pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck = pConfigFileEntry->ForceSyncCheck;
                 WebcfgDebug("pConfigFileEntry->SyncCheckOK: %d\n",pConfigFileEntry->SyncCheckOK);
                 pConfigFileContainer->pConfigFileTable[i].SyncCheckOK = pConfigFileEntry->SyncCheckOK;
-                WebcfgDebug("pConfigFileEntry->PreviousSyncDateTime: %s\n",pConfigFileEntry->PreviousSyncDateTime);
-                AnscCopyString(pConfigFileContainer->pConfigFileTable[i].PreviousSyncDateTime, pConfigFileEntry->PreviousSyncDateTime);
+                WebcfgDebug("pConfigFileEntry->RequestTimeStamp: %s\n",pConfigFileEntry->RequestTimeStamp);
+                AnscCopyString(pConfigFileContainer->pConfigFileTable[i].RequestTimeStamp, pConfigFileEntry->RequestTimeStamp);
                 i++;
                 tok = strtok(NULL, ",");
             }
@@ -375,7 +375,7 @@ CosaDmlGetConfigFile(
     WebcfgDebug("######### ConfigFile data : %d ########\n",configFileCount);
     for(j=0; j<configFileCount; j++)
     {
-        WebcfgDebug("%d: %s %s %d %d %s\n",pConfigFileContainer->pConfigFileTable[j].InstanceNumber, pConfigFileContainer->pConfigFileTable[j].URL, pConfigFileContainer->pConfigFileTable[j].Version, pConfigFileContainer->pConfigFileTable[j].ForceSyncCheck, pConfigFileContainer->pConfigFileTable[j].SyncCheckOK, pConfigFileContainer->pConfigFileTable[j].PreviousSyncDateTime);
+        WebcfgDebug("%d: %s %s %d %d %s\n",pConfigFileContainer->pConfigFileTable[j].InstanceNumber, pConfigFileContainer->pConfigFileTable[j].URL, pConfigFileContainer->pConfigFileTable[j].Version, pConfigFileContainer->pConfigFileTable[j].ForceSyncCheck, pConfigFileContainer->pConfigFileTable[j].SyncCheckOK, pConfigFileContainer->pConfigFileTable[j].RequestTimeStamp);
     }
     WebcfgDebug("######### ConfigFile data ########\n");
     WebcfgDebug("------- %s -----EXIT----\n",__FUNCTION__);
@@ -416,10 +416,10 @@ CosaDmlGetConfigFileEntry
         pConfigFileEntry->SyncCheckOK = false;
     }
 
-	sprintf(ParamName, "configfile_%d_SyncDateTime", InstanceNumber);
+	sprintf(ParamName, "configfile_%d_RequestTimeStamp", InstanceNumber);
 	CosaDmlGetValueFromDb(ParamName, tmpbuf);
-	WebcfgDebug("PreviousSyncDateTime at %d:%s\n",InstanceNumber,tmpbuf);
-	AnscCopyString(pConfigFileEntry->PreviousSyncDateTime,tmpbuf);
+	WebcfgDebug("RequestTimeStamp at %d:%s\n",InstanceNumber,tmpbuf);
+	AnscCopyString(pConfigFileEntry->RequestTimeStamp,tmpbuf);
 
     WebcfgDebug("-------- %s ----- EXIT ------\n",__FUNCTION__);
     return pConfigFileEntry;
@@ -464,10 +464,10 @@ CosaDmlSetConfigFileEntry
 		CosaDmlStoreValueIntoDb(ParamName, "false");
 	}
 
-	sprintf(ParamName, "configfile_%d_SyncDateTime", configFileEntry->InstanceNumber);
-	if((configFileEntry->PreviousSyncDateTime)[0] != '\0')
+	sprintf(ParamName, "configfile_%d_RequestTimeStamp", configFileEntry->InstanceNumber);
+	if((configFileEntry->RequestTimeStamp)[0] != '\0')
 	{
-		CosaDmlStoreValueIntoDb(ParamName, configFileEntry->PreviousSyncDateTime);
+		CosaDmlStoreValueIntoDb(ParamName, configFileEntry->RequestTimeStamp);
 	}
 	else
 	{
@@ -512,7 +512,7 @@ CosaDmlRemoveConfigFileEntry
 	sprintf(ParamName, "configfile_%d_SyncCheckOk", InstanceNumber);
 	CosaDmlRemoveValueFromDb(ParamName);
 
-	sprintf(ParamName, "configfile_%d_SyncDateTime", InstanceNumber);
+	sprintf(ParamName, "configfile_%d_RequestTimeStamp", InstanceNumber);
 	CosaDmlRemoveValueFromDb(ParamName);
 	
     WebConfigLog("Remove %d from WebConfig_IndexesList\n",InstanceNumber);
@@ -736,7 +736,7 @@ bool FillDefaultConfigFileEntryToDB()
 	
 	CosaDmlStoreValueIntoDb("configfile_1_SyncCheckOk", "false");
 	
-	CosaDmlStoreValueIntoDb("configfile_1_SyncDateTime", "");
+	CosaDmlStoreValueIntoDb("configfile_1_RequestTimeStamp", "");
 
 	updateConfigFileNumberOfEntries(1);
 	updateConfigFileIndexsList(1);

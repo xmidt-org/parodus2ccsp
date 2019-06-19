@@ -477,17 +477,17 @@ ConfigFile_GetParamStringValue
         }
     }
 
-    if( AnscEqualString(ParamName, "PreviousSyncDateTime", TRUE))
+    if( AnscEqualString(ParamName, "RequestTimeStamp", TRUE))
     {
         /* collect value */
-        if ( AnscSizeOfString(pConfigFileEntry->PreviousSyncDateTime) < *pUlSize)
+        if ( AnscSizeOfString(pConfigFileEntry->RequestTimeStamp) < *pUlSize)
         {
-            AnscCopyString(pValue, pConfigFileEntry->PreviousSyncDateTime);
+            AnscCopyString(pValue, pConfigFileEntry->RequestTimeStamp);
             return 0;
         }
         else
         {
-            *pUlSize = AnscSizeOfString(pConfigFileEntry->PreviousSyncDateTime)+1;
+            *pUlSize = AnscSizeOfString(pConfigFileEntry->RequestTimeStamp)+1;
             return 1;
         }
     }
