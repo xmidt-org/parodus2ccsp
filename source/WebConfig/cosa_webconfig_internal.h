@@ -90,6 +90,18 @@ int setSyncCheckOK(int index, BOOL status);
 BOOL getForceSyncCheck(int index,BOOL *pvalue );
 BOOL setForceSyncCheck(int index, BOOL pvalue);
 BOOL isValidInstanceNumber(int instNum);
+
+BOOL getConfigURLFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
+BOOL setConfigURLWithWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
+BOOL getRequestTimeStampFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
+BOOL setRequestTimeStampWithWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
+BOOL getConfigVersionFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
+BOOL setConfigVersionWithWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
+BOOL getSyncCheckOKFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool );
+BOOL setSyncCheckOKWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL status);
+BOOL getForceSyncCheckFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool );
+BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue);
+
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 
 int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
