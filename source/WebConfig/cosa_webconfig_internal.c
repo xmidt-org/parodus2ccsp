@@ -42,6 +42,56 @@ BOOL Get_RfcEnable()
     return pMyObject->RfcEnable;
 }
 
+int setRfcEnable(BOOL bValue)
+{
+	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	char buf[16] = {0};
+	if(bValue == TRUE)
+	{
+		sprintf(buf, "%s", "true");
+		WebcfgDebug("Received RFC enable. updating g_shutdown\n");
+		if(pMyObject->RfcEnable == false)
+		{
+			pthread_mutex_lock (get_global_periodicsync_mutex());
+			g_shutdown  = false;
+			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			WebConfigLog("RfcEnable dynamic change from false to true. start WebConfigTask.\n");
+			initWebConfigTask(0);
+		}
+	}
+	else
+	{
+		sprintf(buf, "%s", "false");
+		WebConfigLog("Received RFC disable. updating g_shutdown\n");
+		/* sending signal to kill WebConfigTask thread*/
+		pthread_mutex_lock (get_global_periodicsync_mutex());
+		g_shutdown  = true;
+		pthread_cond_signal(get_global_periodicsync_condition());
+		pthread_mutex_unlock(get_global_periodicsync_mutex());
+	}  
+#ifdef RDKB_BUILD
+	if(syscfg_set(NULL, "WebConfigRfcEnabled", buf) != 0)
+	{
+		WebConfigLog("syscfg_set failed for RfcEnable\n");
+		return 1;
+	}
+	else
+	{
+		if (syscfg_commit() != 0)
+		{
+			WebConfigLog("syscfg_commit failed\n");
+			return 1;
+		}
+		else
+		{
+			pMyObject->RfcEnable = bValue;
+			return 0;
+		}
+	}
+#endif
+	return 0;
+}
+
 int getConfigNumberOfEntries()
 {
 	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
@@ -49,6 +99,43 @@ int getConfigNumberOfEntries()
 	int count = AnscSListQueryDepth( &pMyObject->ConfigFileList );
 	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
 	return count;
+}
+
+int Get_PeriodicSyncCheckInterval()
+{
+	PCOSA_DATAMODEL_WEBCONFIG pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	return pMyObject->PeriodicSyncCheckInterval; 
+}
+
+int setPeriodicSyncCheckInterval(int iValue)
+{
+	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	char buf[16] = {0};
+	sprintf(buf, "%d", iValue);
+#ifdef RDKB_BUILD
+	if(syscfg_set( NULL, "PeriodicSyncCheckInterval", buf) != 0)
+	{
+		WebConfigLog("syscfg_set failed\n");
+		return 1;
+	}
+	else 
+	{
+		if (syscfg_commit() != 0)
+		{
+			WebConfigLog("syscfg_commit failed\n");
+			return 1;
+		}
+		else
+		{
+			pMyObject->PeriodicSyncCheckInterval = iValue;
+			/* sending signal to WebConfigTask to update the sync time interval*/
+			pthread_mutex_lock (get_global_periodicsync_mutex());
+			pthread_cond_signal(get_global_periodicsync_condition());
+			pthread_mutex_unlock(get_global_periodicsync_mutex());
+		}
+	}
+#endif
+	return 0;
 }
 
 int getInstanceNumberAtIndex(int index)
@@ -798,8 +885,8 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             {
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_RFC_ENABLE, MAX_PARAMETERNAME_LEN);
                                 WebcfgDebug("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
-                                WebcfgDebug("pWebConfig->RfcEnable is %d\n",pWebConfig->RfcEnable);
-                                if(pWebConfig->RfcEnable == true)
+                                WebcfgDebug("RfcEnable is %d\n",RFC_ENABLE);
+                                if(RFC_ENABLE == true)
                                 {
                                     paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
                                 }
@@ -822,10 +909,11 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             }
                             else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0) && (RFC_ENABLE == true))
                             {
+								int interval = Get_PeriodicSyncCheckInterval();
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_PERIODIC_INTERVAL, MAX_PARAMETERNAME_LEN);
-                                WebcfgDebug("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
+                                WebcfgDebug("PeriodicSyncCheckInterval is %d\n",interval);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
-                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebConfig->PeriodicSyncCheckInterval);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",interval);
                                 paramVal[k]->type = ccsp_int;
                                 k++;
                             }
@@ -846,8 +934,8 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                             paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_RFC_ENABLE, MAX_PARAMETERNAME_LEN);
                             WebcfgDebug("paramVal[%d]->parameterName: %s\n",k,paramVal[k]->parameterName);
-                            WebcfgDebug("pWebConfig->RfcEnable is %d\n",pWebConfig->RfcEnable);
-                            if(pWebConfig->RfcEnable == true)
+                            WebcfgDebug("RfcEnable is %d\n",RFC_ENABLE);
+                            if(RFC_ENABLE == true)
                             {
                                 paramVal[k]->parameterValue = strndup("true",MAX_PARAMETERVALUE_LEN);
                             }
@@ -871,9 +959,10 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_PERIODIC_INTERVAL, MAX_PARAMETERNAME_LEN);
-                                WebcfgDebug("pWebConfig->PeriodicSyncCheckInterval is %d\n",pWebConfig->PeriodicSyncCheckInterval);
+								int interval = Get_PeriodicSyncCheckInterval();
+                                WebcfgDebug("PeriodicSyncCheckInterval is %d\n",interval);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
-                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebConfig->PeriodicSyncCheckInterval);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",interval);
                                 paramVal[k]->type = ccsp_int;
                                 k++;
                                 int n = 0, index = 0;
@@ -951,14 +1040,13 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 		{
 			if(strcmp(val[i].parameterName, WEBCONFIG_PARAM_RFC_ENABLE) == 0)
 			{
-				CosaDmlStoreValueIntoDb( "WebConfigRfcEnabled", val[i].parameterValue );
 				if((val[i].parameterValue != NULL) && (strcmp(val[i].parameterValue, "true") == 0))
 				{
-					pWebConfig->RfcEnable = true;
+					setRfcEnable(true);
 				}
 				else
 				{
-					pWebConfig->RfcEnable = false;
+					setRfcEnable(false);
 				}
 			}
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_PERIODIC_INTERVAL) == 0) && (RFC_ENABLE == true))
@@ -967,11 +1055,11 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				CosaDmlStoreValueIntoDb( subStr, val[i].parameterValue );
 				if(val[i].parameterValue != NULL)
 				{
-					pWebConfig->PeriodicSyncCheckInterval = atoi(val[i].parameterValue);
+					setPeriodicSyncCheckInterval(atoi(val[i].parameterValue));
 				}
 				else
 				{
-					pWebConfig->PeriodicSyncCheckInterval = 0;
+					setPeriodicSyncCheckInterval(0);
 				}
 			}
 			else if((strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL) && (RFC_ENABLE == true))

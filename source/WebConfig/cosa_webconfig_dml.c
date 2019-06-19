@@ -45,16 +45,15 @@ X_RDK_WebConfig_GetParamBoolValue
         BOOL*                       pBool
     )
 {
-    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
-    if( AnscEqualString(ParamName, "RfcEnable", TRUE))
-    {
-        /* collect value */
-        *pBool = pMyObject->RfcEnable;
-        return TRUE;
-    }
+	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
+	if( AnscEqualString(ParamName, "RfcEnable", TRUE))
+	{
+		/* collect value */
+		*pBool = Get_RfcEnable();
+		return TRUE;
+	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
-    return FALSE;
+	return FALSE;
 }
 
 BOOL
@@ -65,53 +64,14 @@ X_RDK_WebConfig_SetParamBoolValue
         BOOL                        bValue
     )
 {
-	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-	char buf[16] = {0};
 	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
 	/* check the parameter name and set the corresponding value */
 	if( AnscEqualString(ParamName, "RfcEnable", TRUE))
 	{
-		if(bValue == TRUE)
+		if(setRfcEnable(bValue) == 0)
 		{
-			sprintf(buf, "%s", "true");
-			WebcfgDebug("Received RFC enable. updating g_shutdown\n");
-                        if(pMyObject->RfcEnable == false)
-			{
-				pthread_mutex_lock (get_global_periodicsync_mutex());
-				g_shutdown  = false;
-				pthread_mutex_unlock(get_global_periodicsync_mutex());
-				WebConfigLog("RfcEnable dynamic change from false to true. start WebConfigTask.\n");
-				initWebConfigTask(0);
-			}
+			return TRUE;
 		}
-		else
-		{
-			sprintf(buf, "%s", "false");
-			WebConfigLog("Received RFC disable. updating g_shutdown\n");
-			/* sending signal to kill WebConfigTask thread*/
-	               pthread_mutex_lock (get_global_periodicsync_mutex());
-		       g_shutdown  = true;
-	               pthread_cond_signal(get_global_periodicsync_condition());
-	               pthread_mutex_unlock(get_global_periodicsync_mutex());
-		}  
-#ifdef RDKB_BUILD
-		if(syscfg_set(NULL, "WebConfigRfcEnabled", buf) != 0)
-		{
-			WebConfigLog("syscfg_set failed for RfcEnable\n");
-		}
-		else
-		{
-			if (syscfg_commit() != 0)
-			{
-				WebConfigLog("syscfg_commit failed\n");
-			}
-			else
-			{
-				pMyObject->RfcEnable = bValue;
-			}
-		}
-#endif
-		return TRUE;
 	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
 	return FALSE;
@@ -125,23 +85,22 @@ X_RDK_WebConfig_GetParamUlongValue
         ULONG*                      puLong
     )
 {
-    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
-        RFC_ENABLE=Get_RfcEnable();
-        if(!RFC_ENABLE)
-        {
-                WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
-                return FALSE;
-        }
-    /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "ConfigFileNumberOfEntries", TRUE))
-    {
-        /* collect value */
-        *puLong = AnscSListQueryDepth( &pMyObject->ConfigFileList );
-        return TRUE;
-    }
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
+		return FALSE;
+	}
+	/* check the parameter name and return the corresponding value */
+	if( AnscEqualString(ParamName, "ConfigFileNumberOfEntries", TRUE))
+	{
+		/* collect value */
+		*puLong = getConfigNumberOfEntries();
+		return TRUE;
+	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
-    return FALSE;
+	return FALSE;
 }
 
 BOOL
@@ -152,30 +111,22 @@ X_RDK_WebConfig_GetParamIntValue
         int*                        pInt
     )
 {
-    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
 	RFC_ENABLE=Get_RfcEnable();
-        if(!RFC_ENABLE)
-        {
-                WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
-                return FALSE;
-        }
-    /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
-    {
-        *pInt = pMyObject->PeriodicSyncCheckInterval;
-        return TRUE;
-    }
+	if(!RFC_ENABLE)
+	{
+		WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
+		return FALSE;
+	}
+	/* check the parameter name and return the corresponding value */
+	if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
+	{
+		*pInt = Get_PeriodicSyncCheckInterval();
+		return TRUE;
+	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
-    /* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
-}
-
-int Get_PeriodicSyncCheckInterval()
-{
-       PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-
-        return pMyObject->PeriodicSyncCheckInterval; 
+	/* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
+	return FALSE;
 }
 
 BOOL
@@ -186,41 +137,20 @@ X_RDK_WebConfig_SetParamIntValue
         int                         iValue
     )
 {
-	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-	char buf[16]={0};
 	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
-        RFC_ENABLE=Get_RfcEnable();
-        if(!RFC_ENABLE)
-        {
-                WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Set failed\n",__FUNCTION__,ParamName);
-                return FALSE;
-        }
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Set failed\n",__FUNCTION__,ParamName);
+		return FALSE;
+	}
 	/* check the parameter name and set the corresponding value */
 	if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
 	{
-		sprintf(buf, "%d", iValue);
-#ifdef RDKB_BUILD
-		if(syscfg_set( NULL, "PeriodicSyncCheckInterval", buf) != 0)
+		if(setPeriodicSyncCheckInterval(iValue) == 0)
 		{
-			WebConfigLog("syscfg_set failed\n");
+			return TRUE;
 		}
-		else 
-		{
-			if (syscfg_commit() != 0)
-			{
-				WebConfigLog("syscfg_commit failed\n");
-			}
-			else
-			{
-				pMyObject->PeriodicSyncCheckInterval = iValue;
-		             /* sending signal to WebConfigTask to update the sync time interval*/
-		               pthread_mutex_lock (get_global_periodicsync_mutex());
-		               pthread_cond_signal(get_global_periodicsync_condition());
-		               pthread_mutex_unlock(get_global_periodicsync_mutex());
-			}
-		}
-#endif
-		return TRUE;
 	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
 	/* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
