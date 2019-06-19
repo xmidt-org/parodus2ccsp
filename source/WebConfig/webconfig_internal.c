@@ -56,7 +56,9 @@ typedef struct _notify_params
 /*----------------------------------------------------------------------------*/
 static char g_systemReadyTime[64]={'\0'};
 static char g_interface[32]={'\0'};
-char serialNum[64]={'\0'};
+static char serialNum[64]={'\0'};
+static char g_FirmwareVersion[64]={'\0'};
+static char g_bootTime[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
 pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t periodicsync_condition=PTHREAD_COND_INITIALIZER;
@@ -82,6 +84,7 @@ void* processWebConfigNotification(void* pValue);
 void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version);
 void free_notify_params_struct(notify_params_t *param);
 char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW);
+void processWebconfigSync(int index, int status);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -115,71 +118,51 @@ void initWebConfigTask(int status)
 static void *WebConfigTask(void *status)
 {
 	pthread_detach(pthread_self());
-	int configRet = -1;
-	char *webConfigData = NULL;
-	int r_count=0;
-	long res_code;
 	int index=0, i=0;
 	int ret = 0;
 	int json_status=-1;
-	int retry_count=0, rv=0, rc=0;
+	int rv=0, rc=0;
         struct timeval tp;
         struct timespec ts;
         time_t t;
 	int count=0;
 	int wait_flag=0;
+	int forced_sync=0, syncIndex = 0;;
         int value =Get_PeriodicSyncCheckInterval();
 
 	count = getConfigNumberOfEntries();
 	WebConfigLog("count returned from getConfigNumberOfEntries:%d\n", count);
 
-       while(1)
-      {
-	if(!wait_flag)
+	while(1)
 	{
-        for(i = 0; i < count; i++)
-        {
-		index = getInstanceNumberAtIndex(i);
-		WebConfigLog("index returned from getInstanceNumberAtIndex:%d\n", index);
-		if(index != 0)
+		if(forced_sync)
 		{
-			while(1)
+			//trigger sync only for particular index
+			WebConfigLog("Trigger Forced sync for index %d\n", syncIndex);
+			processWebconfigSync(syncIndex, (int)status);
+			WebConfigLog("reset forced_sync and syncIndex after sync\n");
+			forced_sync = 0;
+			syncIndex = 0;
+		}
+		else if(!wait_flag)
+		{
+			//iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud.
+			for(i = 0; i < count; i++)
 			{
-				//iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud. 
-				if(retry_count >3)
+				index = getInstanceNumberAtIndex(i);
+				WebConfigLog("index returned from getInstanceNumberAtIndex:%d\n", index);
+				if(index != 0)
 				{
-					WebConfigLog("retry_count has reached max limit. Exiting.\n");
-					retry_count=0;
-					break;
+					processWebconfigSync(index, (int)status);
 				}
-				configRet = requestWebConfigData(&webConfigData, r_count, index,(int)status, &res_code);
-				if(configRet == 0)
-				{
-					rv = handleHttpResponse(res_code, webConfigData, retry_count, index);
-					if(rv ==1)
-					{
-						WebcfgDebug("No retries are required. Exiting..\n");
-						break;
-					}
-				}
-				else
-				{
-					WebConfigLog("Failed to get webConfigData from cloud\n");
-				}
-				WebConfigLog("requestWebConfigData BACKOFF_SLEEP_DELAY_SEC is %d seconds\n", BACKOFF_SLEEP_DELAY_SEC);
-				sleep(BACKOFF_SLEEP_DELAY_SEC);
-				retry_count++;
-				WebcfgDebug("Webconfig retry_count is %d\n", retry_count);
 			}
 		}
-        }
-      }
 
-                 pthread_mutex_lock (&periodicsync_mutex);
-                gettimeofday(&tp, NULL);
-                ts.tv_sec = tp.tv_sec;
-                ts.tv_nsec = tp.tv_usec * 1000;
-                ts.tv_sec += value;
+		pthread_mutex_lock (&periodicsync_mutex);
+		gettimeofday(&tp, NULL);
+		ts.tv_sec = tp.tv_sec;
+		ts.tv_nsec = tp.tv_usec * 1000;
+		ts.tv_sec += value;
 
 		if (g_shutdown)
 		{
@@ -188,40 +171,56 @@ static void *WebConfigTask(void *status)
 			break;
 		}
 
-                rv = pthread_cond_timedwait(&periodicsync_condition, &periodicsync_mutex, &ts);
+		rv = pthread_cond_timedwait(&periodicsync_condition, &periodicsync_mutex, &ts);
 		value=Get_PeriodicSyncCheckInterval();
-                if(!rv && !g_shutdown)
+		if(!rv && !g_shutdown)
 		{
-                        time(&t);
+			time(&t);
 			BOOL ForceSyncEnable;
-			getForceSyncCheck(1,&ForceSyncEnable); //TODO: Iterate through all indexes and check which index needs ForceSync
-                        if(ForceSyncEnable)
-                        {
-                                wait_flag=0;
-                                WebConfigLog("Recieved signal interput to getForceSyncCheck at %s\n",ctime(&t));
-                                setForceSyncCheck(1,false);
-                        }
-                        else
-                        {
-                                wait_flag=1;
-                                WebConfigLog("Recieved signal interput to change the sync interval to %d\n",value);
-                        }
-                }
-                else if (rv == ETIMEDOUT && !g_shutdown)
-                {
-                        time(&t);
+
+			// Iterate through all indexes to check which index needs ForceSync
+			count = getConfigNumberOfEntries();
+			WebConfigLog("count returned is:%d\n", count);
+
+			for(i = 0; i < count; i++)
+			{
+				WebcfgDebug("B4 getInstanceNumberAtIndex for i %d\n", i);
+				index = getInstanceNumberAtIndex(i);
+				WebcfgDebug("getForceSyncCheck for index %d\n", index);
+				getForceSyncCheck(index,&ForceSyncEnable);
+				WebcfgDebug("ForceSyncEnable is %d\n", ForceSyncEnable);
+				if(ForceSyncEnable)
+				{
+					wait_flag=0;
+					forced_sync = 1;
+					syncIndex = index;
+					WebConfigLog("Received signal interrupt to getForceSyncCheck at %s\n",ctime(&t));
+					setForceSyncCheck(index,false);
+					break;
+				}
+			}
+			WebConfigLog("forced_sync is %d\n", forced_sync);
+			if(!forced_sync)
+			{
+				wait_flag=1;
+				WebConfigLog("Received signal interrupt to change the sync interval to %d\n",value);
+			}
+		}
+		else if (rv == ETIMEDOUT && !g_shutdown)
+		{
+			time(&t);
 			wait_flag=0;
-                        WebConfigLog("Periodic Sync Interval %d sec and syncing at %s\n",value,ctime(&t));
-                }
+			WebConfigLog("Periodic Sync Interval %d sec and syncing at %s\n",value,ctime(&t));
+		}
 		else if(g_shutdown)
 		{
-			WebConfigLog("Received signal interupt to RFC disable. g_shutdown is %d, proceeding to kill webconfig thread\n", g_shutdown);
+			WebConfigLog("Received signal interrupt to RFC disable. g_shutdown is %d, proceeding to kill webconfig thread\n", g_shutdown);
 			pthread_mutex_unlock (&periodicsync_mutex);
 			break;
 		}
-			pthread_mutex_unlock(&periodicsync_mutex);
+		pthread_mutex_unlock(&periodicsync_mutex);
 
-     }
+	}
 	if(NotificationThreadId)
 	{
 		ret = pthread_join (NotificationThreadId, NULL);
@@ -238,6 +237,47 @@ static void *WebConfigTask(void *status)
 	pthread_exit(0);
 	WebcfgDebug("After pthread_exit\n");
 	return NULL;
+}
+
+void processWebconfigSync(int index, int status)
+{
+	int retry_count=0;
+	int r_count=0;
+	int configRet = -1;
+	char *webConfigData = NULL;
+	long res_code;
+	int rv=0;
+
+	WebcfgDebug("========= Start of processWebconfigSync =============\n");
+	while(1)
+	{
+		if(retry_count >3)
+		{
+			WebConfigLog("retry_count has reached max limit. Exiting.\n");
+			retry_count=0;
+			break;
+		}
+		configRet = requestWebConfigData(&webConfigData, r_count, index, status, &res_code);
+		if(configRet == 0)
+		{
+			rv = handleHttpResponse(res_code, webConfigData, retry_count, index);
+			if(rv ==1)
+			{
+				WebConfigLog("No retries are required. Exiting..\n");
+				break;
+			}
+		}
+		else
+		{
+			WebConfigLog("Failed to get webConfigData from cloud\n");
+		}
+		WebConfigLog("requestWebConfigData BACKOFF_SLEEP_DELAY_SEC is %d seconds\n", BACKOFF_SLEEP_DELAY_SEC);
+		sleep(BACKOFF_SLEEP_DELAY_SEC);
+		retry_count++;
+		WebConfigLog("Webconfig retry_count is %d\n", retry_count);
+	}
+	WebcfgDebug("========= End of processWebconfigSync =============\n");
+	return;
 }
 
 int handleHttpResponse(long response_code, char *webConfigData, int retry_count, int index)
@@ -875,36 +915,55 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		list = curl_slist_append(list, schema_header);
 		WAL_FREE(schema_header);
 	}
-	bootTime = getParameterValue(DEVICE_BOOT_TIME);
-	if(bootTime !=NULL)
+
+	if(strlen(g_bootTime) ==0)
+	{
+		bootTime = getParameterValue(DEVICE_BOOT_TIME);
+		if(bootTime !=NULL)
+		{
+		       strncpy(g_bootTime, bootTime, sizeof(g_bootTime));
+		       WebcfgDebug("g_bootTime fetched is %s\n", g_bootTime);
+		       WAL_FREE(bootTime);
+		}
+	}
+
+	if(strlen(g_bootTime))
 	{
 		bootTime_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(bootTime_header !=NULL)
 		{
-			snprintf(bootTime_header, MAX_BUF_SIZE, "X-System-Boot-Time: %s", bootTime);
+			snprintf(bootTime_header, MAX_BUF_SIZE, "X-System-Boot-Time: %s", g_bootTime);
 			WebConfigLog("bootTime_header formed %s\n", bootTime_header);
 			list = curl_slist_append(list, bootTime_header);
 			WAL_FREE(bootTime_header);
 		}
-		WAL_FREE(bootTime);
 	}
 	else
 	{
 		WebConfigLog("Failed to get bootTime\n");
 	}
 
-	FwVersion = getParameterValue(FIRMWARE_VERSION);
-	if(FwVersion !=NULL)
+	if(strlen(g_FirmwareVersion) ==0)
+	{
+		FwVersion = getParameterValue(FIRMWARE_VERSION);
+		if(FwVersion !=NULL)
+		{
+		       strncpy(g_FirmwareVersion, FwVersion, sizeof(g_FirmwareVersion));
+		       WebcfgDebug("g_FirmwareVersion fetched is %s\n", g_FirmwareVersion);
+		       WAL_FREE(FwVersion);
+		}
+	}
+
+	if(strlen(g_FirmwareVersion))
 	{
 		FwVersion_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
 		if(FwVersion_header !=NULL)
 		{
-			snprintf(FwVersion_header, MAX_BUF_SIZE, "X-System-Firmware-Version: %s", FwVersion);
+			snprintf(FwVersion_header, MAX_BUF_SIZE, "X-System-Firmware-Version: %s", g_FirmwareVersion);
 			WebConfigLog("FwVersion_header formed %s\n", FwVersion_header);
 			list = curl_slist_append(list, FwVersion_header);
 			WAL_FREE(FwVersion_header);
 		}
-		WAL_FREE(FwVersion);
 	}
 	else
 	{
@@ -1067,13 +1126,16 @@ void getAuthToken()
 
 		if( get_global_deviceMAC() != NULL && strlen(get_global_deviceMAC()) !=0 )
 		{
-			serial_number = getParameterValue(SERIAL_NUMBER);
-                        if(serial_number !=NULL)
-                        {
-			        strncpy(serialNum ,serial_number, sizeof(serialNum));
-			        WebConfigLog("serialNum: %s\n", serialNum);
-			        WAL_FREE(serial_number);
-                        }
+			if(strlen(serialNum) ==0)
+			{
+				serial_number = getParameterValue(SERIAL_NUMBER);
+		                if(serial_number !=NULL)
+		                {
+					strncpy(serialNum ,serial_number, sizeof(serialNum));
+					WebConfigLog("serialNum: %s\n", serialNum);
+					WAL_FREE(serial_number);
+		                }
+			}
 
 			if( serialNum != NULL && strlen(serialNum)>0 )
 			{
