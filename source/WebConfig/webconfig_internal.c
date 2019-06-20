@@ -48,7 +48,7 @@ typedef struct _notify_params
 	long status_code;
 	char * application_status;
 	int application_details;
-	char * previous_sync_time;
+	char * request_timestamp;
 	char * version;
 } notify_params_t;
 /*----------------------------------------------------------------------------*/
@@ -81,7 +81,7 @@ static char* generate_trans_uuid();
 static void macToLowerCase(char macValue[]);
 static void loadInitURLFromFile(char **url);
 void* processWebConfigNotification(void* pValue);
-void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version);
+void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *request_timestamp, char *version);
 void free_notify_params_struct(notify_params_t *param);
 char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW);
 void processWebconfigSync(int index, int status);
@@ -288,7 +288,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	int ret=0, getRet = 0;
 	char *configURL = NULL;
 	char *version = NULL;
-	char *PreviousSyncDateTime=NULL;
+	char *RequestTimeStamp=NULL;
 	char *newDocVersion = NULL;
 
 	if(response_code == 304)
@@ -320,15 +320,15 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 				WebConfigLog("getConfigURL failed\n");
 			}
 
-			ret = setPreviousSyncDateTime(index);
-			WebcfgDebug("setPreviousSyncDateTime ret is %d\n", ret);
+			ret = setRequestTimeStamp(index);
+			WebcfgDebug("setRequestTimeStamp ret is %d\n", ret);
 			if(ret == 0)
 			{
-				WebcfgDebug("PreviousSyncDateTime set successfully for index %d\n", index);
+				WebConfigLog("RequestTimeStamp set successfully for index %d\n", index);
 			}
 			else
 			{
-				WebConfigLog("Failed to set PreviousSyncDateTime for index %d\n", index);
+				WebConfigLog("Failed to set RequestTimeStamp for index %d\n", index);
 			}
 	
 			if(json_status == 1)
@@ -362,19 +362,19 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 					WebConfigLog("Failed to set SyncCheckOK for index %d\n", index);
 				}
 
-				getRet = getPreviousSyncDateTime(index, &PreviousSyncDateTime);
-				WebcfgDebug("getPreviousSyncDateTime getRet is %d\n", getRet);
+				getRet = getRequestTimeStamp(index, &RequestTimeStamp);
+				WebcfgDebug("getRequestTimeStamp getRet is %d\n", getRet);
 				if(getRet)
 				{
-					WebConfigLog("After processJsonDocument: PreviousSyncDateTime is %s for index %d\n", PreviousSyncDateTime, index);
+					WebConfigLog("After processJsonDocument: RequestTimeStamp is %s for index %d\n", RequestTimeStamp, index);
 				}
 				else
 				{
-					WebConfigLog("PreviousSyncDateTime get failed for index %d\n", index);
+					WebConfigLog("RequestTimeStamp get failed for index %d\n", index);
 				}
 
 				WebcfgDebug("B4 Send_Notification_Task success case\n");
-				Send_Notification_Task(configURL, response_code, "success", setRet, PreviousSyncDateTime , newDocVersion);
+				Send_Notification_Task(configURL, response_code, "success", setRet, RequestTimeStamp , newDocVersion);
 				WebcfgDebug("After Send_Notification_Task for success case\n");
 				return 1;
 			}
@@ -395,19 +395,19 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 				if(retry_count == 3)
 				{
 					WebcfgDebug("retry_count is %d\n", retry_count);
-					getRet = getPreviousSyncDateTime(index, &PreviousSyncDateTime);
-					WebcfgDebug("getPreviousSyncDateTime getRet is %d\n", getRet);
+					getRet = getRequestTimeStamp(index, &RequestTimeStamp);
+					WebcfgDebug("getRequestTimeStamp getRet is %d\n", getRet);
 					if(getRet)
 					{
-						WebConfigLog("After processJsonDocument failure: PreviousSyncDateTime is %s for index %d\n", PreviousSyncDateTime, index);
+						WebConfigLog("After processJsonDocument failure: RequestTimeStamp is %s for index %d\n", RequestTimeStamp, index);
 					}
 					else
 					{
-						WebConfigLog("PreviousSyncDateTime get failed for index %d\n", index);
+						WebConfigLog("RequestTimeStamp get failed for index %d\n", index);
 					}
 					WebConfigLog("Configuration settings from %s version %s FAILED\n", configURL, newDocVersion );
 					WebConfigLog("Sending Failure Notification after 3 retry attempts\n");
-					Send_Notification_Task(configURL, response_code, "failed", setRet, PreviousSyncDateTime , newDocVersion);
+					Send_Notification_Task(configURL, response_code, "failed", setRet, RequestTimeStamp , newDocVersion);
 					WebcfgDebug("After Send_Notification_Task failure case\n");
 				}
 			}
@@ -1174,7 +1174,7 @@ void getAuthToken()
 
 
 
-void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *previous_sync_time, char *version)
+void Send_Notification_Task(char *url, long status_code, char *application_status, int application_details, char *request_timestamp, char *version)
 {
 	int err = 0;
 	//pthread_t NotificationThreadId;
@@ -1195,15 +1195,15 @@ void Send_Notification_Task(char *url, long status_code, char *application_statu
 			args->application_status = strdup(application_status);
 		}
 		args->application_details = application_details;
-		if(previous_sync_time != NULL)
+		if(request_timestamp != NULL)
 		{
-			args->previous_sync_time = strdup(previous_sync_time);
+			args->request_timestamp = strdup(request_timestamp);
 		}
 		if(version != NULL)
 		{
 			args->version = strdup(version);
 		}
-		WebcfgDebug("args->url:%s args->status_code:%d args->application_status:%s args->application_details:%d args->previous_sync_time:%s args->version:%s\n", args->url, args->status_code, args->application_status, args->application_details, args->previous_sync_time, args->version );
+		WebcfgDebug("args->url:%s args->status_code:%d args->application_status:%s args->application_details:%d args->request_timestamp:%s args->version:%s\n", args->url, args->status_code, args->application_status, args->application_details, args->request_timestamp, args->version );
 		err = pthread_create(&NotificationThreadId, NULL, processWebConfigNotification, (void *) args);
 		if (err != 0)
 		{
@@ -1252,7 +1252,7 @@ void* processWebConfigNotification(void* pValue)
 			cJSON_AddNumberToObject(one_report,"http_status_code", msg->status_code);
 			cJSON_AddStringToObject(one_report,"document_application_status", (NULL != msg->application_status) ? msg->application_status : "unknown");
 			cJSON_AddNumberToObject(one_report,"document_application_details", msg->application_details);
-			cJSON_AddNumberToObject(one_report, "previous_sync_time", (NULL != msg->previous_sync_time) ? atoi(msg->previous_sync_time) : 0);
+			cJSON_AddNumberToObject(one_report, "request_timestamp", (NULL != msg->request_timestamp) ? atoi(msg->request_timestamp) : 0);
 			cJSON_AddStringToObject(one_report,"version", (NULL != msg->version) ? msg->version : "V1.0-NONE");
 		}
 		stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
@@ -1290,9 +1290,9 @@ void free_notify_params_struct(notify_params_t *param)
         {
             WAL_FREE(param->application_status);
         }
-        if(param->previous_sync_time != NULL)
+        if(param->request_timestamp != NULL)
         {
-            WAL_FREE(param->previous_sync_time);
+            WAL_FREE(param->request_timestamp);
         }
         if(param->version != NULL)
         {

@@ -80,7 +80,7 @@
 +                            <writable>false</writable>
 +                        </parameter>
 +                        <parameter>
-+                            <name>PreviousSyncDateTime</name>
++                            <name>RequestTimeStamp</name>
 +                            <type>string(64)</type>
 +                            <syntax>string</syntax>
 +                            <writable>false</writable>

@@ -32,7 +32,7 @@
 #define CONFIGFILE_PARAM_VERSION            "Version"
 #define CONFIGFILE_PARAM_FORCE_SYNC         "ForceSyncCheck"
 #define CONFIGFILE_PARAM_SYNC_CHECK_OK      "SyncCheckOK"
-#define CONFIGFILE_PARAM_PREV_SYNC_TIME     "PreviousSyncDateTime"
+#define CONFIGFILE_PARAM_REQUEST_TIME_STAMP     "RequestTimeStamp"
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
@@ -260,7 +260,7 @@ int setConfigURL(int index, char *configURL)
         return 0;
 }
 
-BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime)
+BOOL getRequestTimeStamp(int index,char **RequestTimeStamp)
 {
         PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
         PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
@@ -282,7 +282,7 @@ BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime)
                 pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pCxtLink->hContext;
                 if(pConfigFileEntry->InstanceNumber==index)
                 {
-			*PreviousSyncDateTime=strdup(pConfigFileEntry->PreviousSyncDateTime);
+			*RequestTimeStamp=strdup(pConfigFileEntry->RequestTimeStamp);
 			indexFound = 1;
                         break;
                 }
@@ -298,7 +298,7 @@ BOOL getPreviousSyncDateTime(int index,char **PreviousSyncDateTime)
 
 }
 
-int setPreviousSyncDateTime(int index)
+int setRequestTimeStamp(int index)
 {
         PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
         PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
@@ -320,10 +320,10 @@ int setPreviousSyncDateTime(int index)
                 pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pCxtLink->hContext;
                 if(pConfigFileEntry->InstanceNumber==index)
                 {
-       			snprintf(str,sizeof(str),"%ld",(unsigned long)time(NULL));
-       			AnscCopyString(pConfigFileEntry->PreviousSyncDateTime,str);
-			snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_SyncDateTime", pConfigFileEntry->InstanceNumber);
-			CosaDmlStoreValueIntoDb(ParamName, pConfigFileEntry->PreviousSyncDateTime);
+			snprintf(str,sizeof(str),"%ld",(unsigned long)time(NULL));
+			AnscCopyString(pConfigFileEntry->RequestTimeStamp,str);
+			snprintf(ParamName,MAX_BUFF_SIZE, "configfile_%d_RequestTimeStamp", pConfigFileEntry->InstanceNumber);
+			CosaDmlStoreValueIntoDb(ParamName, pConfigFileEntry->RequestTimeStamp);
 			indexFound = 1;
                         break;
                 }
@@ -641,8 +641,8 @@ void updateParamValStructWIthConfigFileDataAtIndex(parameterValStruct_t **paramV
 	paramVal[valIndex] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
 	memset(paramVal[valIndex], 0, sizeof(parameterValStruct_t));
 	paramVal[valIndex]->parameterName = (char *)malloc(sizeof(char)*MAX_PARAMETERNAME_LEN);
-	snprintf(paramVal[valIndex]->parameterName, MAX_PARAMETERNAME_LEN, "%s%d.%s",WEBCONFIG_TABLE_CONFIGFILE, index, CONFIGFILE_PARAM_PREV_SYNC_TIME);
-	ret = getPreviousSyncDateTime(index, &valueStr); 
+	snprintf(paramVal[valIndex]->parameterName, MAX_PARAMETERNAME_LEN, "%s%d.%s",WEBCONFIG_TABLE_CONFIGFILE, index, CONFIGFILE_PARAM_REQUEST_TIME_STAMP);
+	ret = getRequestTimeStamp(index, &valueStr);
 	if(ret)
 	{
 		WebcfgDebug("valueStr: %s\n",valueStr);
@@ -792,9 +792,9 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 									matchFound = 0;
 								}
                             }
-                            else if(strcmp(restDmlString, CONFIGFILE_PARAM_PREV_SYNC_TIME) == 0)
+                            else if(strcmp(restDmlString, CONFIGFILE_PARAM_REQUEST_TIME_STAMP) == 0)
                             {
-                                ret = getPreviousSyncDateTime(index, &valueStr);
+                                ret = getRequestTimeStamp(index, &valueStr);
 								if(ret)
 								{
 									WebcfgDebug("valueStr: %s\n",valueStr);
