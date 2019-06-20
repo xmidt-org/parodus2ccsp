@@ -130,8 +130,6 @@ static void *WebConfigTask(void *status)
 	int forced_sync=0, syncIndex = 0;;
         int value =Get_PeriodicSyncCheckInterval();
 
-	count = getConfigNumberOfEntries();
-	WebConfigLog("count returned from getConfigNumberOfEntries:%d\n", count);
 
 	while(1)
 	{
@@ -147,6 +145,10 @@ static void *WebConfigTask(void *status)
 		else if(!wait_flag)
 		{
 			//iterate through all entries in Device.X_RDK_WebConfig.ConfigFile.[i].URL to check if the current stored version of each configuration document matches the latest version on the cloud.
+
+			count = getConfigNumberOfEntries();
+			WebConfigLog("count returned from getConfigNumberOfEntries:%d\n", count);
+
 			for(i = 0; i < count; i++)
 			{
 				index = getInstanceNumberAtIndex(i);
