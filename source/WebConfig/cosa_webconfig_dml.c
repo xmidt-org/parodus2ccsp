@@ -398,32 +398,31 @@ ConfigFile_GetParamBoolValue
         BOOL*                       pBool
     )
 {
+	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebConfigLog("%s RfcEnable is disabled so, %s GET from DB failed\n",__FUNCTION__,ParamName);
+		return FALSE;
+	}
+	if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
+	{
+		/* all read must return FALSE */
+		*pBool = FALSE;
+		return TRUE;
+	}
 
-    PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
-    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
-    RFC_ENABLE=Get_RfcEnable();
-    if(!RFC_ENABLE)
-    {
-         WebConfigLog("%s RfcEnable is disabled so, %s GET from DB failed\n",__FUNCTION__,ParamName);
-         return FALSE;
-    }
-    if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
-    {
-        /* all read must return FALSE */
-        *pBool = FALSE;
-        return TRUE;
-    }
-    
-    if( AnscEqualString(ParamName, "SyncCheckOK", TRUE))
-    {
-        /* collect value */
-        *pBool = pConfigFileEntry->SyncCheckOK;
-        return TRUE;
-    }
-    WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+	if( AnscEqualString(ParamName, "SyncCheckOK", TRUE))
+	{
+		/* collect value */
+		if(getSyncCheckOKFromWebConfigCtx(hInsContext, pBool))
+		{
+			return TRUE;
+		}
+	}
+	WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
+	/* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
+	return FALSE;
 }
 
 ULONG
@@ -434,67 +433,67 @@ ConfigFile_GetParamStringValue
         char*                       pValue,
         ULONG*                      pUlSize
     )
-
 {
-    PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
-    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    PUCHAR                                    pString       = NULL;
-    WebcfgDebug(" %s : ENTER \n", __FUNCTION__ );
-    RFC_ENABLE=Get_RfcEnable();
-    if(!RFC_ENABLE)
-    {
-        WebConfigLog("%s RfcEnable is disabled so, %s GET from DB failed\n",__FUNCTION__,ParamName);
-        return -1;
-    }
+	WebcfgDebug(" %s : ENTER \n", __FUNCTION__ );
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebConfigLog("%s RfcEnable is disabled so, %s GET from DB failed\n",__FUNCTION__,ParamName);
+		return -1;
+	}
 
-    if( AnscEqualString(ParamName, "URL", TRUE))
-    {
-        /* collect value */
-        if ( AnscSizeOfString(pConfigFileEntry->URL) < *pUlSize)
-        {
-            AnscCopyString(pValue, pConfigFileEntry->URL);
-            return 0;
-        }
-        else
-        {
-            *pUlSize = AnscSizeOfString(pConfigFileEntry->URL)+1;
-            return 1;
-        }
-    }
+	if( AnscEqualString(ParamName, "URL", TRUE))
+	{
+		/* collect value */
+		if(getConfigURLFromWebConfigCtx(hInsContext, pValue))
+		{
+			if (AnscSizeOfString(pValue) < *pUlSize)
+			{
+				return 0;
+			}
+			else
+			{
+				*pUlSize = AnscSizeOfString(pValue)+1;
+				return 1;
+			}
+		}
+	}
 
-    if( AnscEqualString(ParamName, "Version", TRUE))
-    {
-        /* collect value */
-        if ( AnscSizeOfString(pConfigFileEntry->Version) < *pUlSize)
-        {
-            AnscCopyString(pValue, pConfigFileEntry->Version);
-            return 0;
-        }
-        else
-        {
-            *pUlSize = AnscSizeOfString(pConfigFileEntry->Version)+1;
-            return 1;
-        }
-    }
+	if( AnscEqualString(ParamName, "Version", TRUE))
+	{
+		/* collect value */
+		if(getConfigVersionFromWebConfigCtx(hInsContext, pValue))
+		{
+			if (AnscSizeOfString(pValue) < *pUlSize)
+			{
+				return 0;
+			}
+			else
+			{
+				*pUlSize = AnscSizeOfString(pValue)+1;
+				return 1;
+			}
+		}
+	}
 
-    if( AnscEqualString(ParamName, "RequestTimeStamp", TRUE))
-    {
-        /* collect value */
-        if ( AnscSizeOfString(pConfigFileEntry->RequestTimeStamp) < *pUlSize)
-        {
-            AnscCopyString(pValue, pConfigFileEntry->RequestTimeStamp);
-            return 0;
-        }
-        else
-        {
-            *pUlSize = AnscSizeOfString(pConfigFileEntry->RequestTimeStamp)+1;
-            return 1;
-        }
-    }
-
-    WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
-
-    return -1;
+	if( AnscEqualString(ParamName, "RequestTimeStamp", TRUE))
+	{
+		/* collect value */
+		if(getRequestTimeStampFromWebConfigCtx(hInsContext, pValue))
+		{
+			if (AnscSizeOfString(pValue) < *pUlSize)
+			{
+				return 0;
+			}
+			else
+			{
+				*pUlSize = AnscSizeOfString(pValue)+1;
+				return 1;
+			}
+		}
+	}
+	WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
+	return -1;
 }
 
 BOOL
@@ -505,8 +504,6 @@ ConfigFile_SetParamBoolValue
         BOOL                        bValue
     )
 {
-	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
-	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
 	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
 	RFC_ENABLE=Get_RfcEnable();
 	if(!RFC_ENABLE)
@@ -517,15 +514,10 @@ ConfigFile_SetParamBoolValue
 	/* check the parameter name and set the corresponding value */
 	if(AnscEqualString(ParamName, "ForceSyncCheck", TRUE)) 
 	{
-		//trigger sync by sending pthread condition signal
-		pConfigFileEntry->ForceSyncCheck = bValue;
-		if(bValue)
+		if(setForceSyncCheckWithWebConfigCtx(hInsContext, bValue))
 		{
-			pthread_mutex_lock (get_global_periodicsync_mutex());
-			pthread_cond_signal(get_global_periodicsync_condition());
-			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			return TRUE;
 		}
-		return TRUE;
 	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
 	return FALSE;
@@ -538,27 +530,25 @@ ConfigFile_SetParamStringValue
         char*                       ParamName,
         char*                       strValue
     )
-
 {
-	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
-    PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
-    BOOL ret = FALSE;
-    WebcfgDebug(" %s : ENTER \n", __FUNCTION__ );
-    RFC_ENABLE=Get_RfcEnable();
-    if(!RFC_ENABLE)
-    {
-           WebConfigLog("%s RfcEnable is disabled so, %s SET failed\n",__FUNCTION__,ParamName);
-           return FALSE;
-     }
-    if( AnscEqualString(ParamName, "URL", TRUE))
-    {
-	/* save update to backup */
-        AnscCopyString( pConfigFileEntry->URL, strValue );
-        return TRUE;
-    }
-    WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
+	WebcfgDebug(" %s : ENTER \n", __FUNCTION__ );
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebConfigLog("%s RfcEnable is disabled so, %s SET failed\n",__FUNCTION__,ParamName);
+		return FALSE;
+	}
+	if( AnscEqualString(ParamName, "URL", TRUE))
+	{
+		/* save update to backup */
+		if(setConfigURLWithWebConfigCtx(hInsContext, strValue))
+		{
+			return TRUE;
+		}
+	}
+	WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
 
-    return ret;
+	return FALSE;
 }
 
 BOOL isValidUrl
