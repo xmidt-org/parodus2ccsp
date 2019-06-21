@@ -295,7 +295,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	int setRet = 0;
 	int ret=0, getRet = 0;
 	char *configURL = NULL;
-	char *version = NULL;
+	char *configVersion = NULL;
 	char *RequestTimeStamp=NULL;
 	char *newDocVersion = NULL;
 	int err = 0;
@@ -309,6 +309,16 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	else
 	{
 		WebConfigLog("getConfigURL failed for index %d\n", index);
+	}
+
+	getRet = getConfigVersion(index, &configVersion);
+	if(getRet)
+	{
+		WebConfigLog("configVersion for index %d is %s\n", index, configVersion);
+	}
+	else
+	{
+		WebConfigLog("getConfigVersion failed for index %d\n", index);
 	}
 
         ret = setRequestTimeStamp(index);
@@ -335,7 +345,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	{
 		WebConfigLog("webConfig is in sync with cloud. response_code:%d\n", response_code);
 		setSyncCheckOK(index, TRUE);
-		addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , "v1.0-NONE");
+		addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , configVersion);
 		return 1;
 	}
 	else if(response_code == 200)
@@ -412,7 +422,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	else if(response_code == 204)
 	{
 		WebConfigLog("No configuration available for this device. response_code:%d\n", response_code);
-		addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , "v1.0-NONE");
+		addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , configVersion);
 		return 1;
 	}
 	else if(response_code == 403)
@@ -431,7 +441,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	if((response_code !=403) && (first_digit == 4)) //4xx
 	{
 		WebConfigLog("Action not supported. response_code:%d\n", response_code);
-		addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , "v1.0-NONE");
+		addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , configVersion);
 		return 1;
 	}
 	else //5xx & all other errors
@@ -440,7 +450,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 		if(retry_count == 3 && !err)
 		{
 			WebcfgDebug("Sending Notification after 3 retry attempts\n");
-			addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , "v1.0-NONE");
+			addWebConfigNotifyMsg(configURL, response_code, NULL, 0, RequestTimeStamp , configVersion);
 		}
 	}
 }
@@ -898,7 +908,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	if(version_header !=NULL)
 	{
 		getConfigVersion(index, &version);
-		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "V1.0-NONE"));
+		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "NONE"));
 		WebConfigLog("version_header formed %s\n", version_header);
 		list = curl_slist_append(list, version_header);
 		WAL_FREE(version_header);
@@ -1274,7 +1284,7 @@ void* processWebConfigNotification()
 						        cJSON_AddNumberToObject(one_report,"document_application_details", msg->application_details);
                                                 }
 						cJSON_AddNumberToObject(one_report, "request_timestamp", (NULL != msg->request_timestamp) ? atoi(msg->request_timestamp) : 0);
-						cJSON_AddStringToObject(one_report,"version", (NULL != msg->version) ? msg->version : "V1.0-NONE");
+						cJSON_AddStringToObject(one_report,"version", (NULL != msg->version) ? msg->version : "NONE");
 					}
 					stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
 					cJSON_Delete(notifyPayload);
