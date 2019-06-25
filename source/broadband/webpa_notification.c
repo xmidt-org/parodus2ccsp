@@ -1006,6 +1006,7 @@ void processNotification(NotifyData *notifyData)
 	        		}
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
+				OnboardLog("%s\n",dest);
 	        	}
 	        		break;
 
@@ -1045,6 +1046,7 @@ void processNotification(NotifyData *notifyData)
 	        			WalPrint("Framing notifyPayload for Firmware upgrade\n");
 	        			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        			cJSON_AddStringToObject(notifyPayload, "cid", cid);
+					OnboardLog("FIRMWARE_UPGRADE\n");
 	        		}
 	        			break;
 
@@ -1095,6 +1097,7 @@ void processNotification(NotifyData *notifyData)
 	        			free(dest);
 	        			return;
 	        		}
+				OnboardLog("%s/%s\n",dest,notifyData->u.status->transId);
 	        	}
 	        		break;
 
@@ -1105,6 +1108,7 @@ void processNotification(NotifyData *notifyData)
                                 {
                                         reason = (char *)malloc(sizeof(char)*MAX_REASON_LENGTH);
 				        mapComponentStatusToGetReason(notifyData->u.device->status, reason);
+				                        OnboardLog("%\n",reason);
                                         snprintf(dest, WEBPA_NOTIFY_EVENT_MAX_LENGTH, "event:device-status/%s/non-operational/%s/%s", device_id,(NULL != strBootTime)?strBootTime:"unknown",reason);
                                         cJSON_AddStringToObject(notifyPayload, "status", "non-operational");
                                         cJSON_AddStringToObject(notifyPayload, "reason", reason);
@@ -1121,6 +1125,7 @@ void processNotification(NotifyData *notifyData)
 				{
 					WAL_FREE(strBootTime);
 				}
+				OnboardLog("%s\n",dest);
 			}
 	        		break;
 
@@ -1275,6 +1280,7 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 					else
 					{
 						WalError("Error setting CMC value for factory reset\n");
+						OnboardLog("Error setting CMC value for factory reset\n");
 					}
 				}
 				else
@@ -1352,6 +1358,7 @@ static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, 
 		{
 			WAL_FREE(dbCID);
 			WalError("Error setting CMC value for firmware upgrade\n");
+			OnboardLog("Error setting CMC value for firmware upgrade\n");
 		}
 	}
 	else
