@@ -33,7 +33,7 @@
 #define WEBPA_READ_HEADER             "/etc/parodus/parodus_read_file.sh"
 #define WEBPA_CREATE_HEADER           "/etc/parodus/parodus_create_file.sh"
 #define BACKOFF_SLEEP_DELAY_SEC 	    10
-
+#define ETAG_HEADER 		    "ETag:"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -60,6 +60,7 @@ static char serialNum[64]={'\0'};
 static char g_FirmwareVersion[64]={'\0'};
 static char g_bootTime[64]={'\0'};
 char webpa_auth_token[4096]={'\0'};
+static char g_ETAG[64]={'\0'};
 pthread_mutex_t periodicsync_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t periodicsync_condition=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t notify_mut=PTHREAD_MUTEX_INITIALIZER;
@@ -89,6 +90,8 @@ void free_notify_params_struct(notify_params_t *param);
 char *replaceMacWord(const char *s, const char *macW, const char *deviceMACW);
 void processWebconfigSync(int index, int status);
 static void initWebConfigNotifyTask();
+size_t header_callback(char *buffer, size_t size, size_t nitems);
+void stripSpaces(char *str, char **final_str);
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -542,6 +545,9 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers_list);
 
+		WebcfgDebug("Set CURLOPT_HEADERFUNCTION option\n");
+		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
+
 		// setting curl resolve option as default mode.
 		//If any failure, retry with v4 first and then v6 mode. 
 		if(r_count == 1)
@@ -647,6 +653,62 @@ size_t write_callback_fn(void *buffer, size_t size, size_t nmemb, struct token_d
     return size * nmemb;
 }
 
+/* @brief callback function to extract response header data.
+*/
+size_t header_callback(char *buffer, size_t size, size_t nitems)
+{
+	size_t etag_len = 0;
+	char* header_value = NULL;
+	char* final_header = NULL;
+	char header_str[64] = {'\0'};
+	int i=0, j=0;
+
+	etag_len = strlen(ETAG_HEADER);
+	if( nitems > etag_len )
+	{
+		if( strncasecmp(ETAG_HEADER, buffer, etag_len) == 0 )
+		{
+			header_value = strtok(buffer, ":");
+			while( header_value != NULL )
+			{
+				header_value = strtok(NULL, ":");
+				if(header_value !=NULL)
+				{
+					strncpy(header_str, header_value, sizeof(header_str));
+					WebcfgDebug("header_str is %s\n", header_str);
+					stripSpaces(header_str, &final_header);
+
+					WebcfgDebug("final_header is %s len %lu\n", final_header, strlen(final_header));
+					strncpy(g_ETAG, final_header, sizeof(g_ETAG));
+				}
+			}
+		}
+	}
+	return nitems;
+}
+
+//To strip all spaces , new line & carriage return characters from header output
+void stripSpaces(char *str, char **final_str)
+{
+	int i=0, j=0;
+
+	for(i=0;str[i]!='\0';++i)
+	{
+		if(str[i]!=' ')
+		{
+			if(str[i]!='\n')
+			{
+				if(str[i]!='\r')
+				{
+					str[j++]=str[i];
+				}
+			}
+		}
+	}
+	str[j]='\0';
+	*final_str = str;
+}
+
 int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 {
 	cJSON *paramArray = NULL;
@@ -724,7 +786,7 @@ int parseJsonData(char* jsonData, req_struct **req_obj, char **version)
 	int paramCount=0;
 	WDMP_STATUS ret = WDMP_FAILURE, valid_ret = WDMP_FAILURE;
 	int itemSize=0;
-	char *ETAG= NULL;
+	char *configVersion= NULL;
 
 	if((jsonData !=NULL) && (strlen(jsonData)>0))
 	{
@@ -738,15 +800,15 @@ int parseJsonData(char* jsonData, req_struct **req_obj, char **version)
 		}
 		else
 		{
-			isValid = validateConfigFormat(json, &ETAG); //check eTAG value here :TODO
-			WebConfigLog("ETAG is %s\n", ETAG);
-			if(ETAG !=NULL)
+			isValid = validateConfigFormat(json, &configVersion);
+			WebConfigLog("configVersion is %s\n", configVersion);
+			if(configVersion !=NULL)
 			{
-				*version = strdup(ETAG);
-				WebcfgDebug("version copied from ETAG is %s\n", *version);
-				WAL_FREE(ETAG);
+				*version = strdup(configVersion);
+				WebcfgDebug("version copied from configVersion is %s\n", *version);
+				WAL_FREE(configVersion);
 			}
-			if(!isValid)// testing purpose. make it to !isValid
+			if(!isValid)
 			{
 				WebConfigLog("validateConfigFormat failed\n");
 				return rv;
@@ -778,48 +840,59 @@ int validateConfigFormat(cJSON *json, char **eTag)
 	cJSON *versionObj =NULL;
 	cJSON *paramArray = NULL;
 	int itemSize=0;
-	char *version=NULL;
+	char *jsonversion=NULL;
 
 	versionObj = cJSON_GetObjectItem( json, "version" );
 	if(versionObj !=NULL)
 	{
 		if(cJSON_GetObjectItem( json, "version" )->type == cJSON_String)
 		{
-			version = cJSON_GetObjectItem( json, "version" )->valuestring;
-			if(version !=NULL)
+			jsonversion = cJSON_GetObjectItem( json, "version" )->valuestring;
+			if(jsonversion !=NULL)
 			{
-				//version & eTag header validation is not done for phase 1 (Assuming both are matching)
-				//if(strcmp(version, eTag) == 0) 
-				//{
-				WebcfgDebug("Copying version to eTag value\n"); //free eTag
-					*eTag = strdup(version);
-					WebcfgDebug("eTag is %s\n", *eTag);
-					//check parameters
-					paramArray = cJSON_GetObjectItem( json, "parameters" );
-					if( paramArray != NULL )
+				//version & eTag header validation
+				WebcfgDebug("g_ETAG is %s len:%lu\n", g_ETAG, strlen(g_ETAG));
+				if( g_ETAG !=NULL )
+				{
+					WebcfgDebug("jsonversion :%s len %lu\n", jsonversion, strlen(jsonversion));
+					if(strncmp(jsonversion, g_ETAG, strlen(g_ETAG)) == 0)
 					{
-						itemSize = cJSON_GetArraySize( json );
-						if(itemSize ==2)
+						WebConfigLog("Config Version and ETAG header are matching\n");
+						*eTag = strdup(jsonversion);
+						WebConfigLog("eTag is %s\n", *eTag);
+						//check parameters
+						paramArray = cJSON_GetObjectItem( json, "parameters" );
+						if( paramArray != NULL )
 						{
-							return 1;
+							itemSize = cJSON_GetArraySize( json );
+							if(itemSize ==2)
+							{
+								WebConfigLog("Config document format is valid\n");
+								return 1;
+							}
+							else
+							{
+								WebConfigLog("config contains fields other than version and parameters\n");
+								return 0;
+							}
 						}
 						else
 						{
-							WebConfigLog("config contains fields other than version and parameters\n");
+							WebConfigLog("Invalid config json, parameters field is not present\n");
 							return 0;
 						}
 					}
 					else
 					{
-						WebConfigLog("Invalid config json, parameters field is not present\n");
+						WebConfigLog("Invalid config json, version & ETAG are not same\n");
 						return 0;
 					}
-				//}
-				//else
-				//{
-				//	WebConfigLog("Invalid config json, version and ETAG are not same\n");
-				//	return 0;
-				//}
+				}
+				else
+				{
+					WebConfigLog("Failed to fetch ETAG header from config response\n");
+					return 0;
+				}
 			}
 		}
 	}
