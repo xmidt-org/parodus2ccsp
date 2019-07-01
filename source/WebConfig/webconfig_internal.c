@@ -360,7 +360,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 			WebcfgDebug("webConfigData fetched successfully\n");
 			json_status = processJsonDocument(webConfigData, &setRet, &newDocVersion);
 			WebConfigLog("setRet after process Json is %d\n", setRet);
-			WebConfigLog("newDocVersion is %s\n", newDocVersion);
+			WebcfgDebug("newDocVersion is %s\n", newDocVersion);
 
 			if(json_status == 1)
 			{
@@ -722,7 +722,7 @@ int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 	char *version = NULL;
 
 	parseStatus = parseJsonData(jsonData, &reqObj, &version);
-	WebConfigLog("After parseJsonData version is %s\n", version);
+	WebcfgDebug("After parseJsonData version is %s\n", version);
 	if(version!=NULL)
 	{
 		*docVersion = strdup(version);
@@ -732,13 +732,13 @@ int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 	if(parseStatus ==1)
 	{
 		WebcfgDebug("Request:> Type : %d\n",reqObj->reqType);
-		WebConfigLog("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
+		WebcfgDebug("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
 		paramCount = (int)reqObj->u.setReq->paramCnt;
 		for (i = 0; i < paramCount; i++) 
 		{
-		        WebConfigLog("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
-		        WebConfigLog("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
-		        WebConfigLog("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
+		        WebcfgDebug("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
+		        WebcfgDebug("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
+		        WebcfgDebug("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
 		}
 
 		valid_ret = validate_parameter(reqObj->u.setReq->param, paramCount, reqObj->reqType);
@@ -981,7 +981,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 	if(version_header !=NULL)
 	{
 		getConfigVersion(index, &version);
-		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version) ? version : "NONE"));
+		snprintf(version_header, MAX_BUF_SIZE, "IF-NONE-MATCH:%s", ((NULL != version && (strlen(version)!=0)) ? version : "NONE"));
 		WebConfigLog("version_header formed %s\n", version_header);
 		list = curl_slist_append(list, version_header);
 		WAL_FREE(version_header);
@@ -1357,7 +1357,7 @@ void* processWebConfigNotification()
 						        cJSON_AddNumberToObject(one_report,"document_application_details", msg->application_details);
                                                 }
 						cJSON_AddNumberToObject(one_report, "request_timestamp", (NULL != msg->request_timestamp) ? atoi(msg->request_timestamp) : 0);
-						cJSON_AddStringToObject(one_report,"version", (NULL != msg->version) ? msg->version : "NONE");
+						cJSON_AddStringToObject(one_report,"version", (NULL != msg->version && (strlen(msg->version)!=0)) ? msg->version : "NONE");
 					}
 					stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
 					cJSON_Delete(notifyPayload);
