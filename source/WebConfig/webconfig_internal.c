@@ -181,9 +181,20 @@ static void *WebConfigTask(void *status)
 			pthread_mutex_unlock (&periodicsync_mutex);
 			break;
 		}
-
-		rv = pthread_cond_timedwait(&periodicsync_condition, &periodicsync_mutex, &ts);
 		value=Get_PeriodicSyncCheckInterval();
+		WebConfigLog("PeriodicSyncCheckInterval value is %d\n",value);
+		if(value == 0)
+		{
+			WebcfgDebug("B4 periodicsync_condition pthread_cond_wait\n");
+			pthread_cond_wait(&periodicsync_condition, &periodicsync_mutex);
+			rv =0;
+		}
+		else
+		{
+			WebcfgDebug("B4 periodicsync_condition pthread_cond_timedwait\n");
+			rv = pthread_cond_timedwait(&periodicsync_condition, &periodicsync_mutex, &ts);
+		}
+
 		if(!rv && !g_shutdown)
 		{
 			time(&t);
@@ -214,6 +225,7 @@ static void *WebConfigTask(void *status)
 			if(!forced_sync)
 			{
 				wait_flag=1;
+				value=Get_PeriodicSyncCheckInterval();
 				WebConfigLog("Received signal interrupt to change the sync interval to %d\n",value);
 			}
 		}
