@@ -104,6 +104,7 @@ const char * notifyparameters[]={
 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
 "Device.MoCA.Interface.1.Enable",
+"Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
 /* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"
