@@ -1025,7 +1025,7 @@ void processNotification(NotifyData *notifyData)
 	        		WalPrint("Framing notifyPayload for Factory reset\n");
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
-					cJSON_AddStringToObject(notifyPayload, "reboot_reason", reboot_reason);
+				cJSON_AddStringToObject(notifyPayload, "reboot_reason", (NULL != reboot_reason) ? reboot_reason : "NULL");
 	        	}
 	        		break;
 
