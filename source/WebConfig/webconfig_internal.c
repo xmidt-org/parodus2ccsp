@@ -743,14 +743,14 @@ int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 	}
 	if(parseStatus ==1)
 	{
-		WebcfgDebug("Request:> Type : %d\n",reqObj->reqType);
-		WebcfgDebug("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
+		WebConfigLog("Request:> Type : %d\n",reqObj->reqType);
+		WebConfigLog("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
 		paramCount = (int)reqObj->u.setReq->paramCnt;
 		for (i = 0; i < paramCount; i++) 
 		{
-		        WebcfgDebug("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
-		        WebcfgDebug("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
-		        WebcfgDebug("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
+		        WebConfigLog("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
+		        WebConfigLog("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
+		        WebConfigLog("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
 		}
 
 		valid_ret = validate_parameter(reqObj->u.setReq->param, paramCount, reqObj->reqType);
