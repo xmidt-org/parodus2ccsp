@@ -405,12 +405,6 @@ ConfigFile_GetParamBoolValue
 		WebConfigLog("%s RfcEnable is disabled so, %s GET from DB failed\n",__FUNCTION__,ParamName);
 		return FALSE;
 	}
-	if( AnscEqualString(ParamName, "ForceSyncCheck", TRUE))
-	{
-		/* all read must return FALSE */
-		*pBool = FALSE;
-		return TRUE;
-	}
 
 	if( AnscEqualString(ParamName, "SyncCheckOK", TRUE))
 	{
@@ -446,6 +440,23 @@ ConfigFile_GetParamStringValue
 	{
 		/* collect value */
 		if(getConfigURLFromWebConfigCtx(hInsContext, pValue))
+		{
+			if (AnscSizeOfString(pValue) < *pUlSize)
+			{
+				return 0;
+			}
+			else
+			{
+				*pUlSize = AnscSizeOfString(pValue)+1;
+				return 1;
+			}
+		}
+	}
+
+	if( AnscEqualString(ParamName, "ForceSync", TRUE))
+	{
+		/* collect value */
+		if(getForceSyncFromWebConfigCtx(hInsContext, pValue))
 		{
 			if (AnscSizeOfString(pValue) < *pUlSize)
 			{
@@ -512,13 +523,6 @@ ConfigFile_SetParamBoolValue
 		return FALSE;
 	}
 	/* check the parameter name and set the corresponding value */
-	if(AnscEqualString(ParamName, "ForceSyncCheck", TRUE)) 
-	{
-		if(setForceSyncCheckWithWebConfigCtx(hInsContext, bValue))
-		{
-			return TRUE;
-		}
-	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
 	return FALSE;
 }
@@ -542,6 +546,14 @@ ConfigFile_SetParamStringValue
 	{
 		/* save update to backup */
 		if(setConfigURLWithWebConfigCtx(hInsContext, strValue))
+		{
+			return TRUE;
+		}
+	}
+	if( AnscEqualString(ParamName, "ForceSync", TRUE))
+	{
+		/* save update to backup */
+		if(setForceSyncWithWebConfigCtx(hInsContext, strValue))
 		{
 			return TRUE;
 		}

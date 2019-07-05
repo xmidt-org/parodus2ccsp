@@ -136,7 +136,7 @@ CosaWebConfigCreate
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].InstanceNumber = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].InstanceNumber);
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].URL = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].URL);
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
-				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
+				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSync = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSync);
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
 				WebConfigLog("pMyObject->pConfigFileContainer->pConfigFileTable[%d].RequestTimeStamp = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].RequestTimeStamp);
 			}
@@ -236,7 +236,7 @@ CosaWebConfigInitialize
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].InstanceNumber = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].InstanceNumber);
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].URL = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].URL);
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].Version = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].Version);
-			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSyncCheck = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck);
+			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].ForceSync = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].ForceSync);
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].SyncCheckOK = %d\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].SyncCheckOK);
 			    WebcfgDebug("pMyObject->pConfigFileContainer->pConfigFileTable[%d].RequestTimeStamp = %s\n",i,pMyObject->pConfigFileContainer->pConfigFileTable[i].RequestTimeStamp);
 		    }
@@ -361,8 +361,10 @@ CosaDmlGetConfigFile(
                 AnscCopyString(pConfigFileContainer->pConfigFileTable[i].URL, pConfigFileEntry->URL);
                 WebcfgDebug("pConfigFileEntry->Version: %s\n",pConfigFileEntry->Version);
                 AnscCopyString(pConfigFileContainer->pConfigFileTable[i].Version, pConfigFileEntry->Version);
-                WebcfgDebug("pConfigFileEntry->ForceSyncCheck: %d\n",pConfigFileEntry->ForceSyncCheck);
-                pConfigFileContainer->pConfigFileTable[i].ForceSyncCheck = pConfigFileEntry->ForceSyncCheck;
+
+                WebcfgDebug("pConfigFileEntry->ForceSync: %s\n",pConfigFileEntry->ForceSync);
+		AnscCopyString(pConfigFileContainer->pConfigFileTable[i].ForceSync, pConfigFileEntry->ForceSync);
+
                 WebcfgDebug("pConfigFileEntry->SyncCheckOK: %d\n",pConfigFileEntry->SyncCheckOK);
                 pConfigFileContainer->pConfigFileTable[i].SyncCheckOK = pConfigFileEntry->SyncCheckOK;
                 WebcfgDebug("pConfigFileEntry->RequestTimeStamp: %s\n",pConfigFileEntry->RequestTimeStamp);
@@ -375,7 +377,7 @@ CosaDmlGetConfigFile(
     WebcfgDebug("######### ConfigFile data : %d ########\n",configFileCount);
     for(j=0; j<configFileCount; j++)
     {
-        WebcfgDebug("%d: %s %s %d %d %s\n",pConfigFileContainer->pConfigFileTable[j].InstanceNumber, pConfigFileContainer->pConfigFileTable[j].URL, pConfigFileContainer->pConfigFileTable[j].Version, pConfigFileContainer->pConfigFileTable[j].ForceSyncCheck, pConfigFileContainer->pConfigFileTable[j].SyncCheckOK, pConfigFileContainer->pConfigFileTable[j].RequestTimeStamp);
+        WebcfgDebug("%d: %s %s %s %d %s\n",pConfigFileContainer->pConfigFileTable[j].InstanceNumber, pConfigFileContainer->pConfigFileTable[j].URL, pConfigFileContainer->pConfigFileTable[j].Version, pConfigFileContainer->pConfigFileTable[j].ForceSync, pConfigFileContainer->pConfigFileTable[j].SyncCheckOK, pConfigFileContainer->pConfigFileTable[j].RequestTimeStamp);
     }
     WebcfgDebug("######### ConfigFile data ########\n");
     WebcfgDebug("------- %s -----EXIT----\n",__FUNCTION__);
