@@ -53,7 +53,7 @@ _COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
     ULONG                           InstanceNumber;
     char                            URL[256];
     char                            Version[64];
-    BOOLEAN                         ForceSyncCheck;
+    char                            ForceSync[64];
     BOOLEAN                         SyncCheckOK;
     char                            RequestTimeStamp[64];
 }
