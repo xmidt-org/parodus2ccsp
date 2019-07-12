@@ -124,6 +124,11 @@ X_RDK_WebConfig_GetParamIntValue
 		*pInt = Get_PeriodicSyncCheckInterval();
 		return TRUE;
 	}
+	if( AnscEqualString(ParamName, "SyncNotificationInterval", TRUE))
+	{
+		*pInt = Get_SyncNotificationInterval();
+		return TRUE;
+	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
 	/* CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
 	return FALSE;
@@ -148,6 +153,13 @@ X_RDK_WebConfig_SetParamIntValue
 	if( AnscEqualString(ParamName, "PeriodicSyncCheckInterval", TRUE))
 	{
 		if(setPeriodicSyncCheckInterval(iValue) == 0)
+		{
+			return TRUE;
+		}
+	}
+	if( AnscEqualString(ParamName, "SyncNotificationInterval", TRUE))
+	{
+		if(setSyncNotificationInterval(iValue) == 0)
 		{
 			return TRUE;
 		}

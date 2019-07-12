@@ -79,6 +79,8 @@ int setRfcEnable(BOOL bValue);
 int getConfigNumberOfEntries();
 int Get_PeriodicSyncCheckInterval();
 int setPeriodicSyncCheckInterval(int iValue);
+int Get_SyncNotificationInterval();
+int setSyncNotificationInterval(int iValue);
 BOOL getConfigURL(int index,char **configURL);
 int setConfigURL(int index, char *configURL);
 BOOL getRequestTimeStamp(int index,char **RequestTimeStamp);

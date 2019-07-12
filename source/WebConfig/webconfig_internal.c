@@ -68,6 +68,7 @@ pthread_mutex_t notify_mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t notify_con=PTHREAD_COND_INITIALIZER;
 static pthread_t NotificationThreadId=0;
 notify_params_t *notifyMsg = NULL;
+static int one_time_notify = 0;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
@@ -105,6 +106,16 @@ pthread_cond_t *get_global_periodicsync_condition(void)
 pthread_mutex_t *get_global_periodicsync_mutex(void)
 {
     return &periodicsync_mutex;
+}
+
+pthread_cond_t *get_global_notify_con(void)
+{
+    return &notify_con;
+}
+
+pthread_mutex_t *get_global_notify_mut(void)
+{
+    return &notify_mut;
 }
 
 void initWebConfigTask(int status)
@@ -1355,6 +1366,7 @@ void addWebConfigNotifyMsg(char *url, long status_code, char *application_status
 		notifyMsg = args;
 
                 WebcfgDebug("Before notify pthread cond signal\n");
+		one_time_notify = 1;
 		pthread_cond_signal(&notify_con);
                 WebcfgDebug("After notify pthread cond signal\n");
 		pthread_mutex_unlock (&notify_mut);
@@ -1372,77 +1384,120 @@ void* processWebConfigNotification()
 	char dest[512] = {'\0'};
 	char *source = NULL;
 	cJSON * reports, *one_report;
+	int wait_flag=1;
+	struct timeval tp;
+        struct timespec ts;
+        time_t t;
+	int rv =0;
 
+	int value =Get_SyncNotificationInterval();
 	while(1)
 	{
                 WebcfgDebug("processWebConfigNotification Inside while\n");
 		pthread_mutex_lock (&notify_mut);
 		WebcfgDebug("processWebConfigNotification mutex lock\n");
-		msg = notifyMsg;
-		if(msg !=NULL)
+
+		if(!wait_flag)
 		{
-                        WebcfgDebug("Processing msg\n");
-			if(strlen(get_global_deviceMAC()) == 0)
+			msg = notifyMsg;
+			one_time_notify = 0;
+
+			if(msg !=NULL)
 			{
-				WebConfigLog("deviceMAC is NULL, failed to send Webconfig Notification\n");
+		                WebcfgDebug("Processing msg\n");
+				if(strlen(get_global_deviceMAC()) == 0)
+				{
+					WebConfigLog("deviceMAC is NULL, failed to send Webconfig Notification\n");
+				}
+				else
+				{
+					snprintf(device_id, sizeof(device_id), "mac:%s", get_global_deviceMAC());
+					WebConfigLog("webconfig Device_id %s\n", device_id);
+
+					notifyPayload = cJSON_CreateObject();
+
+					if(notifyPayload != NULL)
+					{
+						cJSON_AddStringToObject(notifyPayload,"device_id", device_id);
+
+						if(msg)
+						{
+							cJSON_AddItemToObject(notifyPayload, "reports", reports = cJSON_CreateArray());
+							cJSON_AddItemToArray(reports, one_report = cJSON_CreateObject());
+							cJSON_AddStringToObject(one_report, "url", (NULL != msg->url) ? msg->url : "unknown");
+							cJSON_AddNumberToObject(one_report,"http_status_code", msg->status_code);
+		                                        if(msg->status_code == 200)
+		                                        {
+								cJSON_AddStringToObject(one_report,"document_application_status", (NULL != msg->application_status) ? msg->application_status : "unknown");
+								cJSON_AddNumberToObject(one_report,"document_application_details", msg->application_details);
+		                                        }
+							cJSON_AddNumberToObject(one_report, "request_timestamp", (NULL != msg->request_timestamp) ? atoi(msg->request_timestamp) : 0);
+							cJSON_AddStringToObject(one_report,"version", (NULL != msg->version && (strlen(msg->version)!=0)) ? msg->version : "NONE");
+							cJSON_AddStringToObject(one_report,"transaction_uuid", (NULL != msg->transaction_uuid && (strlen(msg->transaction_uuid)!=0)) ? msg->transaction_uuid : "unknown");
+						}
+						stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
+						cJSON_Delete(notifyPayload);
+					}
+
+					snprintf(dest,sizeof(dest),"event:config-version-report/%s",device_id);
+					WebConfigLog("dest is %s\n", dest);
+
+					if (stringifiedNotifyPayload != NULL && strlen(device_id) != 0)
+					{
+						source = (char*) malloc(sizeof(char) * sizeof(device_id));
+						strncpy(source, device_id, sizeof(device_id));
+						WebConfigLog("source is %s\n", source);
+						WebConfigLog("stringifiedNotifyPayload is %s\n", stringifiedNotifyPayload);
+						sendNotification(stringifiedNotifyPayload, source, dest);
+					}
+				}
 			}
 			else
 			{
-				snprintf(device_id, sizeof(device_id), "mac:%s", get_global_deviceMAC());
-				WebConfigLog("webconfig Device_id %s\n", device_id);
-
-				notifyPayload = cJSON_CreateObject();
-
-				if(notifyPayload != NULL)
-				{
-					cJSON_AddStringToObject(notifyPayload,"device_id", device_id);
-
-					if(msg)
-					{
-						cJSON_AddItemToObject(notifyPayload, "reports", reports = cJSON_CreateArray());
-						cJSON_AddItemToArray(reports, one_report = cJSON_CreateObject());
-						cJSON_AddStringToObject(one_report, "url", (NULL != msg->url) ? msg->url : "unknown");
-						cJSON_AddNumberToObject(one_report,"http_status_code", msg->status_code);
-                                                if(msg->status_code == 200)
-                                                {
-						        cJSON_AddStringToObject(one_report,"document_application_status", (NULL != msg->application_status) ? msg->application_status : "unknown");
-						        cJSON_AddNumberToObject(one_report,"document_application_details", msg->application_details);
-                                                }
-						cJSON_AddNumberToObject(one_report, "request_timestamp", (NULL != msg->request_timestamp) ? atoi(msg->request_timestamp) : 0);
-						cJSON_AddStringToObject(one_report,"version", (NULL != msg->version && (strlen(msg->version)!=0)) ? msg->version : "NONE");
-						cJSON_AddStringToObject(one_report,"transaction_uuid", (NULL != msg->transaction_uuid && (strlen(msg->transaction_uuid)!=0)) ? msg->transaction_uuid : "unknown");
-					}
-					stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
-					cJSON_Delete(notifyPayload);
-				}
-
-				snprintf(dest,sizeof(dest),"event:config-version-report/%s",device_id);
-				WebConfigLog("dest is %s\n", dest);
-
-				if (stringifiedNotifyPayload != NULL && strlen(device_id) != 0)
-				{
-					source = (char*) malloc(sizeof(char) * sizeof(device_id));
-					strncpy(source, device_id, sizeof(device_id));
-					WebConfigLog("source is %s\n", source);
-					WebConfigLog("stringifiedNotifyPayload is %s\n", stringifiedNotifyPayload);
-					sendNotification(stringifiedNotifyPayload, source, dest);
-				}
-				if(msg != NULL)
-				{
-					free_notify_params_struct(msg);
-					notifyMsg = NULL;
-				}
+				WebConfigLog("Webconfig notifyMsg is NULL, failed to send notification\n");
 			}
-			pthread_mutex_unlock (&notify_mut);
-			WebcfgDebug("processWebConfigNotification mutex unlock\n");
+		}
+		gettimeofday(&tp, NULL);
+		ts.tv_sec = tp.tv_sec;
+		ts.tv_nsec = tp.tv_usec * 1000;
+		ts.tv_sec += value;
+
+		value=Get_SyncNotificationInterval();
+		WebConfigLog("SyncNotificationInterval value is %d\n",value);
+		if(value == 0)
+		{
+			WebcfgDebug("B4 notify_con pthread_cond_wait\n");
+			pthread_cond_wait(&notify_con, &notify_mut);
+			rv =0;
 		}
 		else
 		{
-			WebcfgDebug("Before pthread cond wait in notify thread\n");
-			pthread_cond_wait(&notify_con, &notify_mut);
-			pthread_mutex_unlock (&notify_mut);
-			WebcfgDebug("mutex unlock in notify thread after cond wait\n");
+			WebcfgDebug("B4 notify_con pthread_cond_timedwait\n");
+			rv = pthread_cond_timedwait(&notify_con, &notify_mut, &ts);
 		}
+
+		if(!rv)
+		{
+			wait_flag=0;
+			time(&t);
+			WebConfigLog("Received signal interrupt for notify at %s\n",ctime(&t));
+			WebConfigLog("one_time_notify is %d\n", one_time_notify);
+			if(!one_time_notify)
+			{
+				wait_flag=1;
+				value=Get_SyncNotificationInterval();
+				WebConfigLog("Received signal interrupt to change the periodic sync notify interval to %d\n",value);
+			}
+
+		}
+		else if (rv == ETIMEDOUT)
+		{
+			time(&t);
+			wait_flag=0;
+			WebConfigLog("Sync Notify Interval %d sec and sending at %s\n",value,ctime(&t));
+		}
+		WebcfgDebug("B4 processWebConfigNotification pthread_mutex_unlock\n");
+		pthread_mutex_unlock(&notify_mut);
 	}
 	return NULL;
 }

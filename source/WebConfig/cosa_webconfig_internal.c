@@ -27,6 +27,7 @@
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_CONFIGFILE_ENTRIES  "Device.X_RDK_WebConfig.ConfigFileNumberOfEntries"
 #define WEBCONFIG_PARAM_PERIODIC_INTERVAL   "Device.X_RDK_WebConfig.PeriodicSyncCheckInterval"
+#define WEBCONFIG_PARAM_SYNCNOTIFY_INTERVAL "Device.X_RDK_WebConfig.SyncNotificationInterval"
 #define WEBCONFIG_TABLE_CONFIGFILE          "Device.X_RDK_WebConfig.ConfigFile."
 #define CONFIGFILE_PARAM_URL                "URL"
 #define CONFIGFILE_PARAM_VERSION            "Version"
@@ -132,6 +133,43 @@ int setPeriodicSyncCheckInterval(int iValue)
 			pthread_mutex_lock (get_global_periodicsync_mutex());
 			pthread_cond_signal(get_global_periodicsync_condition());
 			pthread_mutex_unlock(get_global_periodicsync_mutex());
+		}
+	}
+#endif
+	return 0;
+}
+
+int Get_SyncNotificationInterval()
+{
+	PCOSA_DATAMODEL_WEBCONFIG pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	return pMyObject->SyncNotificationInterval;
+}
+
+int setSyncNotificationInterval(int iValue)
+{
+	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	char buf[16] = {0};
+	sprintf(buf, "%d", iValue);
+#ifdef RDKB_BUILD
+	if(syscfg_set( NULL, "SyncNotificationInterval", buf) != 0)
+	{
+		WebConfigLog("syscfg_set failed\n");
+		return 1;
+	}
+	else
+	{
+		if (syscfg_commit() != 0)
+		{
+			WebConfigLog("syscfg_commit failed\n");
+			return 1;
+		}
+		else
+		{
+			pMyObject->SyncNotificationInterval = iValue;
+			/* sending signal to WebConfigNotifyTask to update the sync notify time interval*/
+			pthread_mutex_lock (get_global_notify_mut());
+			pthread_cond_signal(get_global_notify_con());
+			pthread_mutex_unlock(get_global_notify_mut());
 		}
 	}
 #endif
@@ -943,6 +981,16 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->type = ccsp_int;
                                 k++;
                             }
+			    else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_SYNCNOTIFY_INTERVAL) == 0) && (RFC_ENABLE == true))
+                            {
+								int interval = Get_SyncNotificationInterval();
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SYNCNOTIFY_INTERVAL, MAX_PARAMETERNAME_LEN);
+                                WebcfgDebug("SyncNotificationInterval is %d\n",interval);
+                                paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",interval);
+                                paramVal[k]->type = ccsp_int;
+                                k++;
+                            }
                             else
                             {
                                 WAL_FREE(paramVal[k]);
@@ -989,6 +1037,15 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 WebcfgDebug("PeriodicSyncCheckInterval is %d\n",interval);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
                                 snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",interval);
+                                paramVal[k]->type = ccsp_int;
+                                k++;
+				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SYNCNOTIFY_INTERVAL, MAX_PARAMETERNAME_LEN);
+				int syncNotifyinterval = Get_SyncNotificationInterval();
+                                WebcfgDebug("SyncNotificationInterval is %d\n",syncNotifyinterval);
+                                paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
+                                snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",syncNotifyinterval);
                                 paramVal[k]->type = ccsp_int;
                                 k++;
                                 int n = 0, index = 0;
@@ -1085,6 +1142,19 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				else
 				{
 					setPeriodicSyncCheckInterval(0);
+				}
+			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_SYNCNOTIFY_INTERVAL) == 0) && (RFC_ENABLE == true))
+			{
+				subStr = val[i].parameterName+strlen(webConfigObject);
+				CosaDmlStoreValueIntoDb( subStr, val[i].parameterValue );
+				if(val[i].parameterValue != NULL)
+				{
+					setSyncNotificationInterval(atoi(val[i].parameterValue));
+				}
+				else
+				{
+					setSyncNotificationInterval(0);
 				}
 			}
 			else if((strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL) && (RFC_ENABLE == true))

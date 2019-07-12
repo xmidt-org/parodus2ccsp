@@ -1,6 +1,6 @@
 --- arch/intel_usg/boards/rdkb_atom/config/comcast/WebpaAgent.xml	2019-06-05 21:49:39.180115700 +0000
 +++ arch/intel_usg/boards/rdkb_atom/config/comcast/WebpaAgent.xml	2019-06-05 21:44:10.671983701 +0000
-@@ -80,5 +80,90 @@
+@@ -80,5 +80,96 @@
                  </object>
              </objects>
          </object>
@@ -29,6 +29,12 @@
 +                </parameter>
 +                <parameter>
 +                    <name>PeriodicSyncCheckInterval</name>
++                    <type>int</type>
++                    <syntax>int</syntax>
++                    <writable>true</writable>
++                </parameter>
++                <parameter>
++                    <name>SyncNotificationInterval</name>
 +                    <type>int</type>
 +                    <syntax>int</syntax>
 +                    <writable>true</writable>

@@ -126,6 +126,7 @@ CosaWebConfigCreate
 	WebConfigLog("------ pMyObject -------\n");
 	WebConfigLog("pMyObject->RfcEnable: %d\n",pMyObject->RfcEnable);
 	WebConfigLog("pMyObject->PeriodicSyncCheckInterval: %d\n",pMyObject->PeriodicSyncCheckInterval);
+	WebConfigLog("pMyObject->SyncNotificationInterval: %d\n",pMyObject->SyncNotificationInterval);
 	if(pMyObject->pConfigFileContainer != NULL)
 	{
 		WebConfigLog("pMyObject->pConfigFileContainer->ConfigFileEntryCount: %d\n",pMyObject->pConfigFileContainer->ConfigFileEntryCount);
@@ -211,7 +212,14 @@ CosaWebConfigInitialize
             pMyObject->PeriodicSyncCheckInterval = atoi(tmpbuf);
         }
         WebcfgDebug("pMyObject->PeriodicSyncCheckInterval:%d\n",pMyObject->PeriodicSyncCheckInterval);
-    
+
+	CosaDmlGetValueFromDb("SyncNotificationInterval", tmpbuf);
+        if(tmpbuf != NULL)
+        {
+            pMyObject->SyncNotificationInterval = atoi(tmpbuf);
+        }
+        WebcfgDebug("pMyObject->SyncNotificationInterval:%d\n",pMyObject->SyncNotificationInterval);
+
         AnscSListInitializeHeader( &pMyObject->ConfigFileList );
         WebcfgDebug("B4 CosaDmlGetConfigFile\n");
         pMyObject->pConfigFileContainer = CosaDmlGetConfigFile((ANSC_HANDLE)pMyObject);
@@ -247,6 +255,7 @@ CosaWebConfigInitialize
 	{
 	    WebConfigLog("RFC disabled. Hence not loading ConfigFile entries\n");
 	    pMyObject->PeriodicSyncCheckInterval = 0;
+	    pMyObject->SyncNotificationInterval = 0;
 	    pMyObject->pConfigFileContainer = NULL;
 	}*/
     WebcfgDebug("#### CosaWebConfigInitialize done. return %d\n", returnStatus);
