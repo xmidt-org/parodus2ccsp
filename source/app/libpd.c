@@ -94,7 +94,6 @@ static void connect_parodus()
 	            else
 	            {
 	                    WalError("Init for parodus failed: '%s'\n",libparodus_strerror(ret));
-	                    OnboardLog("Init for parodus failed: '%s'\n",libparodus_strerror(ret));
 	                    sleep(backoffRetryTime);
 	                    c++;
 
@@ -103,6 +102,7 @@ static void connect_parodus()
 	                    	c = 2;
 	                    	backoffRetryTime = 0;
 	                    	WalPrint("backoffRetryTime reached max value, reseting to initial value\n");
+	                    	OnboardLog("Init for parodus failed: '%s'\n",libparodus_strerror(ret));
 	                    }
 	            }
 	            retval = libparodus_shutdown(&current_instance);
