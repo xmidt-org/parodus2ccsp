@@ -1007,7 +1007,7 @@ void processNotification(NotifyData *notifyData)
 	        		}
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
-				OnboardLog("%s\n",dest);
+				OnboardLog("%s/%d/%s\n",dest,cmc,cid);
 	        	}
 	        		break;
 
@@ -1047,7 +1047,7 @@ void processNotification(NotifyData *notifyData)
 	        			WalPrint("Framing notifyPayload for Firmware upgrade\n");
 	        			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        			cJSON_AddStringToObject(notifyPayload, "cid", cid);
-					OnboardLog("FIRMWARE_UPGRADE\n");
+					OnboardLog("FIRMWARE_UPGRADE/%d/%s\n",cmc,cid);
 	        		}
 	        			break;
 
@@ -1109,7 +1109,7 @@ void processNotification(NotifyData *notifyData)
                                 {
                                         reason = (char *)malloc(sizeof(char)*MAX_REASON_LENGTH);
 				        mapComponentStatusToGetReason(notifyData->u.device->status, reason);
-				                        OnboardLog("%\n",reason);
+				                        OnboardLog("%s\n",reason);
                                         snprintf(dest, WEBPA_NOTIFY_EVENT_MAX_LENGTH, "event:device-status/%s/non-operational/%s/%s", device_id,(NULL != strBootTime)?strBootTime:"unknown",reason);
                                         cJSON_AddStringToObject(notifyPayload, "status", "non-operational");
                                         cJSON_AddStringToObject(notifyPayload, "reason", reason);
