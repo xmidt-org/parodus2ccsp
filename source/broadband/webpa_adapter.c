@@ -285,6 +285,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 resObj->u.paramRes->params = NULL;
                                 
                                 WalInfo("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
+                                OnboardLog("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
                                 // Get CMC from device database
 	                        dbCMC = getParameterValue(PARAM_CMC);
 				WalInfo("dbCMC : %s\n",(NULL != dbCMC) ? dbCMC: "NULL" );
