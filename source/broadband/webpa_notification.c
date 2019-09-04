@@ -108,6 +108,7 @@ const char * notifyparameters[]={
 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
 "Device.MoCA.Interface.1.Enable",
+"Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
 "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
 /* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
@@ -1007,6 +1008,7 @@ void processNotification(NotifyData *notifyData)
 	        		}
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
+				OnboardLog("%s/%d/%s\n",dest,cmc,cid);
 	        	}
 	        		break;
 
@@ -1046,6 +1048,7 @@ void processNotification(NotifyData *notifyData)
 	        			WalPrint("Framing notifyPayload for Firmware upgrade\n");
 	        			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        			cJSON_AddStringToObject(notifyPayload, "cid", cid);
+					OnboardLog("FIRMWARE_UPGRADE/%d/%s\n",cmc,cid);
 	        		}
 	        			break;
 
@@ -1096,6 +1099,7 @@ void processNotification(NotifyData *notifyData)
 	        			free(dest);
 	        			return;
 	        		}
+				OnboardLog("%s/%s\n",dest,notifyData->u.status->transId);
 	        	}
 	        		break;
 
@@ -1106,6 +1110,7 @@ void processNotification(NotifyData *notifyData)
                                 {
                                         reason = (char *)malloc(sizeof(char)*MAX_REASON_LENGTH);
 				        mapComponentStatusToGetReason(notifyData->u.device->status, reason);
+				                        OnboardLog("%s\n",reason);
                                         snprintf(dest, WEBPA_NOTIFY_EVENT_MAX_LENGTH, "event:device-status/%s/non-operational/%s/%s", device_id,(NULL != strBootTime)?strBootTime:"unknown",reason);
                                         cJSON_AddStringToObject(notifyPayload, "status", "non-operational");
                                         cJSON_AddStringToObject(notifyPayload, "reason", reason);
@@ -1122,6 +1127,7 @@ void processNotification(NotifyData *notifyData)
 				{
 					WAL_FREE(strBootTime);
 				}
+				OnboardLog("%s\n",dest);
 			}
 	        		break;
 
@@ -1276,6 +1282,7 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 					else
 					{
 						WalError("Error setting CMC value for factory reset\n");
+						OnboardLog("Error setting CMC value for factory reset\n");
 					}
 				}
 				else
@@ -1353,6 +1360,7 @@ static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, 
 		{
 			WAL_FREE(dbCID);
 			WalError("Error setting CMC value for firmware upgrade\n");
+			OnboardLog("Error setting CMC value for firmware upgrade\n");
 		}
 	}
 	else

@@ -58,6 +58,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         
         wdmp_parse_request(reqPayload,&reqObj);
         WalInfo("transactionId in request: %s\n",transactionId);
+        OnboardLog("%s\n",transactionId);
         
         if(reqObj != NULL)
         {
@@ -284,6 +285,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 resObj->u.paramRes->params = NULL;
                                 
                                 WalInfo("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
+                                OnboardLog("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
                                 // Get CMC from device database
 	                        dbCMC = getParameterValue(PARAM_CMC);
 				WalInfo("dbCMC : %s\n",(NULL != dbCMC) ? dbCMC: "NULL" );
@@ -670,6 +672,7 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 		// Using printf to log message to ArmConsolelog.txt.0 on XB3
 		printf("RDKB_REBOOT : Reboot triggered through WEBPA\n");
 		WalInfo("RDKB_REBOOT : Reboot triggered through WEBPA\n");
+		OnboardLog("RDKB_REBOOT : Reboot triggered through WEBPA\n");
 		rebootParam[0].name = "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason";
 		rebootParam[0].value = "webpa-reboot";
 		rebootParam[0].type = WDMP_STRING;
