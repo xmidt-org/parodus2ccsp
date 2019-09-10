@@ -87,8 +87,8 @@ BOOL getConfigVersion(int index, char **version);
 int setConfigVersion(int index, char *version);
 BOOL getSyncCheckOK(int index,BOOL *pvalue );
 int setSyncCheckOK(int index, BOOL status);
-BOOL getForceSyncCheck(int index,BOOL *pvalue );
-BOOL setForceSyncCheck(int index, BOOL pvalue);
+BOOL getForceSyncCheck(int index,BOOL *pvalue, char** transactionID );
+BOOL setForceSyncCheck(int index, BOOL pvalue, char *transactionId,int *session_status);
 BOOL isValidInstanceNumber(int instNum);
 
 BOOL getConfigURLFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
@@ -99,11 +99,11 @@ BOOL getConfigVersionFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
 BOOL setConfigVersionWithWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
 BOOL getSyncCheckOKFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool );
 BOOL setSyncCheckOKWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL status);
-BOOL getForceSyncCheckFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool );
-BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue);
+BOOL getForceSyncCheckFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool, char *pTransValue );
+BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue, char *transactionId,int *pStatus);
 
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 
-int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
+int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam, char *transactionId );
 
 #endif

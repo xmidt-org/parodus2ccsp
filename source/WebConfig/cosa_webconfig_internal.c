@@ -516,7 +516,7 @@ int setSyncCheckOK(int index, BOOL status)
 	return 0;
 }
 
-BOOL getForceSyncCheckFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool )
+BOOL getForceSyncCheckFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool, char *pTransValue )
 {
 	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
 	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
@@ -524,23 +524,30 @@ BOOL getForceSyncCheckFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool )
 	if(pConfigFileEntry)
 	{
 		*pBool = pConfigFileEntry->ForceSyncCheck;
+		AnscCopyString(pTransValue, pConfigFileEntry->ForceSyncTransID);
 		return TRUE;
 	}
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
 	return FALSE;
 }
 
-BOOL getForceSyncCheck(int index,BOOL *pvalue )
+BOOL getForceSyncCheck(int index,BOOL *pvalue, char** transactionID )
 {
 	PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCtxLink          = NULL;
+	char pTransValue[256] = {'\0'};
 	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	pCtxLink = CosaSListGetEntryByInsNum(&pMyObject->ConfigFileList, index);
 	if(pCtxLink)
 	{
-		if(!getForceSyncCheckFromWebConfigCtx(pCtxLink, pvalue))
+		if(!getForceSyncCheckFromWebConfigCtx(pCtxLink, pvalue, pTransValue))
 		{
+			*transactionID = NULL;
 			return FALSE;
+		}
+		else
+		{
+			*transactionID = strdup(pTransValue);
 		}
 	}
 	else
@@ -552,7 +559,7 @@ BOOL getForceSyncCheck(int index,BOOL *pvalue )
 	return TRUE;
 }
 
-BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue)
+BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue, char *transactionId, int *pStatus)
 {
 	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT   pWebConfigCxtLink     = (PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT)hInsContext;
 	PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY pConfigFileEntry  = (PCOSA_DML_WEBCONFIG_CONFIGFILE_ENTRY)pWebConfigCxtLink->hContext;
@@ -562,9 +569,27 @@ BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue)
 		pConfigFileEntry->ForceSyncCheck = bValue;
 		if(bValue)
 		{
-			pthread_mutex_lock (get_global_periodicsync_mutex());
-			pthread_cond_signal(get_global_periodicsync_condition());
-			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			if(pConfigFileEntry->ForceSyncTransID !=NULL && (strlen(pConfigFileEntry->ForceSyncTransID)>0))
+			{
+				WebConfigLog("Force sync is already in progress, Ignoring this request.\n");
+				*pStatus = 1;
+				return FALSE;
+			}
+			else
+			{
+				pthread_mutex_lock (get_global_periodicsync_mutex());
+				//Update ForceSyncTransID to access webpa transactionId in webConfig sync.
+				if(transactionId !=NULL && (strlen(transactionId)>0))
+				{
+					AnscCopyString(pConfigFileEntry->ForceSyncTransID, transactionId);
+				}
+				pthread_cond_signal(get_global_periodicsync_condition());
+				pthread_mutex_unlock(get_global_periodicsync_mutex());
+			}
+		}
+		else
+		{
+			memset(pConfigFileEntry->ForceSyncTransID,0,sizeof(pConfigFileEntry->ForceSyncTransID));
 		}
 		return TRUE;
 	}
@@ -572,16 +597,18 @@ BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue)
 	return FALSE;
 }
 
-BOOL setForceSyncCheck(int index, BOOL pvalue)
+BOOL setForceSyncCheck(int index, BOOL pvalue, char *transactionId, int *session_status)
 {
 	PCOSA_DATAMODEL_WEBCONFIG                   pMyObject         = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	PCOSA_CONTEXT_WEBCONFIG_LINK_OBJECT    pCtxLink          = NULL;
+	int pStatus = 0;
 	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 	pCtxLink = CosaSListGetEntryByInsNum(&pMyObject->ConfigFileList, index);
 	if(pCtxLink)
 	{
-		if(!setForceSyncCheckWithWebConfigCtx(pCtxLink, pvalue))
+		if(!setForceSyncCheckWithWebConfigCtx(pCtxLink, pvalue, transactionId, &pStatus))
 		{
+			*session_status = pStatus;
 			return FALSE;
 		}
 	}
@@ -1040,11 +1067,12 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
     return CCSP_SUCCESS;
 }
 
-int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
+int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam, char *transactionId )
 {
 	int i=0;
 	char *subStr = NULL;
 	BOOL RFC_ENABLE;
+	int session_status = 0;
 	WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 
 	char *webConfigObject = "Device.X_RDK_WebConfig.";
@@ -1107,11 +1135,15 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				{
 					if(strcmp(val[i].parameterValue, "true") == 0)
 					{
-						ret = setForceSyncCheck(index, true);
+						ret = setForceSyncCheck(index, true, transactionId, &session_status);
 					}
-					else
+					else //pass empty transaction id when Force sync is false
 					{
-						ret = setForceSyncCheck(index, false);
+						ret = setForceSyncCheck(index, false, "", 0);
+					}
+					if(session_status)
+					{
+						return CCSP_CR_ERR_SESSION_IN_PROGRESS;
 					}
 					if(!ret)
 					{
