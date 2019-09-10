@@ -73,6 +73,7 @@ static void connect_parodus()
 	            {
 	                    WalInfo("Init for parodus Success..!!\n");
 	                    WalInfo("WebPA is now ready to process requests\n");
+	                    OnboardLog("WebPA is now ready to process requests\n");
 #ifdef RDKB_BUILD
 	                    if (access("/tmp/webpa_start", F_OK) == -1 && errno == ENOENT)
 	                    {
@@ -101,6 +102,7 @@ static void connect_parodus()
 	                    	c = 2;
 	                    	backoffRetryTime = 0;
 	                    	WalPrint("backoffRetryTime reached max value, reseting to initial value\n");
+	                    	OnboardLog("Init for parodus failed: '%s'\n",libparodus_strerror(ret));
 	                    }
 	            }
 	            retval = libparodus_shutdown(&current_instance);
@@ -131,6 +133,7 @@ static void parodus_receive()
         if (rtn != 0)
         {
                 WalError ("Libparodus failed to recieve message: '%s'\n",libparodus_strerror(rtn));
+                OnboardLog("Libparodus failed to recieve message: '%s'\n",libparodus_strerror(rtn));
                 sleep(5);
                 return;
         }
@@ -181,6 +184,7 @@ static void parodus_receive()
                         else
                         {
                                 WalError("Failed to send message: '%s'\n",libparodus_strerror(sendStatus));
+                                OnboardLog("Failed to send message: '%s'\n",libparodus_strerror(sendStatus));
                         }
                         getCurrentTime(endPtr);
                         WalInfo("Elapsed time : %ld ms\n", timeValDiff(startPtr, endPtr));

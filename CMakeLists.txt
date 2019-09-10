@@ -106,7 +106,7 @@ add_dependencies(libcJSON cJSON)
 ExternalProject_Add(cimplog
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/cimplog
     GIT_REPOSITORY https://github.com/Comcast/cimplog.git
-    GIT_TAG "5ca3d60b58b58370e6ac8e1d8a5896a0078959ea"
+    GIT_TAG "1.0.2"
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libcimplog STATIC SHARED IMPORTED)

@@ -411,12 +411,14 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 			if(strstr(tempParamName, PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret); 
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret);
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
 		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",tempParamName, ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",tempParamName, ret);
 		 	}					
             		*error = 1;
 			return ret;
@@ -446,6 +448,7 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 		else
 		{
 			WalError("Parameter name %s is not supported. ret = %d\n", tempParamName, ret);
+			OnboardLog("Parameter name %s is not supported. ret = %d\n", tempParamName, ret);
 			free_componentStruct_t(bus_handle, size, ppComponents);
 			*error = 1;
 			return ret;
@@ -783,6 +786,7 @@ char * getParameterValue(char *paramName)
 	else
 	{
 		WalError("Failed to GetValue for %s\n", getParamList[0]);
+		OnboardLog("Failed to GetValue for %s\n", getParamList[0]);
 		WAL_FREE(paramValue);
 	}
 	
@@ -815,6 +819,7 @@ WDMP_STATUS setParameterValue(char *paramName, char* value, DATA_TYPE type)
 	else
 	{
 		WalError("Failed to SetValue for %s\n", parametervalArr[0].name);
+		OnboardLog("Failed to SetValue for %s\n", parametervalArr[0].name);
 	}
 
 	WAL_FREE(parametervalArr);
@@ -1022,6 +1027,7 @@ static void waitUntilSystemReady()
 				    if(total_wait_time >= 84)
 				    {
 					    WalInfo("Queried CR for system ready after waiting for 7 mins, it is still not ready. Proceeding ...\n");
+					    OnboardLog("Queried CR for system ready after waiting for 7 mins, it is still not ready. Proceeding ...\n");
 					    break;
 				    }
 			    }
@@ -1170,7 +1176,8 @@ static void checkComponentReady(char *compName, char *dbusPath)
 			
 			if(retrycount > 3)
 			{
-				WalError("Proceeding as component %s is not up even after retry\n", compName); 
+				WalError("Proceeding as component %s is not up even after retry\n", compName);
+				OnboardLog("Proceeding as component %s is not up even after retry\n", compName);
 			}
 		}
 	} 
@@ -1232,6 +1239,7 @@ static void retryFailedComponentCaching()
 					if(retryCount == WAL_COMPONENT_INIT_RETRY_COUNT)
 					{
 						WalError("Unable to get component for object %s\n", failedCompList[i]);
+						OnboardLog("Unable to get component for object %s\n", failedCompList[i]);
 					}
 					else
 					{
@@ -1278,6 +1286,7 @@ static void retryFailedComponentCaching()
 					if(retryCount == WAL_COMPONENT_INIT_RETRY_COUNT)
 					{
 						WalError("Unable to get component for object %s\n", failedSubCompList[i]);
+						OnboardLog("Unable to get component for object %s\n", failedSubCompList[i]);
 					}
 					else
 					{
@@ -1306,6 +1315,7 @@ WDMP_STATUS check_ethernet_wan_status()
         if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0))
         {
             WalInfo("Ethernet WAN is enabled\n");
+            OnboardLog("Ethernet WAN is enabled\n");
             eth_wan_status = TRUE;
             return WDMP_SUCCESS;
         }
@@ -1318,6 +1328,7 @@ WDMP_STATUS check_ethernet_wan_status()
         if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
         {
             WalInfo("Ethernet WAN is enabled\n");
+            OnboardLog("Ethernet WAN is enabled\n");
             eth_wan_status = TRUE;
             WAL_FREE(status);
             return WDMP_SUCCESS;

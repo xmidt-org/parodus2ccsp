@@ -423,15 +423,10 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 					WebConfigLog("Failed to set SyncCheckOK to FALSE for index %d\n", index);
 				}
 
-				if(retry_count == 3)
-				{
-					WebcfgDebug("retry_count is %d\n", retry_count);
-					WebConfigLog("Configuration settings from %s version %s FAILED\n", configURL, newDocVersion );
-					WebConfigLog("Sending Failure Notification after 3 retry attempts\n");
-					err =1;
-					addWebConfigNotifyMsg(configURL, response_code, "failed", setRet, RequestTimeStamp , newDocVersion, transaction_uuid);
-					return 0;
-				}
+				WebConfigLog("Configuration settings from %s version %s FAILED\n", configURL, newDocVersion );
+				WebConfigLog("Sending Webconfig apply Failure Notification\n");
+				addWebConfigNotifyMsg(configURL, response_code, "failed", setRet, RequestTimeStamp , newDocVersion);
+				return 1;
 			}
 		}
 		else
@@ -749,6 +744,7 @@ int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 	WDMP_STATUS ret = WDMP_FAILURE;
 	int ccspStatus=0;
 	char *version = NULL;
+	int retry_count=0;
 
 	parseStatus = parseJsonData(jsonData, &reqObj, &version);
 	WebcfgDebug("After parseJsonData version is %s\n", version);
@@ -774,20 +770,35 @@ int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 
 		if(valid_ret == WDMP_SUCCESS)
 		{
-			WebcfgInfo("WebConfig SET Request\n");
-			setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret, &ccspStatus);
-			WebcfgInfo("Processed WebConfig SET Request\n");
-			*retStatus = ccspStatus;
-			WebcfgDebug("*retStatus is %d\n", *retStatus);
-                        if(ret == WDMP_SUCCESS)
-                        {
-                                WebConfigLog("setValues success. ccspStatus : %d\n", ccspStatus);
-                                rv= 1;
-                        }
-                        else
-                        {
-                              WebConfigLog("setValues Failed. ccspStatus : %d\n", ccspStatus);
-                        }
+			while(1)
+			{
+				if(retry_count >3)
+				{
+					WebConfigLog("Config apply retry_count has reached max limit\n");
+					retry_count=0;
+					break;
+				}
+
+				WebcfgInfo("WebConfig SET Request\n");
+				setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, NULL, NULL, &ret, &ccspStatus);
+				WebcfgInfo("Processed WebConfig SET Request\n");
+				*retStatus = ccspStatus;
+				WebcfgDebug("*retStatus is %d\n", *retStatus);
+		                if(ret == WDMP_SUCCESS)
+		                {
+		                        WebConfigLog("setValues success. ccspStatus : %d\n", ccspStatus);
+		                        rv= 1;
+					break;
+		                }
+		                else
+		                {
+		                      WebConfigLog("setValues Failed. ccspStatus : %d\n", ccspStatus);
+		                }
+				WebConfigLog("processJsonDocument BACKOFF_SLEEP_DELAY_SEC is %d seconds\n", BACKOFF_SLEEP_DELAY_SEC);
+				sleep(BACKOFF_SLEEP_DELAY_SEC);
+				retry_count++;
+				WebConfigLog("Config apply retry_count is %d\n", retry_count);
+			}
 		}
 		else
 		{

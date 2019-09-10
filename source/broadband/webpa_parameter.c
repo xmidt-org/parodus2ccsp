@@ -104,6 +104,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
             {
                 ret = CCSP_ERR_WIFI_BUSY;
                 WalError("WiFi component is busy\n");
+                OnboardLog("WiFi component is busy\n");
                 break;
             }
             WalPrint("index: %d startIndex: %d\n",index, startIndex);
@@ -123,6 +124,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
             if(ret != CCSP_SUCCESS)
             {
                 WalError("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",cnt1,ParamGroup[cnt1].comp_name,ret);
+                OnboardLog("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",cnt1,ParamGroup[cnt1].comp_name,ret);
                 break;
             }
             totalParams = totalParams + retCount;
@@ -193,6 +195,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                         {
                                 ret = CCSP_ERR_WIFI_BUSY;
                                 WalError("WiFi component is busy\n");
+                                OnboardLog("WiFi component is busy\n");
                                 getFlag = 1;
                                 break;
                         }
@@ -204,6 +207,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                         if(ret != CCSP_SUCCESS)
                         {
                                 WalError("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",i,ParamGroup[i].comp_name,ret);
+                                OnboardLog("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",i,ParamGroup[i].comp_name,ret);
                                 getFlag = 1;
 
                                 for(cnt1=index-1;cnt1>=0;cnt1--)
@@ -262,6 +266,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                 {
                                         ret = CCSP_ERR_WIFI_BUSY;
                                         WalError("WiFi component is busy\n");
+                                        OnboardLog("WiFi component is busy\n");
                                         break;
                                 }			
 
@@ -425,12 +430,14 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
             if(strstr(parameterNamesLocal[cnt], PARAM_RADIO_OBJECT) != NULL)
             {
                 ret = CCSP_ERR_INVALID_RADIO_INDEX;
-                WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret); 
+                WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret);
+                OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret);
             }
             else
             {
                 ret = CCSP_ERR_INVALID_WIFI_INDEX;
                 WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
+                OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
             }
             error = 1;
             break;
@@ -463,6 +470,7 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
         if (ret != CCSP_SUCCESS)
         {
             WalError("Error:Failed to GetValue for parameters ret: %d\n", ret);
+            OnboardLog("Error:Failed to GetValue for parameters ret: %d\n", ret);
         }
         else
         {
@@ -662,12 +670,14 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
                         if(strstr(paramName, PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret); 
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
 		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
 		 	}
 			free_set_param_values_memory(val,paramCount,faultParam);
                         return ret;
@@ -867,6 +877,7 @@ static void *applyWiFiSettingsTask()
 			if ((ret != CCSP_SUCCESS) && (faultParam != NULL))
 			{
 				WalError("Failed to Set Apply Settings\n");
+				OnboardLog("Failed to Set Apply Settings\n");
 				WAL_FREE(faultParam);
 			}	
 			
