@@ -514,7 +514,7 @@ ConfigFile_SetParamBoolValue
 	/* check the parameter name and set the corresponding value */
 	if(AnscEqualString(ParamName, "ForceSyncCheck", TRUE)) 
 	{
-		if(setForceSyncCheckWithWebConfigCtx(hInsContext, bValue))
+		if(setForceSyncCheckWithWebConfigCtx(hInsContext, bValue, "", 0))
 		{
 			return TRUE;
 		}
@@ -556,7 +556,7 @@ BOOL isValidUrl
         PCHAR                       pUrl
     )
 {
-	if(strstr(pUrl, "http") == NULL)
+	if(strstr(pUrl, "https") == NULL)
 	{
 		WalError("Invalid URL\n");
 		return FALSE;

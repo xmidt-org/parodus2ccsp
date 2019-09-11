@@ -54,6 +54,7 @@ _COSA_DML_WEBCONFIG_CONFIGFILE_ENTRY
     char                            URL[256];
     char                            Version[64];
     BOOLEAN                         ForceSyncCheck;
+    char                            ForceSyncTransID[64];
     BOOLEAN                         SyncCheckOK;
     char                            RequestTimeStamp[64];
 }
