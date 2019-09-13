@@ -425,7 +425,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 
 				WebConfigLog("Configuration settings from %s version %s FAILED\n", configURL, newDocVersion );
 				WebConfigLog("Sending Webconfig apply Failure Notification\n");
-				addWebConfigNotifyMsg(configURL, response_code, "failed", setRet, RequestTimeStamp , newDocVersion);
+				addWebConfigNotifyMsg(configURL, response_code, "failed", setRet, RequestTimeStamp , newDocVersion, transaction_uuid);
 				return 1;
 			}
 		}
