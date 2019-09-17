@@ -9,6 +9,7 @@
 
 #define WEBPA_PARAM_VERSION                 "Device.X_RDKCENTRAL-COM_Webpa.Version"
 #define WEBPA_PARAM_PROTOCOL_VERSION        "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
+#define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
@@ -68,6 +69,14 @@ Webpa_SetParamStringValue
                         WalPrint(" \n Notification : New Value = %s \n", p_new_val);
                         WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
 #endif
+
+			if(NULL != p_notify_param_name && (strcmp(p_notify_param_name, WiFi_FactoryResetRadioAndAp)== 0))
+			{
+				// sleep for 90s to delay the notification and give wifi time to reset and apply to driver
+				WalInfo("Delay wifi factory reset notification by 90s so that wifi is reset completely\n");
+				sleep(90);
+			}
+
                         param.parameterName = p_notify_param_name;
                         param.oldValue = p_old_val;
                         param.newValue = p_new_val;
