@@ -412,8 +412,8 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
             cnt1 = cnt * writableParamCount;
             for(; cnt1 < paramCount; cnt1++)
             {
-                if(strstr(parameterval[cnt1]->parameterName,(*rowList)[cnt]) != NULL &&
-                strstr(parameterval[cnt1]->parameterName,writableList[i]) != NULL)
+                if(strstr(parameterval[cnt1]->parameterName,(*rowList)[cnt]) != NULL && (writableList[i] != NULL &&
+                strstr(parameterval[cnt1]->parameterName,writableList[i]) != NULL))
                 {
                     WalPrint("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt1,parameterval[cnt1]->parameterName,cnt1,parameterval[cnt1]->parameterValue);
                     (*getList)[cnt].names[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
@@ -423,6 +423,10 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
                     strcpy((*getList)[cnt].values[i],parameterval[cnt1]->parameterValue);
                     WalPrint("(*getList)[%d].values[%d] : %s\n",cnt, i, (*getList)[cnt].values[i]);
                     i++;
+		    if( i == writableParamCount)
+		    {
+			break;
+		    }
                 }
             }
         }
