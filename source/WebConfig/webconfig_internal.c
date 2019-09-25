@@ -215,13 +215,20 @@ static void *WebConfigTask(void *status)
 				WebcfgDebug("getForceSyncCheck for index %d\n", index);
 				getForceSyncCheck(index,&ForceSyncEnable, &ForceSyncTransID);
 				WebcfgDebug("ForceSyncEnable is %d\n", ForceSyncEnable);
-				if(ForceSyncEnable)
+				if(ForceSyncTransID !=NULL)
 				{
-					wait_flag=0;
-					forced_sync = 1;
-					syncIndex = index;
-					WebConfigLog("Received signal interrupt to getForceSyncCheck at %s\n",ctime(&t));
-					break;
+					if(ForceSyncEnable)
+					{
+						wait_flag=0;
+						forced_sync = 1;
+						syncIndex = index;
+						WebConfigLog("Received signal interrupt to getForceSyncCheck at %s\n",ctime(&t));
+						WAL_FREE(ForceSyncTransID);
+						break;
+					}
+					WebConfigLog("ForceSyncEnable is false\n");
+					WAL_FREE(ForceSyncTransID);
+					WebConfigLog("free ForceSyncTransID done\n");
 				}
 			}
 			WebConfigLog("forced_sync is %d\n", forced_sync);
@@ -1148,10 +1155,13 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
         }
 
 	getForceSyncCheck(index,&ForceSyncEnable, &syncTransID);
-	if(ForceSyncEnable && ((syncTransID !=NULL) && strlen(syncTransID)>0))
+	if(syncTransID !=NULL)
 	{
-		WebConfigLog("updating transaction_uuid with force syncTransID\n");
-		transaction_uuid = strdup(syncTransID);
+		if(ForceSyncEnable && strlen(syncTransID)>0)
+		{
+			WebConfigLog("updating transaction_uuid with force syncTransID\n");
+			transaction_uuid = strdup(syncTransID);
+		}
 		WAL_FREE(syncTransID);
 	}
 	else
