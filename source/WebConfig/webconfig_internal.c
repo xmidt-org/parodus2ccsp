@@ -532,9 +532,11 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 		data.data[0] = '\0';
 		createCurlheader(list, &headers_list, status, index, &transID);
-		*transaction_id = strdup(transID);
-		WAL_FREE(transID);
-		
+		if(transID !=NULL)
+		{
+			*transaction_id = strdup(transID);
+			WAL_FREE(transID);
+		}
 		getConfigURL(index, &configURL);
 		WebConfigLog("configURL fetched is %s\n", configURL);
 
@@ -1164,7 +1166,8 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		}
 		WAL_FREE(syncTransID);
 	}
-	else
+
+	if(transaction_uuid == NULL)
 	{
 		transaction_uuid = generate_trans_uuid();
 	}
