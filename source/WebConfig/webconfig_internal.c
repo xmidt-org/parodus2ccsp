@@ -228,7 +228,6 @@ static void *WebConfigTask(void *status)
 					}
 					WebConfigLog("ForceSyncEnable is false\n");
 					WAL_FREE(ForceSyncTransID);
-					WebConfigLog("free ForceSyncTransID done\n");
 				}
 			}
 			WebConfigLog("forced_sync is %d\n", forced_sync);
@@ -484,6 +483,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 		WAL_FREE(RequestTimeStamp);
 		WAL_FREE(transaction_uuid);
 	}
+	return 0;
 }
 
 
@@ -519,6 +519,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 	int ret =0, count = 0;
 	char *url = NULL;
 	char c[] = "{mac}";
+	void * dataVal = NULL;
 
 	curl = curl_easy_init();
 	if(curl)
@@ -560,7 +561,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 			get_webCfg_interface(&interface);
 			if(interface !=NULL)
 		        {
-		               strncpy(g_interface, interface, sizeof(g_interface));
+		               strncpy(g_interface, interface, sizeof(g_interface)-1);
 		               WebcfgDebug("g_interface copied is %s\n", g_interface);
 		               WAL_FREE(interface);
 		        }
@@ -573,8 +574,9 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		}
 
 		// set callback for writing received data
+		dataVal = &data;
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_fn);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, dataVal);
 
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers_list);
 
@@ -707,12 +709,12 @@ size_t header_callback(char *buffer, size_t size, size_t nitems)
 				header_value = strtok(NULL, ":");
 				if(header_value !=NULL)
 				{
-					strncpy(header_str, header_value, sizeof(header_str));
+					strncpy(header_str, header_value, sizeof(header_str)-1);
 					WebcfgDebug("header_str is %s\n", header_str);
 					stripSpaces(header_str, &final_header);
 
 					WebcfgDebug("final_header is %s len %lu\n", final_header, strlen(final_header));
-					strncpy(g_ETAG, final_header, sizeof(g_ETAG));
+					strncpy(g_ETAG, final_header, sizeof(g_ETAG)-1);
 				}
 			}
 		}
@@ -765,6 +767,11 @@ int processJsonDocument(char *jsonData, int *retStatus, char **docVersion)
 	}
 	if(parseStatus ==1)
 	{
+		if(NULL == reqObj)
+		{
+			WebConfigLog("parseJsonData failed. reqObj is empty\n");
+			return rv;
+		}
 		WebConfigLog("Request:> Type : %d\n",reqObj->reqType);
 		WebConfigLog("Request:> ParamCount = %zu\n",reqObj->u.setReq->paramCnt);
 		paramCount = (int)reqObj->u.setReq->paramCnt;
@@ -863,17 +870,20 @@ int parseJsonData(char* jsonData, req_struct **req_obj, char **version)
 				return rv;
 			}
 			(reqObj) = (req_struct *) malloc(sizeof(req_struct));
-                	memset((reqObj), 0, sizeof(req_struct));
-
-			parse_set_request(json, &reqObj, WDMP_TR181);
-			if(reqObj != NULL)
-        		{
-				*req_obj = reqObj;	
-				rv = 1;		
-			}
-			else
+			if(reqObj !=NULL)
 			{
-				WebConfigLog("Failed to parse set request\n");
+				memset((reqObj), 0, sizeof(req_struct));
+
+				parse_set_request(json, &reqObj, WDMP_TR181);
+				if(reqObj != NULL)
+				{
+					*req_obj = reqObj;
+					rv = 1;
+				}
+				else
+				{
+					WebConfigLog("Failed to parse set request\n");
+				}
 			}
 		}
 	}
@@ -900,8 +910,7 @@ int validateConfigFormat(cJSON *json, char **eTag)
 			if(jsonversion !=NULL)
 			{
 				//version & eTag header validation
-				WebcfgDebug("g_ETAG is %s len:%lu\n", g_ETAG, strlen(g_ETAG));
-				if( g_ETAG !=NULL )
+				if(strlen(g_ETAG)>0)
 				{
 					WebcfgDebug("jsonversion :%s len %lu\n", jsonversion, strlen(jsonversion));
 					if(strncmp(jsonversion, g_ETAG, strlen(g_ETAG)) == 0)
@@ -962,14 +971,16 @@ static void get_webCfg_interface(char **interface)
 	if (NULL != fp)
 	{
 		char str[255] = {'\0'};
-		while(fscanf(fp,"%s", str) != EOF)
+		while (fgets(str, sizeof(str), fp) != NULL)
 		{
 		    char *value = NULL;
 
 		    if(NULL != (value = strstr(str, "WEBCONFIG_INTERFACE=")))
 		    {
 			value = value + strlen("WEBCONFIG_INTERFACE=");
+			value[strlen(value)-1] = '\0';
 			*interface = strdup(value);
+			break;
 		    }
 
 		}
@@ -1036,6 +1047,10 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		WebConfigLog("version_header formed %s\n", version_header);
 		list = curl_slist_append(list, version_header);
 		WAL_FREE(version_header);
+		if(version !=NULL)
+		{
+			WAL_FREE(version);
+		}
 	}
 
 	schema_header = (char *) malloc(sizeof(char)*MAX_BUF_SIZE);
@@ -1052,7 +1067,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		bootTime = getParameterValue(DEVICE_BOOT_TIME);
 		if(bootTime !=NULL)
 		{
-		       strncpy(g_bootTime, bootTime, sizeof(g_bootTime));
+		       strncpy(g_bootTime, bootTime, sizeof(g_bootTime)-1);
 		       WebcfgDebug("g_bootTime fetched is %s\n", g_bootTime);
 		       WAL_FREE(bootTime);
 		}
@@ -1079,7 +1094,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
 		FwVersion = getParameterValue(FIRMWARE_VERSION);
 		if(FwVersion !=NULL)
 		{
-		       strncpy(g_FirmwareVersion, FwVersion, sizeof(g_FirmwareVersion));
+		       strncpy(g_FirmwareVersion, FwVersion, sizeof(g_FirmwareVersion)-1);
 		       WebcfgDebug("g_FirmwareVersion fetched is %s\n", g_FirmwareVersion);
 		       WAL_FREE(FwVersion);
 		}
@@ -1134,7 +1149,7 @@ void createCurlheader( struct curl_slist *list, struct curl_slist **header_list,
                 systemReadyTime = get_global_systemReadyTime();
                 if(systemReadyTime !=NULL)
                 {
-                       strncpy(g_systemReadyTime, systemReadyTime, sizeof(g_systemReadyTime));
+                       strncpy(g_systemReadyTime, systemReadyTime, sizeof(g_systemReadyTime)-1);
                        WebcfgDebug("g_systemReadyTime fetched is %s\n", g_systemReadyTime);
                        WAL_FREE(systemReadyTime);
                 }
@@ -1278,13 +1293,13 @@ void getAuthToken()
 				serial_number = getParameterValue(SERIAL_NUMBER);
 		                if(serial_number !=NULL)
 		                {
-					strncpy(serialNum ,serial_number, sizeof(serialNum));
+					strncpy(serialNum ,serial_number, sizeof(serialNum)-1);
 					WebConfigLog("serialNum: %s\n", serialNum);
 					WAL_FREE(serial_number);
 		                }
 			}
 
-			if( serialNum != NULL && strlen(serialNum)>0 )
+			if( strlen(serialNum)>0 )
 			{
 				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), get_global_deviceMAC(), serialNum);
 				if ((strlen(output) == 0))
@@ -1390,7 +1405,7 @@ void* processWebConfigNotification()
 {
 	char device_id[32] = { '\0' };
 	cJSON *notifyPayload = NULL;
-	char  * stringifiedNotifyPayload;
+	char  * stringifiedNotifyPayload = NULL;
 	notify_params_t *msg = NULL;
 	char dest[512] = {'\0'};
 	char *source = NULL;
