@@ -117,6 +117,8 @@ const char * notifyparameters[]={
 "Device.NAT.X_Comcast_com_EnablePortMapping",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PrivacyProtection.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
 "Device.MoCA.Interface.1.Enable",
