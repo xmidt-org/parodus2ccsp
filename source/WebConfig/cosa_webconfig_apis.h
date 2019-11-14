@@ -138,4 +138,4 @@ CosaDmlRemoveConfigFileEntry
     );
 
 
-int initConfigFileWithURL(char *Url, ULONG InstanceNumber);
+void CosaDmlStoreValueIntoDb(char *ParamName, char *pString);
