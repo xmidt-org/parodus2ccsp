@@ -51,12 +51,14 @@ Webpa_SetParamStringValue
         #ifdef USE_NOTIFY_COMPONENT
 
                 WalPrint(" \n WebPA : Notification Received \n");
+                char *tmpStr, *notifyStr;
+                tmpStr = notifyStr = strdup(pString);
 
-                p_notify_param_name = strtok_r(pString, ",", &st);
-                p_write_id = strtok_r(NULL, ",", &st);
-                p_new_val = strtok_r(NULL, ",", &st);
-                p_old_val = strtok_r(NULL, ",", &st);
-                p_val_type = strtok_r(NULL, ",", &st);
+                p_notify_param_name = strsep(&notifyStr, ",");
+                p_write_id = strsep(&notifyStr,",");
+                p_new_val = strsep(&notifyStr,",");
+                p_old_val = strsep(&notifyStr,",");
+                p_val_type = strsep(&notifyStr, ",");
 
                 if(p_val_type !=NULL && p_write_id !=NULL)
                 {
@@ -90,7 +92,7 @@ Webpa_SetParamStringValue
                 {
                         WalError("Received insufficient data to process notification\n");
                 }
-
+                WAL_FREE(tmpStr);
         #endif
                 return TRUE;
         }    
