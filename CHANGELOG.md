@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - log length >4MB
 - External dependencies dbus & ccsp-commom-library are added
 - switched to nanomsg version 1.1.4, also libparodus with nanomsg 1.1.4
-- fix else if error in parodus_receive
+- Fix crash in parodus_receive function
 
 ## [0.0.1] - 2017-06-15
 ### Added
