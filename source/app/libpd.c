@@ -194,7 +194,7 @@ static void parodus_receive()
             }
 
             //handle cloud-status retrieve response received from parodus
-            if (wrp_msg->msg_type == WRP_MSG_TYPE__RETREIVE)
+            else if (wrp_msg->msg_type == WRP_MSG_TYPE__RETREIVE)
             {
 				sourceService = wrp_get_msg_element(WRP_ID_ELEMENT__SERVICE, wrp_msg, SOURCE);
 				sourceApplication = wrp_get_msg_element(WRP_ID_ELEMENT__APPLICATION, wrp_msg, SOURCE);
