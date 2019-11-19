@@ -691,8 +691,8 @@ static void loadInitURLFromFile(char **url)
 		while (fgets(str, sizeof(str), fp) != NULL)
 		{
 		    char *value = NULL;
-
-		    if(NULL != (value = strstr(str, "WEBCONFIG_INIT_URL=")))
+                    
+                    if(NULL != (value = strstr(str, "WEBCONFIG_INIT_URL=")))
 		    {
 			value = value + strlen("WEBCONFIG_INIT_URL=");
 			value[strlen(value)-1] = '\0';
@@ -707,7 +707,7 @@ static void loadInitURLFromFile(char **url)
 	{
 		WebConfigLog("Failed to open device.properties file:%s\n", DEVICE_PROPS_FILE);
 	}
-
+        
 	if (NULL == *url)
 	{
 		WebConfigLog("WebConfig url is not present in device.properties\n");
@@ -724,21 +724,21 @@ bool FillDefaultConfigFileEntryToDB()
 	char *url = NULL;
 
 	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
-
-	loadInitURLFromFile(&url);
-
-	if(url[0] != '\0')
-	{
-		CosaDmlStoreValueIntoDb("configfile_1_Url", url);
+        
+        loadInitURLFromFile(&url);
+        
+        if(NULL != url)
+	{       
+                CosaDmlStoreValueIntoDb("configfile_1_Url", url);
 	}
 	else
 	{
 		WebConfigLog("Could not load default url into DB\n");
 		return false;
 	}
-	
+ 
 	CosaDmlStoreValueIntoDb("configfile_1_Version", "");
-	
+ 
 	CosaDmlStoreValueIntoDb("configfile_1_SyncCheckOk", "false");
 	
 	CosaDmlStoreValueIntoDb("configfile_1_RequestTimeStamp", "");
