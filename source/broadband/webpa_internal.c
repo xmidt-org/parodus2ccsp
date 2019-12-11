@@ -1130,9 +1130,7 @@ static void checkComponentHealthStatus(char * compName, char * dbusPath, char *s
 	
 	sprintf(tmp,"%s.%s",compName, "Health");
 	parameterNames[0] = tmp;
-#if defined(RDKB_EMU)	      
-	walStrncpy(l_Subsystem, "",sizeof(l_Subsystem));
-#else
+#if !defined(RDKB_EMU)
 	walStrncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
 	snprintf(str, sizeof(str), "%s%s", l_Subsystem, compName);
