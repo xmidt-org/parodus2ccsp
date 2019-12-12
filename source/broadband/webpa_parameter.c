@@ -100,7 +100,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
                 WalPrint("ParamGroup[%d].parameterName :%s\n",cnt1,ParamGroup[cnt1].parameterName[cnt2]);
             }
 
-            if(!strcmp(ParamGroup[cnt1].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) && applySettingsFlag == TRUE) 
+            if((!strcmp(ParamGroup[cnt1].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(ParamGroup[cnt1].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME_RBUS)) && applySettingsFlag == TRUE)
             {
                 ret = CCSP_ERR_WIFI_BUSY;
                 WalError("WiFi component is busy\n");
@@ -191,7 +191,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                 WalPrint("--------- Start of SET Atomic caching -------\n");
                 for (i = 0; i < compCount; i++)
                 {
-                        if(!strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) && applySettingsFlag == TRUE)
+                        if((!strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME_RBUS)) && applySettingsFlag == TRUE)
                         {
                                 ret = CCSP_ERR_WIFI_BUSY;
                                 WalError("WiFi component is busy\n");
@@ -262,7 +262,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
 
                         for (i = 0; i < compCount; i++)
                         {
-                                if(!strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) && applySettingsFlag == TRUE)
+                                if((!strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME_RBUS)) && applySettingsFlag == TRUE)
                                 {
                                         ret = CCSP_ERR_WIFI_BUSY;
                                         WalError("WiFi component is busy\n");
@@ -271,7 +271,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                 }			
 
                                 // Skip and do SET for Wifi component at the end 
-                                if(!strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME))
+                                if((!strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(ParamGroup[i].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME_RBUS)))
                                 {
                                         WalPrint("skip wifi set and get the index %d\n",i);
                                         indexWifi = i;
@@ -694,7 +694,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
 
         writeID = (setType == WEBPA_ATOMIC_SET_XPC)? CCSP_COMPONENT_ID_XPC: CCSP_COMPONENT_ID_WebPA;
 
-        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME_RBUS))
         {
                 identifyRadioIndexToReset(paramCount,val,&bRestartRadio1,&bRestartRadio2);
                 bRadioRestartEn = TRUE;
@@ -718,7 +718,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
             ret = CcspBaseIf_setParameterValues(bus_handle, CompName, dbusPath, 0, writeID, val, paramCount, TRUE, &faultParam);
         }
 
-        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME_RBUS))
         {
                 if(ret == CCSP_SUCCESS) //signal apply settings thread only when set is success
                 {

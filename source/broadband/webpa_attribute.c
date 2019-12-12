@@ -71,7 +71,7 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
 		  	{
 		 		WalPrint("ParamGroup[%d].parameterName :%s\n",cnt1,ParamGroup[cnt1].parameterName[cnt2]);
 		  	}
-			if(!strcmp(ParamGroup[cnt1].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME)&& applySettingsFlag == TRUE) 
+			if((!strcmp(ParamGroup[cnt1].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(ParamGroup[cnt1].comp_name,RDKB_WIFI_FULL_COMPONENT_NAME_RBUS)) && applySettingsFlag == TRUE)
 			{
 				ret = CCSP_ERR_WIFI_BUSY;
 				WalError("Wifi busy\n");
@@ -234,7 +234,7 @@ static int setParamAttributes(param_t *attArr,int paramCount, money_trace_spans 
 	for(i = 0; i < count; i++)
 	{
 		WalInfo("compName[%d] : %s, dbusPath[%d] : %s\n", i,compName[i],i, dbusPath[i]);
-        if(!strcmp(compName[i],RDKB_WIFI_FULL_COMPONENT_NAME) && applySettingsFlag == TRUE)
+        if((!strcmp(compName[i],RDKB_WIFI_FULL_COMPONENT_NAME) || !strcmp(compName[i],RDKB_WIFI_FULL_COMPONENT_NAME_RBUS)) && applySettingsFlag == TRUE)
         {
             ret = CCSP_ERR_WIFI_BUSY;
             WalError("WiFi component is busy\n");
