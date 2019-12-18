@@ -10,6 +10,10 @@
 
 #include "webpa_internal.h"
 
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+#include "webconfig_log.h"
+#endif
+
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -69,6 +73,9 @@ char *objectList[] ={
 "Device.NotifyComponent.",
 "Device.LogAgent.",
 "Device.X_RDKCENTRAL-COM_Webpa.",
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+"Device.X_RDK_WebConfig.",
+#endif
 "Device.Webpa."
 };
  
@@ -91,6 +98,9 @@ char *subObjectList[] =
 "Device.X_RDKCENTRAL-COM_Report.RadioInterfaceStatistics.",
 "Device.X_RDKCENTRAL-COM_Report.NeighboringAP.",
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesStatus.",
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+"Device.X_RDK_WebConfig.ConfigFile.",
+#endif
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic."
 }; 
 
@@ -131,18 +141,18 @@ static void waitUntilSystemReady();
 static void ccspSystemReadySignalCB(void* user_data);
 static int checkIfSystemReady();
 extern ANSC_HANDLE bus_handle;
-static void *WALInit();
+static void *WALInit(void *status);
 static void retryFailedComponentCaching();
 
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
-void initComponentCaching()
+void initComponentCaching(int status)
 {
         int err = 0;
 	pthread_t threadId;
 
-	err = pthread_create(&threadId, NULL, WALInit, NULL);
+	err = pthread_create(&threadId, NULL, WALInit, (void *) status);
 	if (err != 0)
 	{
 		WalError("Error creating WALInit thread :[%s]\n", strerror(err));
@@ -214,7 +224,7 @@ void walStrncpy(char *destStr, const char *srcStr, size_t destSize)
     destStr[destSize-1] = '\0';
 }
 
-static void *WALInit()
+static void *WALInit(void *status)
 {
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
@@ -226,6 +236,33 @@ static void *WALInit()
 	WalPrint("------------ WALInit ----------\n");
 	pthread_detach(pthread_self());
 	waitUntilSystemReady();
+	
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+	//Function to start webConfig operation after system ready.
+	WebcfgInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
+	char RfcEnable[64];
+	memset(RfcEnable, 0, sizeof(RfcEnable));
+#ifdef RDKB_BUILD
+	if(0 == syscfg_init())
+	{
+	    syscfg_get( NULL, "WebConfigRfcEnabled", RfcEnable, sizeof(RfcEnable));
+            WebcfgDebug("RfcEnable is %s\n", RfcEnable);
+	}
+	else
+	{
+	    WebcfgError("syscfg_init failed\n");
+	}
+#endif
+	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
+	{
+	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigTask\n");
+	    initWebConfigTask((int)status);
+	}
+	else
+	{
+		WebcfgError("WebConfig Rfc Flag is not enabled\n");
+	}
+#endif
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
@@ -374,12 +411,14 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 			if(strstr(tempParamName, PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret); 
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret);
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
 		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",tempParamName, ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",tempParamName, ret);
 		 	}					
             		*error = 1;
 			return ret;
@@ -409,6 +448,7 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 		else
 		{
 			WalError("Parameter name %s is not supported. ret = %d\n", tempParamName, ret);
+			OnboardLog("Parameter name %s is not supported. ret = %d\n", tempParamName, ret);
 			free_componentStruct_t(bus_handle, size, ppComponents);
 			*error = 1;
 			return ret;
@@ -585,6 +625,8 @@ WDMP_STATUS mapStatus(int ret)
 			return WDMP_ERR_INVALID_RADIO_INDEX;
 		case CCSP_ERR_METHOD_NOT_SUPPORTED:
 		    return WDMP_ERR_METHOD_NOT_SUPPORTED;
+		case CCSP_CR_ERR_SESSION_IN_PROGRESS:
+		    return WDMP_ERR_SESSION_IN_PROGRESS;
 		default:
 			return WDMP_FAILURE;
 	}
@@ -744,6 +786,7 @@ char * getParameterValue(char *paramName)
 	else
 	{
 		WalError("Failed to GetValue for %s\n", getParamList[0]);
+		OnboardLog("Failed to GetValue for %s\n", getParamList[0]);
 		WAL_FREE(paramValue);
 	}
 	
@@ -759,6 +802,7 @@ WDMP_STATUS setParameterValue(char *paramName, char* value, DATA_TYPE type)
 	WDMP_STATUS ret = WDMP_FAILURE;
 	param_t *parametervalArr = (param_t *) malloc(sizeof(param_t) * paramCount);
 	bool error = false;
+	int ccspStatus = 0;
 
 	parametervalArr[0].name = paramName;
 	parametervalArr[0].type = type;
@@ -766,7 +810,7 @@ WDMP_STATUS setParameterValue(char *paramName, char* value, DATA_TYPE type)
 	walStrncpy(paramValue, value,sizeof(paramValue));
 	parametervalArr[0].value = paramValue;
 
-	setValues(parametervalArr, paramCount, WEBPA_SET, NULL, NULL, &ret);
+	setValues(parametervalArr, paramCount, WEBPA_SET, NULL, NULL, &ret, &ccspStatus);
 
 	if (ret == WDMP_SUCCESS)
 	{
@@ -775,6 +819,7 @@ WDMP_STATUS setParameterValue(char *paramName, char* value, DATA_TYPE type)
 	else
 	{
 		WalError("Failed to SetValue for %s\n", parametervalArr[0].name);
+		OnboardLog("Failed to SetValue for %s\n", parametervalArr[0].name);
 	}
 
 	WAL_FREE(parametervalArr);
@@ -792,7 +837,7 @@ void macToLower(char macValue[],char macConverted[])
 	token[i] = strtok(tmp, ":");
 	if(token[i]!=NULL)
 	{
-	    strncat(macConverted, token[i],31);
+	    strncpy(macConverted, token[i],31);
 	    macConverted[31]='\0';
 	    i++;
 	}
@@ -982,6 +1027,7 @@ static void waitUntilSystemReady()
 				    if(total_wait_time >= 84)
 				    {
 					    WalInfo("Queried CR for system ready after waiting for 7 mins, it is still not ready. Proceeding ...\n");
+					    OnboardLog("Queried CR for system ready after waiting for 7 mins, it is still not ready. Proceeding ...\n");
 					    break;
 				    }
 			    }
@@ -1084,8 +1130,9 @@ static void checkComponentHealthStatus(char * compName, char * dbusPath, char *s
 	
 	sprintf(tmp,"%s.%s",compName, "Health");
 	parameterNames[0] = tmp;
-	      
+#if !defined(RDKB_EMU)
 	walStrncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
+#endif
 	snprintf(str, sizeof(str), "%s%s", l_Subsystem, compName);
 	WalPrint("str is:%s\n", str);
 		
@@ -1130,7 +1177,8 @@ static void checkComponentReady(char *compName, char *dbusPath)
 			
 			if(retrycount > 3)
 			{
-				WalError("Proceeding as component %s is not up even after retry\n", compName); 
+				WalError("Proceeding as component %s is not up even after retry\n", compName);
+				OnboardLog("Proceeding as component %s is not up even after retry\n", compName);
 			}
 		}
 	} 
@@ -1192,6 +1240,7 @@ static void retryFailedComponentCaching()
 					if(retryCount == WAL_COMPONENT_INIT_RETRY_COUNT)
 					{
 						WalError("Unable to get component for object %s\n", failedCompList[i]);
+						OnboardLog("Unable to get component for object %s\n", failedCompList[i]);
 					}
 					else
 					{
@@ -1238,6 +1287,7 @@ static void retryFailedComponentCaching()
 					if(retryCount == WAL_COMPONENT_INIT_RETRY_COUNT)
 					{
 						WalError("Unable to get component for object %s\n", failedSubCompList[i]);
+						OnboardLog("Unable to get component for object %s\n", failedSubCompList[i]);
 					}
 					else
 					{
@@ -1266,6 +1316,7 @@ WDMP_STATUS check_ethernet_wan_status()
         if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0))
         {
             WalInfo("Ethernet WAN is enabled\n");
+            OnboardLog("Ethernet WAN is enabled\n");
             eth_wan_status = TRUE;
             return WDMP_SUCCESS;
         }
@@ -1278,6 +1329,7 @@ WDMP_STATUS check_ethernet_wan_status()
         if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
         {
             WalInfo("Ethernet WAN is enabled\n");
+            OnboardLog("Ethernet WAN is enabled\n");
             eth_wan_status = TRUE;
             WAL_FREE(status);
             return WDMP_SUCCESS;

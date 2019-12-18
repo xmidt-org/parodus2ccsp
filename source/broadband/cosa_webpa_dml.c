@@ -10,6 +10,7 @@
 
 #define WEBPA_PARAM_VERSION                 "Device.X_RDKCENTRAL-COM_Webpa.Version"
 #define WEBPA_PARAM_PROTOCOL_VERSION        "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
+#define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
@@ -50,12 +51,14 @@ Webpa_SetParamStringValue
         #ifdef USE_NOTIFY_COMPONENT
 
                 WalPrint(" \n WebPA : Notification Received \n");
+                char *tmpStr, *notifyStr;
+                tmpStr = notifyStr = strdup(pString);
 
-                p_notify_param_name = strtok_r(pString, ",", &st);
-                p_write_id = strtok_r(NULL, ",", &st);
-                p_new_val = strtok_r(NULL, ",", &st);
-                p_old_val = strtok_r(NULL, ",", &st);
-                p_val_type = strtok_r(NULL, ",", &st);
+                p_notify_param_name = strsep(&notifyStr, ",");
+                p_write_id = strsep(&notifyStr,",");
+                p_new_val = strsep(&notifyStr,",");
+                p_old_val = strsep(&notifyStr,",");
+                p_val_type = strsep(&notifyStr, ",");
 
                 if(p_val_type !=NULL && p_write_id !=NULL)
                 {
@@ -69,6 +72,14 @@ Webpa_SetParamStringValue
                         WalPrint(" \n Notification : New Value = %s \n", p_new_val);
                         WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
 #endif
+
+			if(NULL != p_notify_param_name && (strcmp(p_notify_param_name, WiFi_FactoryResetRadioAndAp)== 0))
+			{
+				// sleep for 90s to delay the notification and give wifi time to reset and apply to driver
+				WalInfo("Delay wifi factory reset notification by 90s so that wifi is reset completely\n");
+				sleep(90);
+			}
+
                         param.parameterName = p_notify_param_name;
                         param.oldValue = p_old_val;
                         param.newValue = p_new_val;
@@ -81,7 +92,7 @@ Webpa_SetParamStringValue
                 {
                         WalError("Received insufficient data to process notification\n");
                 }
-
+                WAL_FREE(tmpStr);
         #endif
                 return TRUE;
         }    
@@ -367,6 +378,7 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
                     case 2:
                     {
                         WalError("%s parameter GET is not supported through webpa\n",parameterNames[i]);
+                        OnboardLog("%s parameter GET is not supported through webpa\n",parameterNames[i]);
                         *val = NULL;
                         *val_size = 0;
                         for(k=k-1;k>=0;k--)
@@ -386,6 +398,7 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
         if(matchFound == 0)
         {
             WalError("%s is invalid parameter\n",parameterNames[i]);
+            OnboardLog("%s is invalid parameter\n",parameterNames[i]);
             *val = NULL;
             *val_size = 0;
             for(k=k-1;k>=0;k--)
@@ -465,6 +478,7 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
             else
             {
                 WalError("%s parameter SET is not supported through webpa\n",val[i].parameterName);
+                OnboardLog("%s parameter SET is not supported through webpa\n",val[i].parameterName);
                 *faultParam = strdup(val[i].parameterName);
                 return CCSP_ERR_METHOD_NOT_SUPPORTED;
             }
@@ -472,6 +486,7 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
         else
         {
             WalError("%s is not writable\n",val[i].parameterName);
+            OnboardLog("%s is not writable\n",val[i].parameterName);
             *faultParam = strdup(val[i].parameterName);
             return CCSP_ERR_NOT_WRITABLE;
         }

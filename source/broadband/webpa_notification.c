@@ -54,9 +54,13 @@ static NotifyMsg *notifyMsgQ = NULL;
 void (*notifyCbFn)(NotifyData*) = NULL;
 static WebPaCfg webPaCfg;
 char deviceMAC[32]={'\0'};
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+char *g_systemReadyTime=NULL;
+#endif
 
 pthread_mutex_t mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t con=PTHREAD_COND_INITIALIZER;
+pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 const char * notifyparameters[]={
 "Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client",
@@ -73,12 +77,24 @@ const char * notifyparameters[]={
 "Device.WiFi.AccessPoint.10101.SSIDAdvertisementEnabled",
 "Device.WiFi.AccessPoint.10101.X_CISCO_COM_MACFilter.Enable",
 "Device.WiFi.AccessPoint.10101.X_CISCO_COM_MACFilter.FilterAsBlackList",
+"Device.WiFi.AccessPoint.10002.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10002.Security.X_COMCAST-COM_KeyPassphrase",
+"Device.WiFi.AccessPoint.10002.Security.KeyPassphrase",
+"Device.WiFi.AccessPoint.10002.Security.PreSharedKey",
+"Device.WiFi.AccessPoint.10102.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10102.Security.X_COMCAST-COM_KeyPassphrase",
+"Device.WiFi.AccessPoint.10102.Security.KeyPassphrase",
+"Device.WiFi.AccessPoint.10102.Security.PreSharedKey",
 "Device.WiFi.Radio.10000.Enable",
 "Device.WiFi.Radio.10100.Enable",
 "Device.WiFi.SSID.10001.Enable",
 "Device.WiFi.SSID.10001.SSID",
 "Device.WiFi.SSID.10101.Enable",
 "Device.WiFi.SSID.10101.SSID",
+"Device.WiFi.SSID.10002.Enable",
+"Device.WiFi.SSID.10002.SSID",
+"Device.WiFi.SSID.10102.Enable",
+"Device.WiFi.SSID.10102.SSID",
 "Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode",
 "Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequests",
 "Device.X_CISCO_COM_Security.Firewall.FilterHTTP",
@@ -101,9 +117,13 @@ const char * notifyparameters[]={
 "Device.NAT.X_Comcast_com_EnablePortMapping",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PrivacyProtection.Enable",
+"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
 "Device.MoCA.Interface.1.Enable",
+"Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
+"Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
 /* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"
@@ -112,7 +132,6 @@ const char * notifyparameters[]={
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 void loadCfgFile();
-static void getDeviceMac();
 static int writeToJson(char *data);
 static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID);
 static void *notifyTask(void *status);
@@ -157,7 +176,12 @@ void initNotifyTask(int status)
 	}
 }
 
-
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+char *get_global_systemReadyTime()
+{
+	return g_systemReadyTime;
+}
+#endif
 void FactoryResetCloudSyncTask()
 {
 	int err = 0;
@@ -181,7 +205,7 @@ void *FactoryResetCloudSync()
 	int retryCount = 0;
 	int status = 0;
 	int backoffRetryTime = 0;
-	int c=2;
+	int c=120;
 
 	while(FOREVER())
 	{
@@ -194,7 +218,7 @@ void *FactoryResetCloudSync()
 			}
 			else
 			{
-				backoffRetryTime = (int) pow(2, c) -1;
+				backoffRetryTime = (int) (1 << retryCount)*c+1;
 				//wait for backoff delay for retransmission
 				WalInfo("Wait for backoffRetryTime %d sec for retransmission\n", backoffRetryTime);
 				sleep(backoffRetryTime);
@@ -222,7 +246,6 @@ void *FactoryResetCloudSync()
 					memset(notifyData,0,sizeof(NotifyData));
 						notifyData->type = FACTORY_RESET;
 					processNotification(notifyData);
-					c++;
 					retryCount++;
 				}
 				else
@@ -353,7 +376,11 @@ void processDeviceManageableNotification()
     snprintf(systemReadyTime,sizeof(systemReadyTime),"%d",(int)cTime.tv_sec);
     WalInfo("systemReadyTime is %s\n",systemReadyTime);
 
-    ret = setParameterValue("Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification", systemReadyTime, WDMP_STRING);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+	//To access systemReadyTime in webConfig through getter function.
+	g_systemReadyTime = strdup(systemReadyTime);
+#endif
+	ret = setParameterValue("Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification", systemReadyTime, WDMP_STRING);
     if(ret == WDMP_SUCCESS)
     {
         WalInfo("Device manageable notification processed\n");
@@ -659,7 +686,14 @@ static void *notifyTask(void *status)
 	return NULL;
 }
 
-static void getDeviceMac()
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+char* get_global_deviceMAC()
+{
+    return deviceMAC;
+}
+#endif
+
+void getDeviceMac()
 {
     char *macID = NULL;
     char deviceMACValue[32] = { '\0' };
@@ -671,6 +705,7 @@ static void getDeviceMac()
     {
         do
         {
+	    pthread_mutex_lock(&device_mac_mutex);
             backoffRetryTime = (int) pow(2, c) -1;
 #ifdef RDKB_BUILD
             token_t  token;
@@ -695,11 +730,17 @@ static void getDeviceMac()
             if(strlen(deviceMAC) == 0)
             {
                 WalError("Failed to GetValue for MAC. Retrying...\n");
+		pthread_mutex_unlock(&device_mac_mutex);
                 WalInfo("backoffRetryTime %d seconds\n", backoffRetryTime);
                 sleep(backoffRetryTime);
                 c++;
                 retryCount++;
             }
+	    else
+	    {
+		pthread_mutex_unlock(&device_mac_mutex);
+		break;
+	    }
         }while((retryCount >= 1) && (retryCount <= 5));
     }
 }
@@ -981,6 +1022,7 @@ void processNotification(NotifyData *notifyData)
 	        		}
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
+				OnboardLog("%s/%d/%s\n",dest,cmc,cid);
 	        	}
 	        		break;
 
@@ -1000,7 +1042,7 @@ void processNotification(NotifyData *notifyData)
 	        		WalPrint("Framing notifyPayload for Factory reset\n");
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
-					cJSON_AddStringToObject(notifyPayload, "reboot_reason", reboot_reason);
+				cJSON_AddStringToObject(notifyPayload, "reboot_reason", (NULL != reboot_reason) ? reboot_reason : "NULL");
 	        	}
 	        		break;
 
@@ -1020,6 +1062,7 @@ void processNotification(NotifyData *notifyData)
 	        			WalPrint("Framing notifyPayload for Firmware upgrade\n");
 	        			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        			cJSON_AddStringToObject(notifyPayload, "cid", cid);
+					OnboardLog("FIRMWARE_UPGRADE/%d/%s\n",cmc,cid);
 	        		}
 	        			break;
 
@@ -1070,6 +1113,7 @@ void processNotification(NotifyData *notifyData)
 	        			free(dest);
 	        			return;
 	        		}
+				OnboardLog("%s/%s\n",dest,notifyData->u.status->transId);
 	        	}
 	        		break;
 
@@ -1080,6 +1124,7 @@ void processNotification(NotifyData *notifyData)
                                 {
                                         reason = (char *)malloc(sizeof(char)*MAX_REASON_LENGTH);
 				        mapComponentStatusToGetReason(notifyData->u.device->status, reason);
+				                        OnboardLog("%s\n",reason);
                                         snprintf(dest, WEBPA_NOTIFY_EVENT_MAX_LENGTH, "event:device-status/%s/non-operational/%s/%s", device_id,(NULL != strBootTime)?strBootTime:"unknown",reason);
                                         cJSON_AddStringToObject(notifyPayload, "status", "non-operational");
                                         cJSON_AddStringToObject(notifyPayload, "reason", reason);
@@ -1096,6 +1141,7 @@ void processNotification(NotifyData *notifyData)
 				{
 					WAL_FREE(strBootTime);
 				}
+				OnboardLog("%s\n",dest);
 			}
 	        		break;
 
@@ -1250,6 +1296,7 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 					else
 					{
 						WalError("Error setting CMC value for factory reset\n");
+						OnboardLog("Error setting CMC value for factory reset\n");
 					}
 				}
 				else
@@ -1327,6 +1374,7 @@ static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, 
 		{
 			WAL_FREE(dbCID);
 			WalError("Error setting CMC value for firmware upgrade\n");
+			OnboardLog("Error setting CMC value for firmware upgrade\n");
 		}
 	}
 	else

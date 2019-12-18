@@ -32,6 +32,11 @@ extern int numLoops;
 #define WalError(...)                   cimplog_error(LOGGING_MODULE, __VA_ARGS__)
 #define WalInfo(...)                    cimplog_info(LOGGING_MODULE, __VA_ARGS__)
 #define WalPrint(...)                   cimplog_debug(LOGGING_MODULE, __VA_ARGS__)
+#ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
+#define OnboardLog(...)                 onboarding_log(LOGGING_MODULE, __VA_ARGS__)
+#else
+#define OnboardLog(...)
+#endif
 
 /**
  * @brief Set operations supported by WebPA.
@@ -132,8 +137,9 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
  * @param[in] setType Flag to specify the type of set operation.
  * @param[out] timeSpan timing_values for each component. 
  * @param[out] retStatus Returns status
+ * @param[out] ccspStatus Returns ccsp set status
  */
-void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType, char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus);
+void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType, char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus, int *ccspStatus);
 
 /**
  * @brief setAttributes Returns the status of parameter from stack for SET-ATTRIBUTES request

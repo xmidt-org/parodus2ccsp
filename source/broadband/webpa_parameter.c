@@ -8,9 +8,12 @@
 
 #include <pthread.h>
 
-#include "webpa_internal.h"
 #include "webpa_notification.h"
-
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#include "cosa_webconfig_internal.h"
+#else
+#include "webpa_internal.h"
+#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -101,6 +104,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
             {
                 ret = CCSP_ERR_WIFI_BUSY;
                 WalError("WiFi component is busy\n");
+                OnboardLog("WiFi component is busy\n");
                 break;
             }
             WalPrint("index: %d startIndex: %d\n",index, startIndex);
@@ -120,6 +124,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
             if(ret != CCSP_SUCCESS)
             {
                 WalError("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",cnt1,ParamGroup[cnt1].comp_name,ret);
+                OnboardLog("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",cnt1,ParamGroup[cnt1].comp_name,ret);
                 break;
             }
             totalParams = totalParams + retCount;
@@ -131,7 +136,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
     free_ParamCompList(ParamGroup, compCount);		
 }
 
-void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType,char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
+void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType,char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus, int *ccspRetStatus)
 {
         int cnt = 0, ret = 0, cnt1 =0, i = 0, count = 0, error = 0, compCount = 0, cnt2= 0, j = 0;
         int index = 0,retCount = 0,checkSetstatus = 0,rev=0,indexWifi= -1,getFlag=0;
@@ -190,6 +195,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                         {
                                 ret = CCSP_ERR_WIFI_BUSY;
                                 WalError("WiFi component is busy\n");
+                                OnboardLog("WiFi component is busy\n");
                                 getFlag = 1;
                                 break;
                         }
@@ -201,6 +207,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                         if(ret != CCSP_SUCCESS)
                         {
                                 WalError("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",i,ParamGroup[i].comp_name,ret);
+                                OnboardLog("Get Atomic Values call failed for ParamGroup[%d]->comp_name :%s ret: %d\n",i,ParamGroup[i].comp_name,ret);
                                 getFlag = 1;
 
                                 for(cnt1=index-1;cnt1>=0;cnt1--)
@@ -259,6 +266,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                 {
                                         ret = CCSP_ERR_WIFI_BUSY;
                                         WalError("WiFi component is busy\n");
+                                        OnboardLog("WiFi component is busy\n");
                                         break;
                                 }			
 
@@ -358,6 +366,8 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
         WalPrint("------ Free for ParamGroup ------\n");
         free_ParamCompList(ParamGroup, compCount);
         
+	*ccspRetStatus = ret;
+	WalInfo("ccspRetStatus is %d\n", *ccspRetStatus);
         *retStatus = mapStatus(ret);
 
         WalPrint("=============== End of setValues =============\n");
@@ -420,12 +430,14 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
             if(strstr(parameterNamesLocal[cnt], PARAM_RADIO_OBJECT) != NULL)
             {
                 ret = CCSP_ERR_INVALID_RADIO_INDEX;
-                WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret); 
+                WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret);
+                OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret);
             }
             else
             {
                 ret = CCSP_ERR_INVALID_WIFI_INDEX;
                 WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
+                OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
             }
             error = 1;
             break;
@@ -439,7 +451,16 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
         WalInfo("CompName = %s, dbusPath : %s, paramCount = %d\n", CompName, dbusPath, paramCount);
         if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
         {
-            ret = getWebpaParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+			if(strstr(parameterNamesLocal[0],RDKB_PARAM_WEBCONFIG) != NULL)
+			{
+				ret = getWebConfigParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
+			}
+			else
+#endif
+			{
+            	ret = getWebpaParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
+			}
         }
         else
         {
@@ -449,6 +470,7 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
         if (ret != CCSP_SUCCESS)
         {
             WalError("Error:Failed to GetValue for parameters ret: %d\n", ret);
+            OnboardLog("Error:Failed to GetValue for parameters ret: %d\n", ret);
         }
         else
         {
@@ -648,12 +670,14 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
                         if(strstr(paramName, PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret); 
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
 		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
 		 	}
 			free_set_param_values_memory(val,paramCount,faultParam);
                         return ret;
@@ -678,7 +702,16 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
 
         if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
         {
-            ret = setWebpaParameterValues(val, paramCount,&faultParam);
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+			if(strstr(val[0].parameterName, RDKB_PARAM_WEBCONFIG) != NULL)
+			{
+				ret = setWebConfigParameterValues(val, paramCount,&faultParam, transactionId);
+			}
+			else
+#endif
+			{
+            	ret = setWebpaParameterValues(val, paramCount,&faultParam);
+			}
         }
         else
         {
@@ -844,6 +877,7 @@ static void *applyWiFiSettingsTask()
 			if ((ret != CCSP_SUCCESS) && (faultParam != NULL))
 			{
 				WalError("Failed to Set Apply Settings\n");
+				OnboardLog("Failed to Set Apply Settings\n");
 				WAL_FREE(faultParam);
 			}	
 			

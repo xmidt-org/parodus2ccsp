@@ -51,12 +51,14 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
         if(strstr(paramName, PARAM_RADIO_OBJECT) != NULL)
         {
             ret = CCSP_ERR_INVALID_RADIO_INDEX;
-            WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret); 
+            WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
+            OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
         }
         else
         {
             ret = CCSP_ERR_INVALID_WIFI_INDEX;
             WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
+            OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
         }
     }
     else
@@ -214,6 +216,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
     else
     {
         WalError("Parameter name %s is not supported. ret = %d\n", objectName, ret);
+        OnboardLog("Parameter name %s is not supported. ret = %d\n", objectName, ret);
         free_componentStruct_t(bus_handle, size, ppComponents);
         return ret;
     }
@@ -268,6 +271,7 @@ static int addNewData(char *objectName,TableData * list,int paramcount)
         if(addRet != WDMP_SUCCESS)
         {
             WalError("Failed to add/update row to %s table, addRet : %d, hence deleting the already added rows\n", objectName, addRet);
+            OnboardLog("Failed to add/update row to %s table, addRet : %d, hence deleting the already added rows\n", objectName, addRet);
             for(i= cnt-1; i >= 0; i--)
             {
                 strncpy(paramName,retObject[i],sizeof(paramName));
@@ -408,8 +412,8 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
             cnt1 = cnt * writableParamCount;
             for(; cnt1 < paramCount; cnt1++)
             {
-                if(strstr(parameterval[cnt1]->parameterName,(*rowList)[cnt]) != NULL &&
-                strstr(parameterval[cnt1]->parameterName,writableList[i]) != NULL)
+                if(strstr(parameterval[cnt1]->parameterName,(*rowList)[cnt]) != NULL && (writableList[i] != NULL &&
+                strstr(parameterval[cnt1]->parameterName,writableList[i]) != NULL))
                 {
                     WalPrint("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt1,parameterval[cnt1]->parameterName,cnt1,parameterval[cnt1]->parameterValue);
                     (*getList)[cnt].names[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
@@ -419,6 +423,10 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
                     strcpy((*getList)[cnt].values[i],parameterval[cnt1]->parameterValue);
                     WalPrint("(*getList)[%d].values[%d] : %s\n",cnt, i, (*getList)[cnt].values[i]);
                     i++;
+		    if( i == writableParamCount)
+		    {
+			break;
+		    }
                 }
             }
         }
@@ -513,6 +521,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
     else
     {
         WalError("Parameter name %s is not supported. ret = %d\n", paramName, ret);
+        OnboardLog("Parameter name %s is not supported. ret = %d\n", paramName, ret);
         free_componentStruct_t(bus_handle, size, ppComponents);
     }
     WalPrint("==================== End of getWritableParams ==================\n");

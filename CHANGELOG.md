@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Modified logic to increase factory reset notification retransmission interval.  
+- Added support for Webconfig feature to fetch config from cloud, process and apply settings
 - Avoid repeated factory reset notification when cmc is 512
 - Removed "Device.TR069Notify" parameter from component caching
 - Removed turn on notification for 'Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client' parameter when mesh/plume or cujo is enabled
@@ -33,6 +35,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - log length >4MB
 - External dependencies dbus & ccsp-commom-library are added
 - switched to nanomsg version 1.1.4, also libparodus with nanomsg 1.1.4
+- Fix crash in parodus_receive function
 
 ## [0.0.1] - 2017-06-15
 ### Added

@@ -67,6 +67,11 @@
 
 #include "plugin_main_apis.h"
 #include "cosa_webpa_apis.h"
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#include "cosa_webconfig_apis.h"
+#include "webconfig_log.h"
+#endif
+#include "webpa_adapter.h"
 
 ANSC_HANDLE                        g_MessageBusHandle;
 
@@ -119,7 +124,6 @@ CosaBackEndManagerCreate
     pMyObject->Initialize        = CosaBackEndManagerInitialize;
 printf("-- %s %d\n", __func__, __LINE__);
     CcspTraceWarning(("RDKB_SYSTEM_BOOT_UP_LOG : Entering %s %d\n", __func__, __LINE__));
-    /*pMyObject->Initialize   ((ANSC_HANDLE)pMyObject);*/
 
     return  (ANSC_HANDLE)pMyObject;
 }
@@ -162,6 +166,10 @@ CosaBackEndManagerInitialize
     /* Create all object */
     pMyObject->hWebpa           = (ANSC_HANDLE)CosaWebpaCreate();
     AnscTraceWarning(("  CosaWebpaCreate done!\n"));
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+    pMyObject->hWebConfig  = (ANSC_HANDLE)CosaWebConfigCreate();
+    AnscTraceWarning(("  CosaWebConfigCreate done!\n"));
+#endif
 
     return returnStatus;
 }
@@ -205,6 +213,13 @@ CosaBackEndManagerRemove
     {
         CosaWebpaRemove((ANSC_HANDLE)pMyObject->hWebpa);
     }
+
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+    if ( pMyObject->hWebConfig )
+    {
+        CosaWebConfigRemove((ANSC_HANDLE)pMyObject->hWebConfig);
+    }
+#endif
 
     /* Remove self */
     AnscFreeMemory((ANSC_HANDLE)pMyObject);

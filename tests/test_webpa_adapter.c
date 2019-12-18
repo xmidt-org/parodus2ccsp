@@ -56,9 +56,9 @@ void getAttributes(const char *paramName[], const unsigned int paramCount, money
     function_called();
 }
 
-void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType, char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus)
+void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType, char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus, int *ccspStatus)
 {
-    UNUSED(paramVal); UNUSED(paramCount); UNUSED(setType); UNUSED(transactionId); UNUSED(timeSpan); UNUSED(retStatus);
+    UNUSED(paramVal); UNUSED(paramCount); UNUSED(setType); UNUSED(transactionId); UNUSED(timeSpan); UNUSED(retStatus); UNUSED(ccspStatus);
     function_called();
 }
 

@@ -29,7 +29,6 @@
 /*----------------------------------------------------------------------------*/
 static WDMP_STATUS validate_cmc_and_cid(test_set_req_t *testSetReq, char *dbCMC, char *dbCID);
 static WDMP_STATUS set_cmc_and_cid(char *dbCMC, char *cid, int isNew);
-static WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
 static WDMP_STATUS validate_table_object(table_req_t *tableObj);
 static void setRebootReason(param_t param, WEBPA_SET_TYPE setType);
 
@@ -45,6 +44,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         char *payload = NULL;
         WDMP_STATUS ret = WDMP_FAILURE, setRet = WDMP_FAILURE;
         int paramCount = 0, i = 0, wildcardParamCount = 0,nonWildcardParamCount = 0, retCount=0, index = 0, error = 0;
+	int ccspStatus = 0;
         const char *getParamList[MAX_PARAMETERNAME_LEN];
         const char *wildcardGetParamList[MAX_PARAMETERNAME_LEN];
         WDMP_STATUS setCidStatus = WDMP_SUCCESS, setCmcStatus = WDMP_SUCCESS;
@@ -58,6 +58,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         
         wdmp_parse_request(reqPayload,&reqObj);
         WalInfo("transactionId in request: %s\n",transactionId);
+        OnboardLog("%s\n",transactionId);
         
         if(reqObj != NULL)
         {
@@ -235,7 +236,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 {
                                         if(reqObj->reqType == SET)
                                         {
-                                                setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, transactionId, resObj->timeSpan, &ret);
+                                                setValues(reqObj->u.setReq->param, paramCount, WEBPA_SET, transactionId, resObj->timeSpan, &ret, &ccspStatus);
                                         }
                                         else
                                         {
@@ -284,6 +285,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 resObj->u.paramRes->params = NULL;
                                 
                                 WalInfo("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
+                                OnboardLog("Request:> newCid: %s oldCid: %s syncCmc: %s\n",reqObj->u.testSetReq->newCid, reqObj->u.testSetReq->oldCid, reqObj->u.testSetReq->syncCmc);
                                 // Get CMC from device database
 	                        dbCMC = getParameterValue(PARAM_CMC);
 				WalInfo("dbCMC : %s\n",(NULL != dbCMC) ? dbCMC: "NULL" );
@@ -315,7 +317,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                         WalPrint("ret : %d\n",ret);
                                                         if(ret == WDMP_SUCCESS)
 	                                                {
-	                                                        setValues(reqObj->u.setReq->param, paramCount, WEBPA_ATOMIC_SET_XPC, transactionId, resObj->timeSpan, &ret);
+	                                                        setValues(reqObj->u.setReq->param, paramCount, WEBPA_ATOMIC_SET_XPC, transactionId, resObj->timeSpan, &ret, &ccspStatus);
 	                                                        WalPrint("SPV ret : %d\n",ret);
 	                                                        if(ret == WDMP_SUCCESS)
 	                                                        {
@@ -577,7 +579,7 @@ static WDMP_STATUS set_cmc_and_cid(char *dbCMC, char *cid, int isNew)
  * @param[in] param arry if parameters
  * @param[in] paramCount input cid
  */
-static WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type)
+WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type)
 {
         int i = 0;
         WalPrint("------------ validate_parameter ----------\n");
@@ -661,6 +663,7 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 	
 	WDMP_STATUS retReason = WDMP_FAILURE;
 	param_t *rebootParam = NULL;
+	int ccspStatus = 0;
 	// Detect device reboot through WEBPA and log message for device reboot through webpa
 	if(param.name != NULL && strcmp(param.name, WEBPA_DEVICE_REBOOT_PARAM) == 0 && param.value != NULL && strcmp(param.value, WEBPA_DEVICE_REBOOT_VALUE) == 0)
 	{
@@ -669,11 +672,12 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 		// Using printf to log message to ArmConsolelog.txt.0 on XB3
 		printf("RDKB_REBOOT : Reboot triggered through WEBPA\n");
 		WalInfo("RDKB_REBOOT : Reboot triggered through WEBPA\n");
+		OnboardLog("RDKB_REBOOT : Reboot triggered through WEBPA\n");
 		rebootParam[0].name = "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason";
 		rebootParam[0].value = "webpa-reboot";
 		rebootParam[0].type = WDMP_STRING;
 
-		setValues(rebootParam, 1, setType, NULL, NULL, &retReason);
+		setValues(rebootParam, 1, setType, NULL, NULL, &retReason, &ccspStatus);
 
 		if(retReason != WDMP_SUCCESS)
 		{

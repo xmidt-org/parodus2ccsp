@@ -24,8 +24,14 @@
 #define MAX_PATHNAME_CR_LEN			64
 #define CCSP_COMPONENT_ID_WebPA			0x0000000A
 #define CCSP_COMPONENT_ID_XPC			0x0000000B
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+#define RDKB_PARAM_WEBCONFIG	"Device.X_RDK_WebConfig."
+#define RDKB_TR181_OBJECT_LEVEL1_COUNT	        46
+#define RDKB_TR181_OBJECT_LEVEL2_COUNT	        19
+#else
 #define RDKB_TR181_OBJECT_LEVEL1_COUNT	        45
 #define RDKB_TR181_OBJECT_LEVEL2_COUNT	        18
+#endif
 #define WAL_COMPONENT_INIT_RETRY_COUNT          4
 #define WAL_COMPONENT_INIT_RETRY_INTERVAL       10
 #define CCSP_ERR_WIFI_BUSY			503
@@ -223,8 +229,35 @@ void macToLower(char macValue[],char macConverted[]);
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
 
+/**
+ * @brief validate_parameter validates parameter values
+ *
+ * @param[in] param arry if parameters
+ * @param[in] paramCount input cid
+ */
+WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
+
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+/*
+ * @brief webConfig getter function to get systemReadyTime from webpa
+ * @return systemReadyTime in UTC format.
+ */
+char *get_global_systemReadyTime();
+
+/*
+ * @brief webConfig getter function to get deviceMAC
+ * @return MAC value.
+ */
+char* get_global_deviceMAC();
+/*
+ * @brief To initiate webConfig Task handling
+ */
+void initWebConfigTask();
+#endif
 BOOL get_eth_wan_status();
 
 WDMP_STATUS check_ethernet_wan_status();
 
 void processDeviceManageableNotification();
+
+void getDeviceMac();
