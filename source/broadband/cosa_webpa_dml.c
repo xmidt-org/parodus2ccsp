@@ -263,6 +263,7 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
     paramVal = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t *)*paramCount);
     int i=0, j=0, k=0, isWildcard = 0, matchFound = 0;
     int localCount = paramCount;
+    char tmpchar[128] = { 0 };
     WalPrint("*********** %s ***************\n",__FUNCTION__);
 
     PCOSA_DATAMODEL_WEBPA       hWebpa    = (PCOSA_DATAMODEL_WEBPA)g_pCosaBEManager->hWebpa;
@@ -297,7 +298,11 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
                             {
                                 paramVal[k]->parameterName = strndup(PARAM_CMC, MAX_PARAMETERNAME_LEN);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
-                                WalPrint("pWebpaCfg->X_COMCAST_COM_CMC is %d\n",pWebpaCfg->X_COMCAST_COM_CMC);
+				if(pWebpaCfg->X_COMCAST_COM_CMC == 0)
+				{
+					CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_CMC", tmpchar );
+					pWebpaCfg->X_COMCAST_COM_CMC = atoi(tmpchar);
+				}
                                 snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebpaCfg->X_COMCAST_COM_CMC);
                                 paramVal[k]->type = ccsp_unsignedInt;
                                 k++;
@@ -305,7 +310,11 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
                             else if(strcmp(parameterNames[i], PARAM_CID) == 0)
                             {
                                 paramVal[k]->parameterName = strndup(PARAM_CID, MAX_PARAMETERNAME_LEN);
-                                WalPrint("pWebpaCfg->X_COMCAST_COM_CID is %s\n",pWebpaCfg->X_COMCAST_COM_CID);
+				if((strlen(pWebpaCfg->X_COMCAST_COM_CID) == 0) || (strcmp(pWebpaCfg->X_COMCAST_COM_CID, "0") == 0))
+				{
+					WalPrint("CID is empty or 0, get value from DB\n");
+					CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_CID", pWebpaCfg->X_COMCAST_COM_CID );
+				}
                                 paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_CID,MAX_PARAMETERVALUE_LEN);
                                 paramVal[k]->type = ccsp_string;
                                 k++;
@@ -313,7 +322,10 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
                             else if(strcmp(parameterNames[i], WEBPA_PARAM_PROTOCOL_VERSION) == 0)
                             {
                                 paramVal[k]->parameterName = strndup(WEBPA_PARAM_PROTOCOL_VERSION, MAX_PARAMETERNAME_LEN);
-                                WalPrint("pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion is %s\n",pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion);
+				if((strlen(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion) == 0) || (strcmp(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion, "0") == 0))
+				{
+					CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_SyncProtocolVersion", pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion );
+				}
                                 paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion,MAX_PARAMETERVALUE_LEN);
                                 paramVal[k]->type = ccsp_string;
                                 k++;
@@ -333,19 +345,31 @@ int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size
                                 paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(PARAM_CMC, MAX_PARAMETERNAME_LEN);
                                 paramVal[k]->parameterValue = (char *)malloc(sizeof(char)*MAX_PARAMETERVALUE_LEN);
-                                WalPrint("pWebpaCfg->X_COMCAST_COM_CMC is %d\n",pWebpaCfg->X_COMCAST_COM_CMC);
+				if(pWebpaCfg->X_COMCAST_COM_CMC == 0)
+				{
+					CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_CMC", tmpchar );
+					pWebpaCfg->X_COMCAST_COM_CMC = atoi(tmpchar);
+
+				}
                                 snprintf(paramVal[k]->parameterValue,MAX_PARAMETERVALUE_LEN,"%d",pWebpaCfg->X_COMCAST_COM_CMC);
                                 paramVal[k]->type = ccsp_unsignedInt;
                                 k++;
                                 paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(PARAM_CID, MAX_PARAMETERNAME_LEN);
-                                WalPrint("pWebpaCfg->X_COMCAST_COM_CID is %s\n",pWebpaCfg->X_COMCAST_COM_CID);
+				if((strlen(pWebpaCfg->X_COMCAST_COM_CID) == 0) || (strcmp(pWebpaCfg->X_COMCAST_COM_CID, "0") == 0))
+				{
+					WalPrint("CID is empty or 0, get value from DB\n");
+					CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_CID", pWebpaCfg->X_COMCAST_COM_CID );
+				}
                                 paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_CID,MAX_PARAMETERVALUE_LEN);
                                 paramVal[k]->type = ccsp_string;
                                 k++;
                                 paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(WEBPA_PARAM_PROTOCOL_VERSION, MAX_PARAMETERNAME_LEN);
-                                WalPrint("pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion is %s\n",pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion);
+				if((strlen(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion) == 0) || (strcmp(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion, "0") == 0)) 
+				{
+					CosaDmlWEBPA_GetValueFromDB( "X_COMCAST-COM_SyncProtocolVersion",pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion );
+				}
                                 paramVal[k]->parameterValue = strndup(pWebpaCfg->X_COMCAST_COM_SyncProtocolVersion,MAX_PARAMETERVALUE_LEN);
                                 paramVal[k]->type = ccsp_string;
                                 k++;
