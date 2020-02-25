@@ -253,6 +253,7 @@ char* get_global_deviceMAC();
  * @brief To initiate webConfig Task handling
  */
 void initWebConfigTask();
+void initWebConfigMultipartTask();
 #endif
 BOOL get_eth_wan_status();
 

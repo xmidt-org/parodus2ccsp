@@ -255,8 +255,10 @@ static void *WALInit(void *status)
 #endif
 	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
 	{
-	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigTask\n");
-	    initWebConfigTask((int)status);
+	    //WebConfigLog("WebConfig Rfc is enabled, starting WebConfigTask\n");
+	    //initWebConfigTask((int)status);
+	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigMultipartTask\n");
+	    initWebConfigMultipartTask();
 	}
 	else
 	{

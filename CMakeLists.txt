@@ -41,6 +41,7 @@ include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/trower-base64
                     ${INCLUDE_DIR}/wrp-c
                     ${INCLUDE_DIR}/wdmp-c
+		    ${INCLUDE_DIR}/webcfg
                     ${INCLUDE_DIR}/libparodus
                     ${INCLUDE_DIR}/cimplog
                     ${LIBRARY_DIR}/dbus-1.0/include
@@ -134,6 +135,18 @@ ExternalProject_Add(wdmp-c
 )
 add_library(libwdmp-c STATIC SHARED IMPORTED)
 add_dependencies(libwdmp-c wdmp-c)
+
+# webcfg external dependency
+#-------------------------------------------------------------------------------
+ExternalProject_Add(webcfg
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/webcfg
+    GIT_REPOSITORY https://github.com/Comcast/webcfg.git
+    GIT_TAG "c227bfa1e129404f21fa0272f411c7a472a0f237"
+    CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
+                  -DBUILD_TESTING=OFF
+)
+add_library(libwebcfg STATIC SHARED IMPORTED)
+add_dependencies(libwebcfg webcfg)
 
 if (FEATURE_SUPPORT_WEBCONFIG)
 # curl external dependency
