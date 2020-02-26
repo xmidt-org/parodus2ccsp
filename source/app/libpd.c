@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include "libpd.h"
 #include "webpa_adapter.h"
+#include <webcfg_generic.h>
 
 #define CONTENT_TYPE_JSON       "application/json"
 #define DEVICE_PROPS_FILE   "/etc/device.properties"

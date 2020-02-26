@@ -17,7 +17,7 @@
 #include "ccsp_base_api.h"
 #include "webconfig_log.h"
 #include "cosa_webconfig_apis.h"
-
+#include <webcfg_generic.h>
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/

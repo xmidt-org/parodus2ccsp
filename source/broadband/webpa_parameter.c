@@ -14,6 +14,7 @@
 #else
 #include "webpa_internal.h"
 #endif
+#include <webcfg_generic.h>
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -136,7 +137,7 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
     free_ParamCompList(ParamGroup, compCount);		
 }
 
-void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType,char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus, int *ccspRetStatus)
+void setValues(const param_t paramVal[], const unsigned int paramCount, const int setType,char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus, int *ccspRetStatus)
 {
         int cnt = 0, ret = 0, cnt1 =0, i = 0, count = 0, error = 0, compCount = 0, cnt2= 0, j = 0;
         int index = 0,retCount = 0,checkSetstatus = 0,rev=0,indexWifi= -1,getFlag=0;
@@ -279,7 +280,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                 else
                                 {
                                         WalPrint("ParamGroup[%d].comp_name : %s\n",i,ParamGroup[i].comp_name);
-                                        ret = setParamValues(val[i], ParamGroup[i].comp_name,ParamGroup[i].dbus_path,ParamGroup[i].parameterCount, setType, transactionId);
+                                        ret = setParamValues(val[i], ParamGroup[i].comp_name,ParamGroup[i].dbus_path,ParamGroup[i].parameterCount, (WEBPA_SET_TYPE)setType, transactionId);
                                         WalPrint("ret : %d\n",ret);
                                         if(ret != CCSP_SUCCESS)
                                         {
@@ -293,7 +294,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                                         if(indexWifi != rev)
                                                         {
                                                                 WalPrint("ParamGroup[%d].comp_name : %s\n",rev,ParamGroup[rev].comp_name);
-                                                                checkSetstatus = setParamValues(rollbackVal[rev],ParamGroup[rev].comp_name,ParamGroup[rev].dbus_path, ParamGroup[rev].parameterCount, setType, transactionId);
+                                                                checkSetstatus = setParamValues(rollbackVal[rev],ParamGroup[rev].comp_name,ParamGroup[rev].dbus_path, ParamGroup[rev].parameterCount, (WEBPA_SET_TYPE)setType, transactionId);
                                                                 WalPrint("checkSetstatus is : %d\n",checkSetstatus);
                                                                 if(checkSetstatus != CCSP_SUCCESS)
                                                                 {
@@ -316,7 +317,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                         {
                                 WalPrint("Wifi SET at end\n");
                                 WalPrint("ParamGroup[%d].comp_name : %s\n",indexWifi,ParamGroup[indexWifi].comp_name);
-                                ret = setParamValues(val[indexWifi], ParamGroup[indexWifi].comp_name,ParamGroup[indexWifi].dbus_path, ParamGroup[indexWifi].parameterCount, setType, transactionId);
+                                ret = setParamValues(val[indexWifi], ParamGroup[indexWifi].comp_name,ParamGroup[indexWifi].dbus_path, ParamGroup[indexWifi].parameterCount, (WEBPA_SET_TYPE)setType, transactionId);
                                 if(ret != CCSP_SUCCESS)
                                 {
                                         WalError("Failed atomic set for WIFI hence rollbacking the changes. ret :%d and i is %d\n",ret,i);
@@ -329,7 +330,7 @@ void setValues(const param_t paramVal[], const unsigned int paramCount, const WE
                                                 if(indexWifi != rev)
                                                 {
                                                         WalPrint("ParamGroup[%d].comp_name : %s\n",rev,ParamGroup[rev].comp_name);
-                                                        checkSetstatus = setParamValues(rollbackVal[rev], ParamGroup[rev].comp_name,ParamGroup[rev].dbus_path, ParamGroup[rev].parameterCount, setType, transactionId);	
+                                                        checkSetstatus = setParamValues(rollbackVal[rev], ParamGroup[rev].comp_name,ParamGroup[rev].dbus_path, ParamGroup[rev].parameterCount, (WEBPA_SET_TYPE)setType, transactionId);	
                                                         WalPrint("checkSetstatus is: %d\n",checkSetstatus);
                                                         if(checkSetstatus != CCSP_SUCCESS)
                                                         {
