@@ -257,8 +257,9 @@ static void *WALInit(void *status)
 	{
 	    //WebConfigLog("WebConfig Rfc is enabled, starting WebConfigTask\n");
 	    //initWebConfigTask((int)status);
-	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigMultipartTask..\n");
+	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigMultipartTask\n");
 	    initWebConfigMultipartTask();
+	    WebConfigLog("After WebConfigMultipartTask\n");
 	}
 	else
 	{

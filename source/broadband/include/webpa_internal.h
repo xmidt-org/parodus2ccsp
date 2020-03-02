@@ -253,7 +253,7 @@ WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
  * @brief To initiate webConfig Task handling
  */
 void initWebConfigTask();
-void initWebConfigMultipartTask();
+//void initWebConfigMultipartTask();
 #endif
 BOOL get_eth_wan_status();
 
