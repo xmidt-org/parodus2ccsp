@@ -27,6 +27,7 @@
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_CONFIGFILE_ENTRIES  "Device.X_RDK_WebConfig.ConfigFileNumberOfEntries"
 #define WEBCONFIG_PARAM_PERIODIC_INTERVAL   "Device.X_RDK_WebConfig.PeriodicSyncCheckInterval"
+#define WEBCONFIG_PARAM_FORCE_SYNC   	    "Device.X_RDK_WebConfig.ForceSync"
 #define WEBCONFIG_TABLE_CONFIGFILE          "Device.X_RDK_WebConfig.ConfigFile."
 #define CONFIGFILE_PARAM_URL                "URL"
 #define CONFIGFILE_PARAM_VERSION            "Version"
@@ -135,6 +136,65 @@ int setPeriodicSyncCheckInterval(int iValue)
 		}
 	}
 #endif
+	return 0;
+}
+
+int setForceSync(char* pString, char *transactionId,int *pStatus)
+{
+	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	WebConfigLog("setForceSync\n");
+#ifdef RDKB_BUILD
+	if(syscfg_set( NULL, "ForceSync", buf) != 0) //modify this to webcfg DB set.
+	{
+		WebConfigLog("syscfg_set failed\n");
+		return 1;
+	}
+	else
+	{
+		if (syscfg_commit() != 0)
+		{
+			WebConfigLog("syscfg_commit failed\n");
+			return 1;
+		}
+		else
+		{
+			memset( pMyObject->ForceSync, 0, sizeof( pMyObject->ForceSync ));
+			AnscCopyString( pMyObject->ForceSync, pString );
+			WebConfigLog("pMyObject->ForceSync is %s\n", pMyObject->ForceSync);
+
+			if((pMyObject->ForceSync !=NULL) && (strlen(pMyObject->ForceSync)>0))
+			{
+				if(strlen(pMyObject->ForceSyncTransID)>0)
+				{
+					WebConfigLog("Force sync is already in progress, Ignoring this request.\n");
+					*pStatus = 1;
+					return 1;
+				}
+				else
+				{
+					/* sending signal to WebConfigTask to update the sync time interval*/
+					pthread_mutex_lock (get_global_periodicsync_mutex());
+
+					//Update ForceSyncTransID to access webpa transactionId in webConfig sync.
+					if(transactionId !=NULL && (strlen(transactionId)>0))
+					{
+						AnscCopyString(pMyObject->ForceSyncTransID, transactionId);
+						WebConfigLog("pMyObject->ForceSyncTransID is %s\n", pMyObject->ForceSyncTransID);
+					}
+					WebConfigLog("Trigger force sync\n");
+					pthread_cond_signal(get_global_periodicsync_condition());
+					pthread_mutex_unlock(get_global_periodicsync_mutex());
+				}
+			}
+			else
+			{
+				WebConfigLog("Force sync param set with empty value\n");
+				memset(pMyObject->ForceSyncTransID,0,sizeof(pMyObject->ForceSyncTransID));
+			}
+		}
+	}
+#endif
+	WebConfigLog("setForceSync returns 0\n");
 	return 0;
 }
 
@@ -1105,6 +1165,26 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				else
 				{
 					setPeriodicSyncCheckInterval(0);
+				}
+			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_FORCE_SYNC) == 0) && (RFC_ENABLE == true))
+			{
+				if((val[i].parameterValue !=NULL) && (strlen(val[i].parameterValue)>0))
+				{
+					ret = setForceSync(val[i].parameterValue, transactionId, &session_status);
+				}
+				else //pass empty transaction id when Force sync is with empty doc
+				{
+					ret = setForceSync(val[i].parameterValue, "", 0);
+				}
+				if(session_status)
+				{
+					return CCSP_CR_ERR_SESSION_IN_PROGRESS;
+				}
+				if(!ret)
+				{
+					WebConfigLog("setForceSync failed\n");
+					return CCSP_FAILURE;
 				}
 			}
 			else if((strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL) && (RFC_ENABLE == true))

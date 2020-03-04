@@ -120,6 +120,14 @@ X_RDK_WebConfig_SetParamIntValue
         char*                       ParamName,
         int                         iValue
     );
+
+BOOL
+X_RDK_WebConfig_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    );
 /***********************************************************************
 
  APIs for Object:

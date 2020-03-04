@@ -13,6 +13,7 @@
 +                <func_GetParamUlongValue>X_RDK_WebConfig_GetParamUlongValue</func_GetParamUlongValue>
 +                <func_GetParamIntValue>X_RDK_WebConfig_GetParamIntValue</func_GetParamIntValue>
 +                <func_SetParamIntValue>X_RDK_WebConfig_SetParamIntValue</func_SetParamIntValue>
++		 <func_SetParamStringValue>X_RDK_WebConfig_SetParamStringValue</func_SetParamStringValue>
 +            </functions>
 +            <parameters>
 +                <parameter>
@@ -31,6 +32,12 @@
 +                    <name>PeriodicSyncCheckInterval</name>
 +                    <type>int</type>
 +                    <syntax>int</syntax>
++                    <writable>true</writable>
++                </parameter>
++                <parameter>
++                    <name>ForceSync</name>
++                    <type>string(256)</type>
++                    <syntax>string</syntax>
 +                    <writable>true</writable>
 +                </parameter>
 +            </parameters>
