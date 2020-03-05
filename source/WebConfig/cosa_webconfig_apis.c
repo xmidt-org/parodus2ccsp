@@ -224,8 +224,12 @@ CosaWebConfigInitialize
         //    strcpy(pMyObject->ForceSync, tmpbuf);
 	_ansc_memset(pMyObject->ForceSync, 0, 256);
 	AnscCopyString( pMyObject->ForceSync, "" );
+
+	_ansc_memset(pMyObject->ForceSyncTransID, 0, 256);
+	AnscCopyString( pMyObject->ForceSyncTransID, "" );
        // }
         WebConfigLog("pMyObject->ForceSync:%s\n",pMyObject->ForceSync);
+	WebConfigLog("pMyObject->ForceSyncTransID:%s\n",pMyObject->ForceSync);
 
         AnscSListInitializeHeader( &pMyObject->ConfigFileList );
         WebcfgDebug("B4 CosaDmlGetConfigFile\n");

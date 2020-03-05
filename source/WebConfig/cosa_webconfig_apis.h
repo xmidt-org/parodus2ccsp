@@ -76,6 +76,8 @@ COSA_DML_CONFIGFILE_CONTAINER,  *PCOSA_DML_CONFIGFILE_CONTAINER;
 	ULONG                           PreviousVisitTime;                                      \
     BOOL                        RfcEnable;                                         \
     int                     PeriodicSyncCheckInterval;                      \
+    char 		    ForceSync[256];					\
+    char 		    ForceSyncTransID[256];					\
     SLIST_HEADER                ConfigFileList;                                        \
     PCOSA_DML_CONFIGFILE_CONTAINER    pConfigFileContainer;                                        \
 	ANSC_HANDLE                     hIrepFolderWebConfig;                                         \

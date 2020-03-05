@@ -144,7 +144,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	WebConfigLog("setForceSync\n");
 #ifdef RDKB_BUILD
-	if(syscfg_set( NULL, "ForceSync", buf) != 0) //modify this to webcfg DB set.
+	if(syscfg_set( NULL, "ForceSync", pString) != 0) //modify this to webcfg DB set.
 	{
 		WebConfigLog("syscfg_set failed\n");
 		return 1;
@@ -196,6 +196,29 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 #endif
 	WebConfigLog("setForceSync returns 0\n");
 	return 0;
+}
+
+int getForceSync(char** pString, char **transactionId )
+{
+	PCOSA_DATAMODEL_WEBCONFIG pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+	WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
+
+	if((pMyObject->ForceSync != NULL) && strlen(pMyObject->ForceSync)>0)
+	{
+		WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
+		*pString = strdup(pMyObject->ForceSync);
+		WebConfigLog("%s ----- updating transactionId ------\n",__FUNCTION__);
+		*transactionId = strdup(pMyObject->ForceSyncTransID);
+	}
+	else
+	{
+		*pString = NULL;
+		*transactionId = NULL;
+		return 0;
+	}
+	WebConfigLog("*transactionId is %s\n",*transactionId);
+	WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
+	return 1;
 }
 
 int getInstanceNumberAtIndex(int index)
@@ -1133,6 +1156,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 	char *subStr = NULL;
 	BOOL RFC_ENABLE;
 	int session_status = 0;
+	int ret = 0;
 	WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 
 	char *webConfigObject = "Device.X_RDK_WebConfig.";
@@ -1171,10 +1195,13 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 			{
 				if((val[i].parameterValue !=NULL) && (strlen(val[i].parameterValue)>0))
 				{
+					WebConfigLog("setWebConfigParameterValues setForceSync\n");
 					ret = setForceSync(val[i].parameterValue, transactionId, &session_status);
+					WebConfigLog("After setForceSync ret %d\n", ret);
 				}
 				else //pass empty transaction id when Force sync is with empty doc
 				{
+					WebConfigLog("setWebConfigParameterValues empty setForceSync\n");
 					ret = setForceSync(val[i].parameterValue, "", 0);
 				}
 				if(session_status)
