@@ -455,6 +455,7 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 			if(strstr(parameterNamesLocal[0],RDKB_PARAM_WEBCONFIG) != NULL)
 			{
+				WalInfo("calling getWebConfigParameterValues\n");
 				ret = getWebConfigParameterValues(parameterNamesLocal, paramCount, &val_size, &parameterval);
 			}
 			else
@@ -706,6 +707,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 			if(strstr(val[0].parameterName, RDKB_PARAM_WEBCONFIG) != NULL)
 			{
+				WalInfo("calling setWebConfigParameterValues\n");
 				ret = setWebConfigParameterValues(val, paramCount,&faultParam, transactionId);
 			}
 			else

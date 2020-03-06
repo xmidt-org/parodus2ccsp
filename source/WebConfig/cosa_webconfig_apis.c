@@ -218,16 +218,11 @@ CosaWebConfigInitialize
         }
         WebcfgDebug("pMyObject->PeriodicSyncCheckInterval:%d\n",pMyObject->PeriodicSyncCheckInterval);
     
-	//CosaDmlGetValueFromDb("ForceSync", tmpbuf); //modify it with webcfg DB
-        //if(tmpbuf[0] != '\0')
-       // {
-        //    strcpy(pMyObject->ForceSync, tmpbuf);
 	_ansc_memset(pMyObject->ForceSync, 0, 256);
 	AnscCopyString( pMyObject->ForceSync, "" );
 
 	_ansc_memset(pMyObject->ForceSyncTransID, 0, 256);
 	AnscCopyString( pMyObject->ForceSyncTransID, "" );
-       // }
         WebConfigLog("pMyObject->ForceSync:%s\n",pMyObject->ForceSync);
 	WebConfigLog("pMyObject->ForceSyncTransID:%s\n",pMyObject->ForceSync);
 

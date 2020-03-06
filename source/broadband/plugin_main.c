@@ -67,6 +67,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamIntValue",  X_RDK_WebConfig_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamIntValue",  X_RDK_WebConfig_SetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamStringValue",  X_RDK_WebConfig_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamStringValue",  X_RDK_WebConfig_GetParamStringValue);
 
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntryCount", ConfigFile_GetEntryCount);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntry",ConfigFile_GetEntry);

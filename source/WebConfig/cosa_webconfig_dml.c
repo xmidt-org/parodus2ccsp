@@ -188,6 +188,34 @@ X_RDK_WebConfig_SetParamStringValue
 
 	return FALSE;
 }
+
+ULONG
+X_RDK_WebConfig_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
+		return 0;
+	}
+	/* check the parameter name and return the corresponding value */
+	if( AnscEqualString(ParamName, "ForceSync", TRUE))
+	{
+		WebConfigLog("ForceSync Get Not supported\n");
+		return 0;
+	}
+
+	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
+ 	CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+	return -1;
+}
 /***********************************************************************
 
  APIs for Object:
