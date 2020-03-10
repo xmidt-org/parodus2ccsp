@@ -153,7 +153,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 		{
 			WebConfigLog("Force sync is already in progress, Ignoring this request.\n");
 			*pStatus = 1;
-			return 1;
+			return 0;
 		}
 		else
 		{
@@ -176,8 +176,8 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 		WebConfigLog("Force sync param set with empty value\n");
 		memset(pMyObject->ForceSyncTransID,0,sizeof(pMyObject->ForceSyncTransID));
 	}
-	WebConfigLog("setForceSync returns 0\n");
-	return 0;
+	WebConfigLog("setForceSync returns success 1\n");
+	return 1;
 }
 
 int getForceSync(char** pString, char **transactionId )
@@ -783,7 +783,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
     WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 
     RFC_ENABLE = Get_RfcEnable();
-    WebcfgDebug("paramCount = %d\n",paramCount);
+    WebConfigLog("paramCount = %d\n",paramCount);
     if(RFC_ENABLE)
     {
         count = getConfigNumberOfEntries();
@@ -1029,10 +1029,9 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             }
 			    else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_FORCE_SYNC) == 0) && (RFC_ENABLE == true))
                             {
-				WebConfigLog("Webpa get WEBCONFIG_PARAM_FORCE_SYNC\n");
+				WebConfigLog("Force Sync GET is not supported\n");
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_FORCE_SYNC, MAX_PARAMETERNAME_LEN);
-				//GET is not supported, hence assigning NULL.
-				paramVal[k]->parameterValue = strndup("", MAX_PARAMETERNAME_LEN);
+				paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
                                 paramVal[k]->type = ccsp_string;
                                 k++;
 				WebConfigLog("Webpa force sync done\n");
@@ -1047,8 +1046,10 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                         {
                             if(RFC_ENABLE)
                             {
-                                localCount = localCount+2+(count*5);
+				WebConfigLog("Updating localCount %d in wildcard GET case\n", localCount);
+                                localCount = localCount+3+(count*5);
                             }
+				WebConfigLog("Updated localCount %d\n", localCount);
                             paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
                             paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                             memset(paramVal[k], 0, sizeof(parameterValStruct_t));
@@ -1090,7 +1091,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_FORCE_SYNC, MAX_PARAMETERNAME_LEN);
-				paramVal[k]->parameterValue = strndup("", MAX_PARAMETERNAME_LEN);
+				paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
                                 paramVal[k]->type = ccsp_string;
                                 k++;
 				WebConfigLog("After Webpa wildcard get for force sync\n");
@@ -1099,7 +1100,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 for(n = 0; n<count; n++)
                                 {
                                     index = getInstanceNumberAtIndex(n);
-                                    WebcfgDebug("InstNum: %d\n",index);
+                                    WebConfigLog("InstNum: %d\n",index);
                                     if(index != 0)
                                     {
                                         WebcfgDebug("B4 updateParamValStructWIthConfigFileDataAtIndex\n");
@@ -1167,10 +1168,8 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 	WebConfigLog("paramCount = %d\n",paramCount);
 	for(i=0; i<paramCount; i++)
 	{
-		WebConfigLog("val[i].parameterName = %s, WEBCONFIG_PARAM_FORCE_SYNC %s\n",val[i].parameterName, WEBCONFIG_PARAM_FORCE_SYNC);
 		if(strstr(val[i].parameterName, webConfigObject) != NULL)
 		{
-			WebConfigLog("Processing webconfig params");
 			if(strcmp(val[i].parameterName, WEBCONFIG_PARAM_RFC_ENABLE) == 0)
 			{
 				if((val[i].parameterValue != NULL) && (strcmp(val[i].parameterValue, "true") == 0))
@@ -1197,7 +1196,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 			}
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_FORCE_SYNC) == 0) && (RFC_ENABLE == true))
 			{
-				WebConfigLog("Processing Force Sync param");
+				WebConfigLog("Processing Force Sync param\n");
 				if((val[i].parameterValue !=NULL) && (strlen(val[i].parameterValue)>0))
 				{
 					WebConfigLog("setWebConfigParameterValues setForceSync\n");
