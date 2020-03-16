@@ -175,7 +175,7 @@ X_RDK_WebConfig_SetParamStringValue
 	if( AnscEqualString(ParamName, "ForceSync", TRUE))
 	{
 		/* save update to backup */
-		if(setForceSync(strValue, "", 0) == 0)
+		if(setForceSync(strValue, "", 0) == 1)
 		{
 			return TRUE;
 		}
