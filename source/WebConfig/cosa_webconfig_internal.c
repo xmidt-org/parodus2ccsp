@@ -113,7 +113,7 @@ int Get_Webconfig_URL( char **pString)
 
                 if (retPsmGet == CCSP_SUCCESS)
                 {
-                        WebConfigLog(pString,"%s",*pString);
+                        WebConfigLog("pString %s\n",*pString);
                 }
                 else
                 {
