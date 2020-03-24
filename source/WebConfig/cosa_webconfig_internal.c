@@ -106,6 +106,7 @@ int Get_Webconfig_URL( char **pString)
         {
                 WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
                 *pString = strdup(pMyObject->URL);
+		WebConfigLog("pString %s,pMyObject->URL=%s\n",*pString,pMyObject->URL);
         }
         else
         {
