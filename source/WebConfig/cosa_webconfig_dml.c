@@ -233,6 +233,7 @@ X_RDK_WebConfig_GetParamStringValue
                         }
                         else
                         {
+				WebConfigLog("URL fetched : pValue %s\n", pValue);
                                 *pUlSize = AnscSizeOfString(pValue)+1;
                                 return 1;
                         }

@@ -99,21 +99,27 @@ int setRfcEnable(BOOL bValue)
 int Get_Webconfig_URL( char **pString)
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
+    WebConfigLog("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
-        if((pMyObject->URL != NULL) && strlen(pMyObject->URL)>0)
+	WebConfigLog("pMyObject->URL %s\n", pMyObject->URL);
+        if((pMyObject->URL != NULL) && (strlen(pMyObject->URL)>0))
         {
                 WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
                 *pString = strdup(pMyObject->URL);
         }
         else
         {
+		char *tempDBUrl = NULL;
                 int   retPsmGet    = CCSP_SUCCESS;
-                retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, WEBCONFIG_PARAM_URL, NULL, pString);
-
+		WebConfigLog("B4 PSM_Get_Record_Value2\n");
+                retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, WEBCONFIG_PARAM_URL, NULL, &tempDBUrl);
+		WebConfigLog("After PSM_Get_Record_Value2\n");
+		WebConfigLog("tempDBUrl is %s\n", tempDBUrl);
                 if (retPsmGet == CCSP_SUCCESS)
                 {
-                        WebConfigLog(pString,"%s",*pString);
+			WebConfigLog("retPsmGet success\n");
+			sprintf(*pString,"%s",tempDBUrl);
+                        WebConfigLog("pString %s\n",*pString);
                 }
                 else
                 {
@@ -1095,6 +1101,28 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 k++;
 				WebConfigLog("Webpa force sync done\n");
                             }
+			    else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_URL) == 0) && (RFC_ENABLE == true))
+                            {
+				char *valuestr = NULL;
+				WebConfigLog("B4 Get_Webconfig_URL\n");
+				Get_Webconfig_URL(&valuestr);
+				if( (valuestr != NULL) && strlen(valuestr) >0 )
+				{
+					WebConfigLog("Webpa get : URL fetched %s\n", valuestr);
+		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
+					paramVal[k]->parameterValue = strndup(valuestr,MAX_PARAMETERVALUE_LEN);
+		                        paramVal[k]->type = ccsp_string;
+		                        k++;
+					WAL_FREE(valuestr);
+					WebConfigLog("Webpa get : URL done\n");
+				}
+				else
+				{
+					WebConfigLog("Webpa get : URL not found\n");
+					WAL_FREE(paramVal[k]);
+					matchFound = 0;
+				}
+                            }
                             else
                             {
                                 WAL_FREE(paramVal[k]);
@@ -1106,7 +1134,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             if(RFC_ENABLE)
                             {
 				WebConfigLog("Updating localCount %d in wildcard GET case\n", localCount);
-                                localCount = localCount+3+(count*5);
+                                localCount = localCount+4+(count*5);
                             }
 				WebConfigLog("Updated localCount %d\n", localCount);
                             paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
@@ -1154,6 +1182,28 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->type = ccsp_string;
                                 k++;
 				WebConfigLog("After Webpa wildcard get for force sync\n");
+
+				WebConfigLog("Webpa wildcard get for URL\n");
+				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
+				char *webcfg_url = NULL;
+				WebConfigLog("Wildcard get : B4 Get_Webconfig_URL\n");
+				Get_Webconfig_URL(&webcfg_url);
+				if( (webcfg_url !=NULL) && strlen(webcfg_url)>0 )
+				{
+					WebConfigLog("webcfg_url fetched %s\n", webcfg_url);
+					paramVal[k]->parameterValue = strndup(webcfg_url,MAX_PARAMETERVALUE_LEN);
+					WebConfigLog("Wildcard get : paramVal[k]->parameterValue:%s\n", paramVal[k]->parameterValue);
+					WAL_FREE(webcfg_url);
+				}
+				else
+				{
+					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+				}
+                                paramVal[k]->type = ccsp_string;
+                                k++;
+				WebConfigLog("After Webpa wildcard get for URL\n");
 
                                 int n = 0, index = 0;
                                 for(n = 0; n<count; n++)
