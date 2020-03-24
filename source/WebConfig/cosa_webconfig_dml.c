@@ -184,6 +184,18 @@ X_RDK_WebConfig_SetParamStringValue
 			WebConfigLog("setForceSync failed\n");
 		}
 	}
+
+        if( AnscEqualString(ParamName, "URL", TRUE))
+        {
+                if(Set_Webconfig_URL(strValue))
+                {
+                        return TRUE;
+                }
+                else
+                {
+                        WebConfigLog("Set_Webconfig_URL failed\n");
+                }
+        }
 	WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 
 	return FALSE;
@@ -211,6 +223,21 @@ X_RDK_WebConfig_GetParamStringValue
 		WebConfigLog("ForceSync Get Not supported\n");
 		return 0;
 	}
+        if( AnscEqualString(ParamName, "URL", TRUE))
+        {
+                if(Get_Webconfig_URL(&pValue))
+                {
+                        if (AnscSizeOfString(pValue) < *pUlSize)
+                        {
+                                return 0;
+                        }
+                        else
+                        {
+                                *pUlSize = AnscSizeOfString(pValue)+1;
+                                return 1;
+                        }
+                }
+        }
 
 	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
  	CcspTraceWarning(("Unsupported parameter '%s'\n", ParamName));

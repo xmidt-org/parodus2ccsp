@@ -25,6 +25,7 @@
 #include "webconfig_internal.h"
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
+#define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
 #define WEBCONFIG_PARAM_CONFIGFILE_ENTRIES  "Device.X_RDK_WebConfig.ConfigFileNumberOfEntries"
 #define WEBCONFIG_PARAM_PERIODIC_INTERVAL   "Device.X_RDK_WebConfig.PeriodicSyncCheckInterval"
 #define WEBCONFIG_PARAM_FORCE_SYNC   	    "Device.X_RDK_WebConfig.ForceSync"
@@ -36,6 +37,8 @@
 #define CONFIGFILE_PARAM_REQUEST_TIME_STAMP     "RequestTimeStamp"
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
+extern ANSC_HANDLE bus_handle;
+extern char        g_Subsystem[32];
 
 BOOL Get_RfcEnable()
 {
@@ -92,6 +95,62 @@ int setRfcEnable(BOOL bValue)
 #endif
 	return 0;
 }
+
+int Get_Webconfig_URL( char **pString)
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
+
+        if((pMyObject->URL != NULL) && strlen(pMyObject->URL)>0)
+        {
+                WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
+                *pString = strdup(pMyObject->URL);
+        }
+        else
+        {
+                int   retPsmGet    = CCSP_SUCCESS;
+                retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, WEBCONFIG_PARAM_URL, NULL, pString);
+
+                if (retPsmGet == CCSP_SUCCESS)
+                {
+                        WebConfigLog(pString,"%s",*pString);
+                }
+                else
+                {
+                        WebConfigLog("psm_get failed ret %d for parameter %s\n", retPsmGet, WEBCONFIG_PARAM_URL);
+                        return 0;
+                }
+        }
+
+        WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
+        return 1;
+}
+
+int Set_Webconfig_URL( char *pString)
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
+    int retPsmSet = CCSP_SUCCESS;
+
+        memset( pMyObject->URL, 0, sizeof( pMyObject->URL ));
+        AnscCopyString( pMyObject->URL, pString );
+
+
+        retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, WEBCONFIG_PARAM_URL, ccsp_string, pString);
+        if (retPsmSet != CCSP_SUCCESS)
+        {
+                WebConfigLog("psm_set failed ret %d for parameter %s and value %s\n", retPsmSet, WEBCONFIG_PARAM_URL, pString);
+                return 0;
+        }
+        else
+        {
+                WebConfigLog("psm_set success ret %d for parameter %s and value %s\n", retPsmSet, WEBCONFIG_PARAM_URL, pString);
+        }
+
+        WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
+        return 1;
+}
+
 
 int getConfigNumberOfEntries()
 {
