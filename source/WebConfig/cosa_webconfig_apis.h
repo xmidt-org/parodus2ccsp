@@ -75,6 +75,7 @@ COSA_DML_CONFIGFILE_CONTAINER,  *PCOSA_DML_CONFIGFILE_CONTAINER;
 	ULONG                       ulWebConfigNextInstanceNumber;                                    \
 	ULONG                           PreviousVisitTime;                                      \
     BOOL                        RfcEnable;                                         \
+    char                        URL[256]                                    \
     int                     PeriodicSyncCheckInterval;                      \
     char 		    ForceSync[256];					\
     char 		    ForceSyncTransID[256];					\
