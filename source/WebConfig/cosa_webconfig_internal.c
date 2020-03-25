@@ -101,11 +101,14 @@ int Get_Webconfig_URL( char **pString)
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     WebConfigLog("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
-	WebConfigLog("pMyObject->URL %s\n", pMyObject->URL);
+	WebConfigLog("pMyObject->URL %s,*pString=%s\n", pMyObject->URL,*pString);
         if((pMyObject->URL != NULL) && (strlen(pMyObject->URL)>0))
         {
                 WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
-                *pString = strdup(pMyObject->URL);
+		
+                //*pString = strdup(pMyObject->URL);
+		*pString=(char*) malloc(sizeof(pMyObject->URL));
+		AnscCopyString( *pString,pMyObject->URL );
 		WebConfigLog("pString %s,pMyObject->URL=%s\n",*pString,pMyObject->URL);
         }
         else
