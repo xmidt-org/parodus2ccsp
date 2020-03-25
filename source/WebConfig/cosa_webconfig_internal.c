@@ -121,9 +121,10 @@ int Get_Webconfig_URL( char **pString)
 		WebConfigLog("tempDBUrl is %s\n", tempDBUrl);
                 if (retPsmGet == CCSP_SUCCESS)
                 {
-			WebConfigLog("retPsmGet success\n");
-			sprintf(*pString,"%s",tempDBUrl);
-                        WebConfigLog("pString %s\n",*pString);
+			WebConfigLog("retPsmGet success...\n");
+			//sprintf(*pString,"%s",tempDBUrl);
+			*pString = strdup(tempDBUrl);
+                        WebConfigLog("pString is %s\n",*pString);
                 }
                 else
                 {
@@ -1110,7 +1111,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				char *valuestr = NULL;
 				WebConfigLog("B4 Get_Webconfig_URL\n");
 				Get_Webconfig_URL(&valuestr);
-				if( (valuestr != NULL) && strlen(valuestr) >0 )
+				if( (valuestr != NULL) && (strlen(valuestr) >0) )
 				{
 					WebConfigLog("Webpa get : URL fetched %s\n", valuestr);
 		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
@@ -1194,7 +1195,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				char *webcfg_url = NULL;
 				WebConfigLog("Wildcard get : B4 Get_Webconfig_URL\n");
 				Get_Webconfig_URL(&webcfg_url);
-				if( (webcfg_url !=NULL) && strlen(webcfg_url)>0 )
+				if( (webcfg_url !=NULL) && (strlen(webcfg_url)>0) )
 				{
 					WebConfigLog("webcfg_url fetched %s\n", webcfg_url);
 					paramVal[k]->parameterValue = strndup(webcfg_url,MAX_PARAMETERVALUE_LEN);
