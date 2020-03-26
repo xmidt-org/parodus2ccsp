@@ -196,6 +196,11 @@ X_RDK_WebConfig_SetParamStringValue
                         WebConfigLog("Set_Webconfig_URL failed\n");
                 }
         }
+		if( AnscEqualString(ParamName, "Data", TRUE))
+	    {
+			WebConfigLog("Data set is Not supported\n");
+			return 0;
+		}
 	WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
 
 	return FALSE;
@@ -241,6 +246,21 @@ X_RDK_WebConfig_GetParamStringValue
 				WebConfigLog("*pUlSize %lu\n", *pUlSize);
                                 return 1;
                         //}
+                }
+        }
+        if( AnscEqualString(ParamName, "Data", TRUE))
+	    {
+                if (Get_Webconfig_Blob(pValue))
+                {
+					WebConfigLog("Blob Data fetched : pValue %s\n", pValue);
+					*pUlSize = AnscSizeOfString(pValue)+1;
+					WebConfigLog("*pUlSize %lu\n", *pUlSize);
+					return 1;
+                }
+                else
+                {
+			WebConfigLog("Failed to get Blob Data \n");
+			return 0;
                 }
         }
 

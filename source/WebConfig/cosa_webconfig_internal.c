@@ -35,6 +35,7 @@
 #define CONFIGFILE_PARAM_FORCE_SYNC         "ForceSyncCheck"
 #define CONFIGFILE_PARAM_SYNC_CHECK_OK      "SyncCheckOK"
 #define CONFIGFILE_PARAM_REQUEST_TIME_STAMP     "RequestTimeStamp"
+#define WEBCFGDB_BLOB_PATH                  "/tmp/webcfg_blob.bin"
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 extern ANSC_HANDLE bus_handle;
@@ -160,6 +161,32 @@ int Set_Webconfig_URL( char *pString)
 
         WebConfigLog("-------- %s ----- Exit ------\n",__FUNCTION__);
         return 1;
+}
+
+int Get_Webconfig_Blob( char *pString)
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WebConfigLog("-------- %s ----- Enter-- ---\n",__FUNCTION__);
+
+	//WebConfigLog("pMyObject->DBBlobData %s,*pString=%s\n", pMyObject->DBBlobData,*pString);
+
+        pMyObject->DBBlobData = NULL;
+        pMyObject->DBBlobData = get_DB_BLOB_base64(&pMyObject->DBBlobLength);
+        writeBlobToFile(WEBCFGDB_BLOB_PATH, pMyObject->DBBlobData);
+        WebConfigLog("pMyObject->DBBlobLength %zu\n",pMyObject->DBBlobLength);
+        readBlobFromFile(WEBCFGDB_BLOB_PATH);
+	pString=(char*) malloc(sizeof(char *)*(pMyObject->DBBlobLength));
+        AnscCopyString( pString,pMyObject->DBBlobData );
+        if (pString != NULL)
+        {
+            WebConfigLog("pMyObject->DBBlobLength %zu, pString %s, pMyObject->DBBlobData=%s\n",pMyObject->DBBlobLength,pString,pMyObject->DBBlobData);
+            return 1;
+        }
+        else
+        {
+            WebConfigLog("Failed to get b64 encoded data\n");
+            return 0;
+        }
 }
 
 
