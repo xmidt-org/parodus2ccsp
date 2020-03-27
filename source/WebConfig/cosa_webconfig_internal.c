@@ -107,7 +107,7 @@ int Get_Webconfig_URL( char **pString)
                 WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
 		
                 //*pString = strdup(pMyObject->URL);
-		*pString=(char*) malloc(sizeof(pMyObject->URL));
+		//*pString=(char*) malloc(sizeof(pMyObject->URL));
 		AnscCopyString( *pString,pMyObject->URL );
 		WebConfigLog("pString %s,pMyObject->URL=%s\n",*pString,pMyObject->URL);
         }
