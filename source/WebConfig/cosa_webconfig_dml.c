@@ -225,7 +225,7 @@ X_RDK_WebConfig_GetParamStringValue
 	}
         if( AnscEqualString(ParamName, "URL", TRUE))
         {
-                if(Get_Webconfig_URL(&pValue))
+                if(Get_Webconfig_URL(pValue))
                 {
 			
 			WebConfigLog("[SUDHEEP]URL fetched1 : pValue %s\n", pValue);

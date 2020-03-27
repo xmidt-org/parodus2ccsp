@@ -96,20 +96,20 @@ int setRfcEnable(BOOL bValue)
 	return 0;
 }
 
-int Get_Webconfig_URL( char **pString)
+int Get_Webconfig_URL( char *pString)
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     WebConfigLog("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
-	WebConfigLog("pMyObject->URL %s,*pString=%s\n", pMyObject->URL,*pString);
+	WebConfigLog("pMyObject->URL %s,pString=%s\n", pMyObject->URL,pString);
         if((pMyObject->URL != NULL) && (strlen(pMyObject->URL)>0))
         {
                 WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
 		
                 //*pString = strdup(pMyObject->URL);
 		//*pString=(char*) malloc(sizeof(pMyObject->URL));
-		AnscCopyString( *pString,pMyObject->URL );
-		WebConfigLog("pString %s,pMyObject->URL=%s\n",*pString,pMyObject->URL);
+		AnscCopyString( pString,pMyObject->URL );
+		WebConfigLog("pString %s,pMyObject->URL=%s\n",pString,pMyObject->URL);
         }
         else
         {
@@ -122,8 +122,8 @@ int Get_Webconfig_URL( char **pString)
                 if (retPsmGet == CCSP_SUCCESS)
                 {
 			WebConfigLog("retPsmGet success\n");
-			sprintf(*pString,"%s",tempDBUrl);
-                        WebConfigLog("pString %s\n",*pString);
+			AnscCopyString( pString,tempDBUrl);
+                        WebConfigLog("pString %s\n",pString);
                 }
                 else
                 {
@@ -1109,7 +1109,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             {
 				char *valuestr = NULL;
 				WebConfigLog("B4 Get_Webconfig_URL\n");
-				Get_Webconfig_URL(&valuestr);
+				Get_Webconfig_URL(valuestr);
 				if( (valuestr != NULL) && strlen(valuestr) >0 )
 				{
 					WebConfigLog("Webpa get : URL fetched %s\n", valuestr);
@@ -1193,7 +1193,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
 				char *webcfg_url = NULL;
 				WebConfigLog("Wildcard get : B4 Get_Webconfig_URL\n");
-				Get_Webconfig_URL(&webcfg_url);
+				Get_Webconfig_URL(webcfg_url);
 				if( (webcfg_url !=NULL) && strlen(webcfg_url)>0 )
 				{
 					WebConfigLog("webcfg_url fetched %s\n", webcfg_url);
