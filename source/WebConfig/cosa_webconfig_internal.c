@@ -59,15 +59,15 @@ int setRfcEnable(BOOL bValue)
 			pthread_mutex_lock (get_global_periodicsync_mutex());
 			g_shutdown  = false;
 			pthread_mutex_unlock(get_global_periodicsync_mutex());
-			WebConfigLog("RfcEnable dynamic change from false to true. start WebConfigTask.\n");
-			initWebConfigTask(0);
+			WebConfigLog("RfcEnable dynamic change from false to true. start initWebConfigMultipartTask.\n");
+			initWebConfigMultipartTask();
 		}
 	}
 	else
 	{
 		sprintf(buf, "%s", "false");
 		WebConfigLog("Received RFC disable. updating g_shutdown\n");
-		/* sending signal to kill WebConfigTask thread*/
+		/* sending signal to kill initWebConfigMultipartTask thread*/
 		pthread_mutex_lock (get_global_periodicsync_mutex());
 		g_shutdown  = true;
 		pthread_cond_signal(get_global_periodicsync_condition());
@@ -199,7 +199,7 @@ int setPeriodicSyncCheckInterval(int iValue)
 		else
 		{
 			pMyObject->PeriodicSyncCheckInterval = iValue;
-			/* sending signal to WebConfigTask to update the sync time interval*/
+			/* sending signal to initWebConfigMultipartTask to update the sync time interval*/
 			pthread_mutex_lock (get_global_periodicsync_mutex());
 			pthread_cond_signal(get_global_periodicsync_condition());
 			pthread_mutex_unlock(get_global_periodicsync_mutex());
@@ -227,7 +227,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 		}
 		else
 		{
-			/* sending signal to WebConfigTask to update the sync time interval*/
+			/* sending signal to initWebConfigMultipartTask to update the sync time interval*/
 			pthread_mutex_lock (get_global_periodicsync_mutex());
 
 			//Update ForceSyncTransID to access webpa transactionId in webConfig sync.
