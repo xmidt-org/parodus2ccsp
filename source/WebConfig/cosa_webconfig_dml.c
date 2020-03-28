@@ -228,21 +228,8 @@ X_RDK_WebConfig_GetParamStringValue
                 if(Get_Webconfig_URL(pValue))
                 {
 			
-			WebConfigLog("[SUDHEEP]URL fetched1 : pValue %s\n", pValue);
+			WebConfigLog("URL fetched : pValue %s\n", pValue);
 				return 0;
-/*
-                        if (AnscSizeOfString(pValue) < *pUlSize)
-                        {
-				WebConfigLog("[SUDHEEP]URL fetched2 : pValue %s\n", pValue);
-                                return 0;
-                        }
-                        else
-                        {
-				WebConfigLog("URL fetched : pValue %s\n", pValue);
-                                *pUlSize = AnscSizeOfString(pValue)+1;
-                                return 1;
-                        }
-*/
                 }
         }
 
