@@ -1109,6 +1109,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             {
 				char *valuestr = NULL;
 				WebConfigLog("B4 Get_Webconfig_URL\n");
+				valuestr=malloc(256*sizeof(char));
 				Get_Webconfig_URL(valuestr);
 				if( (valuestr != NULL) && strlen(valuestr) >0 )
 				{
@@ -1193,6 +1194,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
 				char *webcfg_url = NULL;
 				WebConfigLog("Wildcard get : B4 Get_Webconfig_URL\n");
+				webcfg_url=malloc(256*sizeof(char));
 				Get_Webconfig_URL(webcfg_url);
 				if( (webcfg_url !=NULL) && strlen(webcfg_url)>0 )
 				{
