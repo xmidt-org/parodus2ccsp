@@ -1332,6 +1332,26 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 					return CCSP_FAILURE;
 				}
 			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_URL) == 0) && (RFC_ENABLE == true))
+			{
+				WebConfigLog("Processing Webcfg URL param\n");
+				if(isValidUrl(val[i].parameterValue) == TRUE)
+				{
+					WebConfigLog("setWebConfigParameterValues Set_Webconfig_URL\n");
+					ret = Set_Webconfig_URL(val[i].parameterValue);
+					WebConfigLog("After Set_Webconfig_UR ret %d\n", ret);
+					if(ret != 1)
+					{
+						WebConfigLog("Set_Webconfig_URL failed\n");
+						return CCSP_FAILURE;
+					}
+				}
+				else
+				{
+					WebConfigLog("Webcfg URL validation failed\n");
+					return CCSP_FAILURE;
+				}
+			}
 			else if((strstr(val[i].parameterName, WEBCONFIG_TABLE_CONFIGFILE) != NULL) && (RFC_ENABLE == true))
 			{
 				subStr = val[i].parameterName+strlen(WEBCONFIG_TABLE_CONFIGFILE);
