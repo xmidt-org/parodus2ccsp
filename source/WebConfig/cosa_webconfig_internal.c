@@ -59,15 +59,15 @@ int setRfcEnable(BOOL bValue)
 			pthread_mutex_lock (get_global_periodicsync_mutex());
 			g_shutdown  = false;
 			pthread_mutex_unlock(get_global_periodicsync_mutex());
-			WebConfigLog("RfcEnable dynamic change from false to true. start WebConfigTask.\n");
-			initWebConfigTask(0);
+			WebConfigLog("RfcEnable dynamic change from false to true. start initWebConfigMultipartTask.\n");
+			initWebConfigMultipartTask();
 		}
 	}
 	else
 	{
 		sprintf(buf, "%s", "false");
 		WebConfigLog("Received RFC disable. updating g_shutdown\n");
-		/* sending signal to kill WebConfigTask thread*/
+		/* sending signal to kill initWebConfigMultipartTask thread*/
 		pthread_mutex_lock (get_global_periodicsync_mutex());
 		g_shutdown  = true;
 		pthread_cond_signal(get_global_periodicsync_condition());
@@ -196,7 +196,7 @@ int setPeriodicSyncCheckInterval(int iValue)
 		else
 		{
 			pMyObject->PeriodicSyncCheckInterval = iValue;
-			/* sending signal to WebConfigTask to update the sync time interval*/
+			/* sending signal to initWebConfigMultipartTask to update the sync time interval*/
 			pthread_mutex_lock (get_global_periodicsync_mutex());
 			pthread_cond_signal(get_global_periodicsync_condition());
 			pthread_mutex_unlock(get_global_periodicsync_mutex());
@@ -224,7 +224,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 		}
 		else
 		{
-			/* sending signal to WebConfigTask to update the sync time interval*/
+			/* sending signal to initWebConfigMultipartTask to update the sync time interval*/
 			pthread_mutex_lock (get_global_periodicsync_mutex());
 
 			//Update ForceSyncTransID to access webpa transactionId in webConfig sync.
@@ -1328,6 +1328,26 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				if(!ret)
 				{
 					WebConfigLog("setForceSync failed\n");
+					return CCSP_FAILURE;
+				}
+			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_URL) == 0) && (RFC_ENABLE == true))
+			{
+				WebConfigLog("Processing Webcfg URL param\n");
+				if(isValidUrl(val[i].parameterValue) == TRUE)
+				{
+					WebConfigLog("setWebConfigParameterValues Set_Webconfig_URL\n");
+					ret = Set_Webconfig_URL(val[i].parameterValue);
+					WebConfigLog("After Set_Webconfig_UR ret %d\n", ret);
+					if(ret != 1)
+					{
+						WebConfigLog("Set_Webconfig_URL failed\n");
+						return CCSP_FAILURE;
+					}
+				}
+				else
+				{
+					WebConfigLog("Webcfg URL validation failed\n");
 					return CCSP_FAILURE;
 				}
 			}
