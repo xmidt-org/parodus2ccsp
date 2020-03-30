@@ -188,7 +188,7 @@ CosaWebConfigInitialize
     WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
     pMyObject->MaxInstanceNumber        = 0;
     CHAR tmpbuf[ 128 ] = { 0 };
-    char *URL=NULL;
+   // char *URL=NULL;
 #ifdef RDKB_BUILD
     WebcfgDebug("------- %s ---------\n",__FUNCTION__);
     // Initialize syscfg to make syscfg calls
@@ -228,6 +228,7 @@ CosaWebConfigInitialize
 	WebConfigLog("pMyObject->ForceSyncTransID:%s\n",pMyObject->ForceSync);
 
 	_ansc_memset(pMyObject->URL, 0, 256);
+    /*
 	URL=malloc(256*sizeof(char));
 	Get_Webconfig_URL(URL);
 	if( (URL !=NULL) && strlen(URL)>0 )
@@ -237,6 +238,7 @@ CosaWebConfigInitialize
 		WebConfigLog("pMyObject->URL:%s\n", pMyObject->URL);
 	}
 	WAL_FREE(URL);
+    */
 	WebConfigLog("URL initialization done\n");
         AnscSListInitializeHeader( &pMyObject->ConfigFileList );
         WebcfgDebug("B4 CosaDmlGetConfigFile\n");
