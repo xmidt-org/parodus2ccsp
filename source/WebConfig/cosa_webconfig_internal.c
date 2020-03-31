@@ -102,7 +102,7 @@ int Get_Webconfig_URL( char *pString)
     WebConfigLog("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
 	WebConfigLog("pMyObject->URL %s\n", pMyObject->URL);
-        if((pMyObject->URL != NULL) && (strlen(pMyObject->URL)>0))
+        if((pMyObject != NULL) && (pMyObject->URL != NULL) && (strlen(pMyObject->URL)>0))
         {
                 WebConfigLog("%s ----- updating pString ------\n",__FUNCTION__);
 		
@@ -1105,9 +1105,8 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             }
 			    else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_URL) == 0) && (RFC_ENABLE == true))
                             {
-				char *valuestr = NULL;
+				char valuestr[256] = {0};
 				WebConfigLog("B4 Get_Webconfig_URL\n");
-				valuestr=malloc(256*sizeof(char));
 				Get_Webconfig_URL(valuestr);
 				if( (valuestr != NULL) && strlen(valuestr) >0 )
 				{
@@ -1116,7 +1115,6 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 					paramVal[k]->parameterValue = strndup(valuestr,MAX_PARAMETERVALUE_LEN);
 		                        paramVal[k]->type = ccsp_string;
 		                        k++;
-					WAL_FREE(valuestr);
 					WebConfigLog("Webpa get : URL done\n");
 				}
 				else
@@ -1190,16 +1188,14 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
-				char *webcfg_url = NULL;
+				char webcfg_url[256] = {0};
 				WebConfigLog("Wildcard get : B4 Get_Webconfig_URL\n");
-				webcfg_url=malloc(256*sizeof(char));
 				Get_Webconfig_URL(webcfg_url);
 				if( (webcfg_url !=NULL) && strlen(webcfg_url)>0 )
 				{
 					WebConfigLog("webcfg_url fetched %s\n", webcfg_url);
 					paramVal[k]->parameterValue = strndup(webcfg_url,MAX_PARAMETERVALUE_LEN);
 					WebConfigLog("Wildcard get : paramVal[k]->parameterValue:%s\n", paramVal[k]->parameterValue);
-					WAL_FREE(webcfg_url);
 				}
 				else
 				{
