@@ -230,22 +230,12 @@ X_RDK_WebConfig_GetParamStringValue
 	}
         if( AnscEqualString(ParamName, "URL", TRUE))
         {
-                if(Get_Webconfig_URL(&pValue))
+                if(Get_Webconfig_URL(pValue))
                 {
-			WebConfigLog("After Get_Webconfig_URL : pValue is %s\n", pValue);
-			WebConfigLog("AnscSizeOfString(pValue) is %lu pUlSize is %lu\n", AnscSizeOfString(pValue), *pUlSize);
-                        /*if (AnscSizeOfString(pValue) < *pUlSize)
-                        {
-				WebConfigLog("Failed to get url\n");
-                                return 0;
-                        }
-                        else
-                        {*/
-				WebConfigLog("URL fetched : pValue %s\n", pValue);
-                                *pUlSize = AnscSizeOfString(pValue)+1;
-				WebConfigLog("*pUlSize %lu\n", *pUlSize);
-                                return 1;
-                        //}
+
+			
+			WebConfigLog("URL fetched : pValue %s\n", pValue);
+				return 0;
                 }
         }
         if( AnscEqualString(ParamName, "Data", TRUE))
