@@ -23,6 +23,7 @@
 #include "cosa_webconfig_internal.h"
 #include "webconfig_log.h"
 #include "webconfig_internal.h"
+#include <webcfg_db.h>
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
@@ -35,7 +36,6 @@
 #define CONFIGFILE_PARAM_FORCE_SYNC         "ForceSyncCheck"
 #define CONFIGFILE_PARAM_SYNC_CHECK_OK      "SyncCheckOK"
 #define CONFIGFILE_PARAM_REQUEST_TIME_STAMP     "RequestTimeStamp"
-#define WEBCFGDB_BLOB_PATH                  "/tmp/webcfg_blob.bin"
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 extern ANSC_HANDLE bus_handle;
@@ -169,9 +169,9 @@ int Get_Webconfig_Blob( char *pString)
 
         pMyObject->DBBlobData = NULL;
         pMyObject->DBBlobData = get_DB_BLOB_base64(&pMyObject->DBBlobLength);
-        writeBlobToFile(WEBCFGDB_BLOB_PATH, pMyObject->DBBlobData);
+        writeBlobToFile(WEBCFG_BLOB_PATH, pMyObject->DBBlobData);
         WebConfigLog("pMyObject->DBBlobLength %zu\n",pMyObject->DBBlobLength);
-        readBlobFromFile(WEBCFGDB_BLOB_PATH);
+        readBlobFromFile(WEBCFG_BLOB_PATH);
 	pString=(char*) malloc(sizeof(char *)*(pMyObject->DBBlobLength));
         AnscCopyString( pString,pMyObject->DBBlobData );
         if (pString != NULL)

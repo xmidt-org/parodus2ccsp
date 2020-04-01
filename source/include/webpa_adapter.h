@@ -129,17 +129,6 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
  */
 void getAttributes(const char *paramName[], const unsigned int paramCount, money_trace_spans *timeSpan, param_t **attr, int *retAttrCount, WDMP_STATUS *retStatus);
 
-/**
- * @brief setValues interface sets the parameter value.
- *
- * @param[in] paramVal List of Parameter name/value pairs.
- * @param[in] paramCount Number of parameters.
- * @param[in] setType Flag to specify the type of set operation.
- * @param[out] timeSpan timing_values for each component. 
- * @param[out] retStatus Returns status
- * @param[out] ccspStatus Returns ccsp set status
- */
-//void setValues(const param_t paramVal[], const unsigned int paramCount, const WEBPA_SET_TYPE setType, char *transactionId, money_trace_spans *timeSpan, WDMP_STATUS *retStatus, int *ccspStatus);
 
 /**
  * @brief setAttributes Returns the status of parameter from stack for SET-ATTRIBUTES request
@@ -184,7 +173,6 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
  */
 void initNotifyTask(int status);
 
-//void sendNotification(char *payload, char *source, char *destination);
 
 char* parsePayloadForStatus(char *payload);
 
