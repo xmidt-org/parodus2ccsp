@@ -189,6 +189,7 @@ CosaWebConfigInitialize
     pMyObject->MaxInstanceNumber        = 0;
     CHAR tmpbuf[ 128 ] = { 0 };
     char URL[256] = { 0 };
+    BOOL bValue = FALSE;
 #ifdef RDKB_BUILD
     WebcfgDebug("------- %s ---------\n",__FUNCTION__);
     // Initialize syscfg to make syscfg calls
@@ -199,8 +200,8 @@ CosaWebConfigInitialize
     }
     else
 #endif
-    CosaDmlGetValueFromDb("WebConfigRfcEnabled", tmpbuf);
-    if( (tmpbuf[0] != '\0') && AnscEqualString(tmpbuf, "true", TRUE))
+    CosaDmlGetRFCEnableFromDB(&bValue);
+    if(bValue == TRUE)
     {
         pMyObject->RfcEnable = true;
     }

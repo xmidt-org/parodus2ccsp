@@ -37,6 +37,8 @@
 #define CONFIGFILE_PARAM_SYNC_CHECK_OK      "SyncCheckOK"
 #define CONFIGFILE_PARAM_REQUEST_TIME_STAMP     "RequestTimeStamp"
 
+static char *paramRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.Device.X_RDK_WebConfig.RfcEnable";
+
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 extern ANSC_HANDLE bus_handle;
 extern char        g_Subsystem[32];
@@ -51,6 +53,8 @@ int setRfcEnable(BOOL bValue)
 {
 	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	char buf[16] = {0};
+	int retPsmSet = CCSP_SUCCESS;
+
 	if(bValue == TRUE)
 	{
 		sprintf(buf, "%s", "true");
@@ -75,26 +79,42 @@ int setRfcEnable(BOOL bValue)
 		pthread_mutex_unlock(get_global_periodicsync_mutex());
 	}  
 #ifdef RDKB_BUILD
-	if(syscfg_set(NULL, "WebConfigRfcEnabled", buf) != 0)
-	{
-		WebConfigLog("syscfg_set failed for RfcEnable\n");
-		return 1;
-	}
-	else
-	{
-		if (syscfg_commit() != 0)
-		{
-			WebConfigLog("syscfg_commit failed\n");
-			return 1;
-		}
-		else
-		{
-			pMyObject->RfcEnable = bValue;
-			return 0;
-		}
-	}
+	retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, paramRFCEnable, ccsp_string, buf);
+        if (retPsmSet != CCSP_SUCCESS)
+        {
+                WebConfigLog("psm_set failed ret %d for parameter %s and value %s\n", retPsmSet, paramRFCEnable, buf);
+                return 1;
+        }
+        else
+        {
+                WebConfigLog("psm_set success ret %d for parameter %s and value %s\n", retPsmSet, paramRFCEnable, buf);
+		pMyObject->RfcEnable = bValue;
+		WebConfigLog("pMyObject->RfcEnable is %d\n", pMyObject->RfcEnable);
+		return 0;
+        }
 #endif
 	return 0;
+}
+
+BOOL CosaDmlGetRFCEnableFromDB(BOOL *pbValue)
+{
+    char* strValue = NULL;
+
+    WebcfgDebug("-------- %s ----- Enter-- ---\n",__FUNCTION__);
+
+    *pbValue = FALSE;
+    if (CCSP_SUCCESS == PSM_Get_Record_Value2(bus_handle,
+                g_Subsystem, paramRFCEnable, NULL, &strValue))
+    {
+        if(((strcmp (strValue, "true") == 0)) || (strcmp (strValue, "TRUE") == 0))
+	{
+            *pbValue = TRUE;
+        }
+        ((CCSP_MESSAGE_BUS_INFO *)bus_handle)->freefunc( strValue );
+        return TRUE;
+    }
+    WebcfgDebug("-------- %s ----- Exit-- ---\n",__FUNCTION__);
+    return FALSE;
 }
 
 int Get_Webconfig_URL( char *pString)
