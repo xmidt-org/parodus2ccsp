@@ -449,7 +449,7 @@ int handleHttpResponse(long response_code, char *webConfigData, int retry_count,
 	else if(response_code == 403)
 	{
 		WebConfigLog("Token is expired, fetch new token. response_code:%d\n", response_code);
-		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_global_deviceMAC(), serialNum );
+		createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_deviceMAC(), serialNum );
 		WebcfgDebug("createNewAuthToken done in 403 case\n");
 		err = 1;
 	}
@@ -544,7 +544,7 @@ int requestWebConfigData(char **configData, int r_count, int index, int status, 
 		if(configURL !=NULL)
 		{
 			//Replace {mac} string from default init url with actual deviceMAC
-			webConfigURL = replaceMacWord(configURL, c, get_global_deviceMAC());
+			webConfigURL = replaceMacWord(configURL, c, get_deviceMAC());
 			WebConfigLog("webConfigURL is %s\n", webConfigURL);
 			// Store {mac} replaced/updated config URL to DB
 			setConfigURL(index, webConfigURL);
@@ -1284,9 +1284,9 @@ void getAuthToken()
 	if( strlen(WEBPA_READ_HEADER) !=0 && strlen(WEBPA_CREATE_HEADER) !=0)
 	{
                 getDeviceMac();
-                WebConfigLog("deviceMAC: %s\n",get_global_deviceMAC());
+                WebConfigLog("deviceMAC: %s\n",get_deviceMAC());
 
-		if( get_global_deviceMAC() != NULL && strlen(get_global_deviceMAC()) !=0 )
+		if( get_deviceMAC() != NULL && strlen(get_deviceMAC()) !=0 )
 		{
 			if(strlen(serialNum) ==0)
 			{
@@ -1301,7 +1301,7 @@ void getAuthToken()
 
 			if( strlen(serialNum)>0 )
 			{
-				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), get_global_deviceMAC(), serialNum);
+				execute_token_script(output, WEBPA_READ_HEADER, sizeof(output), get_deviceMAC(), serialNum);
 				if ((strlen(output) == 0))
 				{
 					WebConfigLog("Unable to get auth token\n");
@@ -1310,7 +1310,7 @@ void getAuthToken()
 				{
 					WebConfigLog("Failed to read token from %s. Proceeding to create new token.\n",WEBPA_READ_HEADER);
 					//Call create/acquisition script
-					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_global_deviceMAC(), serialNum );
+					createNewAuthToken(webpa_auth_token, sizeof(webpa_auth_token), get_deviceMAC(), serialNum );
 				}
 				else
 				{
@@ -1420,13 +1420,13 @@ void* processWebConfigNotification()
 		if(msg !=NULL)
 		{
                         WebcfgDebug("Processing msg\n");
-			if(strlen(get_global_deviceMAC()) == 0)
+			if(strlen(get_deviceMAC()) == 0)
 			{
 				WebConfigLog("deviceMAC is NULL, failed to send Webconfig Notification\n");
 			}
 			else
 			{
-				snprintf(device_id, sizeof(device_id), "mac:%s", get_global_deviceMAC());
+				snprintf(device_id, sizeof(device_id), "mac:%s", get_deviceMAC());
 				WebConfigLog("webconfig Device_id %s\n", device_id);
 
 				notifyPayload = cJSON_CreateObject();

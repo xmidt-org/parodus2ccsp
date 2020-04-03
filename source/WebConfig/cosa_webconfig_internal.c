@@ -24,6 +24,7 @@
 #include "webconfig_log.h"
 #include "webconfig_internal.h"
 #include <webcfg_db.h>
+#include <webcfg.h>
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
@@ -61,11 +62,11 @@ int setRfcEnable(BOOL bValue)
 		WebcfgDebug("Received RFC enable. updating g_shutdown\n");
 		if(pMyObject->RfcEnable == false)
 		{
-			pthread_mutex_lock (get_global_periodicsync_mutex());
-			g_shutdown  = false;
-			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			pthread_mutex_lock (get_global_sync_mutex());
+			set_global_shutdown(false);
+			pthread_mutex_unlock(get_global_sync_mutex());
 			WebConfigLog("RfcEnable dynamic change from false to true. start initWebConfigMultipartTask.\n");
-			initWebConfigMultipartTask();
+			initWebConfigMultipartTask(0);
 		}
 	}
 	else
@@ -73,10 +74,10 @@ int setRfcEnable(BOOL bValue)
 		sprintf(buf, "%s", "false");
 		WebConfigLog("Received RFC disable. updating g_shutdown\n");
 		/* sending signal to kill initWebConfigMultipartTask thread*/
-		pthread_mutex_lock (get_global_periodicsync_mutex());
-		g_shutdown  = true;
-		pthread_cond_signal(get_global_periodicsync_condition());
-		pthread_mutex_unlock(get_global_periodicsync_mutex());
+		pthread_mutex_lock (get_global_sync_mutex());
+		set_global_shutdown(true);
+		pthread_cond_signal(get_global_sync_condition());
+		pthread_mutex_unlock(get_global_sync_mutex());
 	}  
 #ifdef RDKB_BUILD
 	retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, paramRFCEnable, ccsp_string, buf);
@@ -244,9 +245,9 @@ int setPeriodicSyncCheckInterval(int iValue)
 		{
 			pMyObject->PeriodicSyncCheckInterval = iValue;
 			/* sending signal to initWebConfigMultipartTask to update the sync time interval*/
-			pthread_mutex_lock (get_global_periodicsync_mutex());
-			pthread_cond_signal(get_global_periodicsync_condition());
-			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			pthread_mutex_lock (get_global_sync_mutex());
+			pthread_cond_signal(get_global_sync_condition());
+			pthread_mutex_unlock(get_global_sync_mutex());
 		}
 	}
 #endif
@@ -272,7 +273,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 		else
 		{
 			/* sending signal to initWebConfigMultipartTask to update the sync time interval*/
-			pthread_mutex_lock (get_global_periodicsync_mutex());
+			pthread_mutex_lock (get_global_sync_mutex());
 
 			//Update ForceSyncTransID to access webpa transactionId in webConfig sync.
 			if(transactionId !=NULL && (strlen(transactionId)>0))
@@ -281,8 +282,8 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 				WebConfigLog("pMyObject->ForceSyncTransID is %s\n", pMyObject->ForceSyncTransID);
 			}
 			WebConfigLog("Trigger force sync\n");
-			pthread_cond_signal(get_global_periodicsync_condition());
-			pthread_mutex_unlock(get_global_periodicsync_mutex());
+			pthread_cond_signal(get_global_sync_condition());
+			pthread_mutex_unlock(get_global_sync_mutex());
 		}
 	}
 	else
@@ -756,14 +757,14 @@ BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue, cha
 			}
 			else
 			{
-				pthread_mutex_lock (get_global_periodicsync_mutex());
+				pthread_mutex_lock (get_global_sync_mutex());
 				//Update ForceSyncTransID to access webpa transactionId in webConfig sync.
 				if(transactionId !=NULL && (strlen(transactionId)>0))
 				{
 					AnscCopyString(pConfigFileEntry->ForceSyncTransID, transactionId);
 				}
-				pthread_cond_signal(get_global_periodicsync_condition());
-				pthread_mutex_unlock(get_global_periodicsync_mutex());
+				pthread_cond_signal(get_global_sync_condition());
+				pthread_mutex_unlock(get_global_sync_mutex());
 			}
 		}
 		else
