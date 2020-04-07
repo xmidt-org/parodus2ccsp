@@ -11,10 +11,10 @@
 #include "webpa_notification.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include "cosa_webconfig_internal.h"
+#include <webcfg_generic.h>
 #else
 #include "webpa_internal.h"
 #endif
-#include <webcfg_generic.h>
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/

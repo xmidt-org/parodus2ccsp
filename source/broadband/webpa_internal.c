@@ -11,9 +11,9 @@
 #include "webpa_internal.h"
 
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
-#include "webconfig_log.h"
-#endif
+#include <webcfg_log.h>
 #include <webcfg.h>
+#endif
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
