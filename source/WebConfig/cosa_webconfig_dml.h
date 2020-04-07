@@ -79,9 +79,6 @@
 
     *  X_RDK_WebConfig_GetParamBoolValue
     *  X_RDK_WebConfig_SetParamBoolValue
-    *  X_RDK_WebConfig_GetParamUlongValue
-    *  X_RDK_WebConfig_GetParamIntValue
-    *  X_RDK_WebConfig_SetParamIntValue
     *  X_RDK_WebConfig_SetParamStringValue
     *  X_RDK_WebConfig_GetParamStringValue
 
@@ -103,30 +100,6 @@ X_RDK_WebConfig_SetParamBoolValue
     );
 
 BOOL
-X_RDK_WebConfig_GetParamUlongValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        ULONG*                      puLong
-    );
-
-BOOL
-X_RDK_WebConfig_GetParamIntValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        int*                        pInt
-    );
-
-BOOL
-X_RDK_WebConfig_SetParamIntValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        int                         iValue
-    );
-
-BOOL
 X_RDK_WebConfig_SetParamStringValue
     (
         ANSC_HANDLE                 hInsContext,
@@ -143,117 +116,7 @@ X_RDK_WebConfig_GetParamStringValue
         ULONG*                      pUlSize
     );
 
-/***********************************************************************
 
- APIs for Object:
-
-    X_RDK_WebConfig.ConfigFile.{i}.
-
-    *  ConfigFile_GetEntryCount
-    *  ConfigFile_GetEntry
-    *  ConfigFile_IsUpdated
-    *  ConfigFile_Synchronize
-    *  ConfigFile_GetParamBoolValue
-    *  ConfigFile_GetParamStringValue
-    *  ConfigFile_SetParamBoolValue
-    *  ConfigFile_SetParamStringValue
-    *  ConfigFile_Validate
-    *  ConfigFile_Commit
-    *  ConfigFile_Rollback
-
-***********************************************************************/
-ULONG
-ConfigFile_GetEntryCount
-    (
-        ANSC_HANDLE
-    );
-
-ANSC_HANDLE
-ConfigFile_GetEntry
-    (
-        ANSC_HANDLE                 hInsContext,
-        ULONG                       nIndex,
-        ULONG*                      pInsNumber
-    );
-
-BOOL
-ConfigFile_IsUpdated
-    (
-        ANSC_HANDLE                 hInsContext
-    );
-
-ULONG
-ConfigFile_Synchronize
-    (
-        ANSC_HANDLE                 hInsContext
-    );
-
-ANSC_HANDLE
-ConfigFile_AddEntry
-    (
-        ANSC_HANDLE                 hInsContext,
-        ULONG*                      pInsNumber
-    );
-
-ULONG
-ConfigFile_DelEntry
-    (
-        ANSC_HANDLE                 hInsContext,
-        ANSC_HANDLE                 hInstance
-    );
-
-BOOL
-ConfigFile_GetParamBoolValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        BOOL*                       pBool
-    );
-
-ULONG
-ConfigFile_GetParamStringValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        char*                       pValue,
-        ULONG*                      pUlSize
-    );
-
-BOOL
-ConfigFile_SetParamBoolValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        BOOL                        bValue
-    );
-
-BOOL
-ConfigFile_SetParamStringValue
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       ParamName,
-        char*                       strValue
-    );
-
-BOOL
-ConfigFile_Validate
-    (
-        ANSC_HANDLE                 hInsContext,
-        char*                       pReturnParamName,
-        ULONG*                      puLength
-    );
-
-ULONG
-ConfigFile_Commit
-    (
-        ANSC_HANDLE                 hInsContext
-    );
-
-ULONG
-ConfigFile_Rollback
-    (
-        ANSC_HANDLE                 hInsContext
-    );
 BOOL Get_RfcEnable();
 BOOL RFC_ENABLE;
 #endif

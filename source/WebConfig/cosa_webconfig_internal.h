@@ -78,31 +78,10 @@ BOOL Get_RfcEnable();
 int setRfcEnable(BOOL bValue);
 int Get_Webconfig_Blob( char *pString);
 BOOL CosaDmlGetRFCEnableFromDB(BOOL *pbValue);
-int getConfigNumberOfEntries();
-int Get_PeriodicSyncCheckInterval();
-int setPeriodicSyncCheckInterval(int iValue);
-BOOL getConfigURL(int index,char **configURL);
-int setConfigURL(int index, char *configURL);
-BOOL getRequestTimeStamp(int index,char **RequestTimeStamp);
-int setRequestTimeStamp(int index);
-BOOL getConfigVersion(int index, char **version);
-int setConfigVersion(int index, char *version);
-BOOL getSyncCheckOK(int index,BOOL *pvalue );
-int setSyncCheckOK(int index, BOOL status);
-BOOL getForceSyncCheck(int index,BOOL *pvalue, char** transactionID );
-BOOL setForceSyncCheck(int index, BOOL pvalue, char *transactionId,int *session_status);
-BOOL isValidInstanceNumber(int instNum);
-
-BOOL getConfigURLFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
-BOOL setConfigURLWithWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
-BOOL getRequestTimeStampFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
-BOOL setRequestTimeStampWithWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
-BOOL getConfigVersionFromWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
-BOOL setConfigVersionWithWebConfigCtx(ANSC_HANDLE hInsContext, char *pValue);
-BOOL getSyncCheckOKFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool );
-BOOL setSyncCheckOKWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL status);
-BOOL getForceSyncCheckFromWebConfigCtx(ANSC_HANDLE hInsContext, BOOL *pBool, char *pTransValue );
-BOOL setForceSyncCheckWithWebConfigCtx(ANSC_HANDLE hInsContext, BOOL bValue, char *transactionId,int *pStatus);
+int Get_Webconfig_URL( char *pString);
+int Set_Webconfig_URL( char *pString);
+int getForceSync(char** pString, char **transactionId );
+int setForceSync(char* pString, char *transactionId,int *pStatus);
 
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 
