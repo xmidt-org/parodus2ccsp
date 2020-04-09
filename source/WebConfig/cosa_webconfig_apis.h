@@ -46,8 +46,6 @@
     char                        URL[256];                                    \
     char 		    ForceSync[256];					\
     char 		    ForceSyncTransID[256];					\
-    char*                    DBBlobData;                                         \
-    size_t                   DBBlobLength;                                        \
 	ANSC_HANDLE                     hIrepFolderWebConfig;                                         \
     ANSC_HANDLE                     hIrepFolderWebConfigMapCont;                                       \
 

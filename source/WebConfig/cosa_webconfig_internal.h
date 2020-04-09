@@ -76,7 +76,6 @@
 
 BOOL Get_RfcEnable();
 int setRfcEnable(BOOL bValue);
-int Get_Webconfig_Blob( char *pString);
 BOOL CosaDmlGetRFCEnableFromDB(BOOL *pbValue);
 int Get_Webconfig_URL( char *pString);
 int Set_Webconfig_URL( char *pString);

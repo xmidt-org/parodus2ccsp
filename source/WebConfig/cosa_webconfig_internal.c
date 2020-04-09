@@ -172,32 +172,6 @@ int Set_Webconfig_URL( char *pString)
         return 1;
 }
 
-int Get_Webconfig_Blob( char *pString)
-{
-    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
-    WebConfigLog("-------- %s ----- Enter-- ---\n",__FUNCTION__);
-
-	//WebConfigLog("pMyObject->DBBlobData %s,*pString=%s\n", pMyObject->DBBlobData,*pString);
-
-        pMyObject->DBBlobData = NULL;
-        pMyObject->DBBlobData = get_DB_BLOB_base64(&pMyObject->DBBlobLength);
-        writeBlobToFile(WEBCFG_BLOB_PATH, pMyObject->DBBlobData);
-        WebConfigLog("pMyObject->DBBlobLength %zu\n",pMyObject->DBBlobLength);
-        readBlobFromFile(WEBCFG_BLOB_PATH);
-	pString=(char*) malloc(sizeof(char *)*(pMyObject->DBBlobLength));
-        AnscCopyString( pString,pMyObject->DBBlobData );
-        if (pString != NULL)
-        {
-            WebConfigLog("pMyObject->DBBlobLength %zu, pString %s, pMyObject->DBBlobData=%s\n",pMyObject->DBBlobLength,pString,pMyObject->DBBlobData);
-            return 1;
-        }
-        else
-        {
-            WebConfigLog("Failed to get b64 encoded data\n");
-            return 0;
-        }
-}
-
 
 int setForceSync(char* pString, char *transactionId,int *pStatus)
 {
