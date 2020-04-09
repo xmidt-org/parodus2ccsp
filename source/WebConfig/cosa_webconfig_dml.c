@@ -21,7 +21,7 @@
 #include "cosa_webconfig_dml.h"
 #include "cosa_webconfig_internal.h"
 #include "plugin_main_apis.h"
-#include "webconfig_log.h"
+#include <webcfg_log.h>
 
 //bool g_shutdown  = false;
 /***********************************************************************

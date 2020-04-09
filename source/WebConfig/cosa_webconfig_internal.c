@@ -21,7 +21,7 @@
 #include "cosa_webconfig_apis.h"
 #include "cosa_webconfig_dml.h"
 #include "cosa_webconfig_internal.h"
-#include "webconfig_log.h"
+#include <webcfg_log.h>
 #include <webcfg_db.h>
 #include <webcfg.h>
 

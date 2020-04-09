@@ -41,7 +41,6 @@ include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/trower-base64
                     ${INCLUDE_DIR}/wrp-c
                     ${INCLUDE_DIR}/wdmp-c
-		    ${INCLUDE_DIR}/webcfg
                     ${INCLUDE_DIR}/libparodus
                     ${INCLUDE_DIR}/cimplog
                     ${LIBRARY_DIR}/dbus-1.0/include
@@ -57,6 +56,7 @@ include_directories(
 if (FEATURE_SUPPORT_WEBCONFIG)
 include_directories(
 		     ${INCLUDE_DIR}/curl
+		     ${INCLUDE_DIR}/webcfg
                      source/WebConfig
                     )
 endif (FEATURE_SUPPORT_WEBCONFIG)
@@ -136,6 +136,18 @@ ExternalProject_Add(wdmp-c
 add_library(libwdmp-c STATIC SHARED IMPORTED)
 add_dependencies(libwdmp-c wdmp-c)
 
+if (FEATURE_SUPPORT_WEBCONFIG)
+# curl external dependency
+#-------------------------------------------------------------------------------
+ExternalProject_Add(curl
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/curl
+    GIT_REPOSITORY https://github.com/curl/curl.git
+    GIT_TAG "curl-7_63_0"
+    CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DBUILD_TESTING=OFF
+)
+add_library(libcurl STATIC SHARED IMPORTED)
+add_dependencies(libcurl curl)
+
 # webcfg external dependency
 #-------------------------------------------------------------------------------
 ExternalProject_Add(webcfg
@@ -148,17 +160,6 @@ ExternalProject_Add(webcfg
 add_library(libwebcfg STATIC SHARED IMPORTED)
 add_dependencies(libwebcfg webcfg)
 
-if (FEATURE_SUPPORT_WEBCONFIG)
-# curl external dependency
-#-------------------------------------------------------------------------------
-ExternalProject_Add(curl
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/curl
-    GIT_REPOSITORY https://github.com/curl/curl.git
-    GIT_TAG "curl-7_63_0"
-    CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DBUILD_TESTING=OFF
-)
-add_library(libcurl STATIC SHARED IMPORTED)
-add_dependencies(libcurl curl)
 endif (FEATURE_SUPPORT_WEBCONFIG)
 
 # nanoMsg external dependency

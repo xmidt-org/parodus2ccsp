@@ -13,7 +13,9 @@
 #ifdef RDKB_BUILD
 #include <sysevent/sysevent.h>
 #endif
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
 #include <webcfg_generic.h>
+#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/

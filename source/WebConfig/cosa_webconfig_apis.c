@@ -69,7 +69,7 @@
 **************************************************************************/
 #include "plugin_main_apis.h"
 #include "cosa_webconfig_apis.h"
-#include "webconfig_log.h"
+#include <webcfg_log.h>
 
 int initConfigFileWithURL(char *Url, ULONG InstanceNumber);
 void CosaDmlRemoveValueFromDb(char *ParamName);
