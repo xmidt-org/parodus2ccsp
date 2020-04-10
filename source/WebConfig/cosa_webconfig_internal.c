@@ -28,6 +28,7 @@
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
 #define WEBCONFIG_PARAM_FORCE_SYNC   	    "Device.X_RDK_WebConfig.ForceSync"
+#define WEBCONFIG_PARAM_DATA   	    	    "Device.X_RDK_WebConfig.Data"
 
 static char *paramRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.Device.X_RDK_WebConfig.RfcEnable";
 
@@ -320,6 +321,26 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 					matchFound = 0;
 				}
                             }
+				 else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))	
+				{
+				char* b64buffer =  get_DB_BLOB_base64();;
+		    		WebConfigLog("B4 Get_Webconfig_Data\n");
+		  		if( (b64buffer == NULL) && strlen(b64buffer) >0 )
+				{
+		   			WebConfigLog("Webpa get : Datafetched %s\n", b64buffer);
+		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
+					paramVal[k]->parameterValue = strndup(b64buffer,MAX_PARAMETERVALUE_LEN);
+		                        paramVal[k]->type = ccsp_string;
+		                        k++;
+					WebConfigLog("Webpa get : Data done\n");	
+     				}
+     				else
+     				{
+        				WebConfigLog("Webpa get : Data not found\n");
+					WAL_FREE(paramVal[k]);
+					matchFound = 0;
+    				 }    
+			      }
                             else
                             {
                                 WAL_FREE(paramVal[k]);
@@ -381,6 +402,23 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->type = ccsp_string;
                                 k++;
 				WebConfigLog("After Webpa wildcard get for URL\n");
+
+				WebConfigLog("Webpa wildcard get for Data\n");
+				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
+				char* b64buffer =  get_DB_BLOB_base64();;
+		    		WebConfigLog("Wildcard get Get_Webconfig_Data\n");
+		  		if( (b64buffer == NULL) && strlen(b64buffer) >0 )
+				{
+		   			WebConfigLog("Webpa get : Datafetched %s\n", b64buffer);
+		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
+					WebConfigLog("Wildcard get : paramVal[k]->parameterValue:%s\n", paramVal[k]->parameterValue);
+					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+		                        paramVal[k]->type = ccsp_string;
+		                        k++;
+					WebConfigLog("Webpa get : Data done\n");	
+     				}
                             }
                         }
                         break;
