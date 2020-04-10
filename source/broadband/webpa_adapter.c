@@ -8,7 +8,9 @@
 
 #include "webpa_notification.h"
 #include "webpa_internal.h"
-
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+#include <webcfg_generic.h>
+#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/

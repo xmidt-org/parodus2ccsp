@@ -14,9 +14,9 @@
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_ANSC_LINUX ")
 set(WEBCONFIG_PATCH "${PATCHES_DIR}/Web_config_XML.patch")
-set(SOURCES broadband/ssp_messagebus_interface.c broadband/ssp_main.c broadband/ssp_action.c broadband/cosa_webpa_dml.c broadband/cosa_webpa_internal.c broadband/cosa_webpa_apis.c broadband/plugin_main.c broadband/plugin_main_apis.c broadband/webpa_adapter.c broadband/webpa_internal.c broadband/webpa_table.c broadband/webpa_replace.c broadband/webpa_parameter.c broadband/webpa_attribute.c broadband/webpa_notification.c app/main.c app/libpd.c)
+set(SOURCES broadband/ssp_messagebus_interface.c broadband/ssp_main.c broadband/ssp_action.c broadband/dm_pack_datamodel.c broadband/cosa_webpa_dml.c broadband/cosa_webpa_internal.c broadband/cosa_webpa_apis.c broadband/plugin_main.c broadband/plugin_main_apis.c broadband/webpa_adapter.c broadband/webpa_internal.c broadband/webpa_table.c broadband/webpa_replace.c broadband/webpa_parameter.c broadband/webpa_attribute.c broadband/webpa_notification.c app/main.c app/libpd.c)
 if (FEATURE_SUPPORT_WEBCONFIG)
-set(SOURCES ${SOURCES} WebConfig/cosa_apis_util.c WebConfig/cosa_webconfig_dml.c WebConfig/cosa_webconfig_apis.c WebConfig/webconfig_internal.c WebConfig/webconfig_log.c WebConfig/cosa_webconfig_internal.c)
+set(SOURCES ${SOURCES} WebConfig/cosa_webconfig_dml.c WebConfig/cosa_webconfig_apis.c WebConfig/webconfig_log.c WebConfig/cosa_webconfig_internal.c WebConfig/webcfg_internal.c)
  execute_process(
     COMMAND patch -p1 --forward --ignore-whitespace
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/source/arch"
@@ -37,7 +37,7 @@ if (BUILD_YOCTO)
 set(COMMON_LIBS "${COMMON_LIBS} -llog4c -lrdkloggers")
 endif()
 if (FEATURE_SUPPORT_WEBCONFIG)
-set(COMMON_LIBS "${COMMON_LIBS} -lcurl")
+set(COMMON_LIBS "${COMMON_LIBS} -lcurl -lwebcfg")
 endif()
 target_link_libraries (webpa ${CMAKE_THREAD_LIBS_INIT} ${COMMON_LIBS})
 install (TARGETS webpa DESTINATION bin)

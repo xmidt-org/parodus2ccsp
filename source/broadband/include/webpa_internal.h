@@ -238,17 +238,7 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
 WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type);
 
 #ifdef FEATURE_SUPPORT_WEBCONFIG
-/*
- * @brief webConfig getter function to get systemReadyTime from webpa
- * @return systemReadyTime in UTC format.
- */
-char *get_global_systemReadyTime();
 
-/*
- * @brief webConfig getter function to get deviceMAC
- * @return MAC value.
- */
-char* get_global_deviceMAC();
 /*
  * @brief To initiate webConfig Task handling
  */
@@ -260,4 +250,3 @@ WDMP_STATUS check_ethernet_wan_status();
 
 void processDeviceManageableNotification();
 
-void getDeviceMac();

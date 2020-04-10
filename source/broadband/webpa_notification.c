@@ -13,6 +13,9 @@
 #ifdef RDKB_BUILD
 #include <sysevent/sysevent.h>
 #endif
+#if defined(FEATURE_SUPPORT_WEBCONFIG)
+#include <webcfg_generic.h>
+#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -687,9 +690,15 @@ static void *notifyTask(void *status)
 }
 
 #ifdef FEATURE_SUPPORT_WEBCONFIG
-char* get_global_deviceMAC()
+char* get_deviceMAC()
 {
-    return deviceMAC;
+	if(strlen(deviceMAC) == 0)
+	{
+		WalInfo("deviceMAC is empty. getDeviceMac\n");
+		getDeviceMac();
+	}
+	WalInfo("get_deviceMAC returns %s\n", deviceMAC);
+    	return deviceMAC;
 }
 #endif
 
