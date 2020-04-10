@@ -240,11 +240,10 @@ int getForceSync(char** pString, char **transactionId )
 
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
 {
-    char *objects[] ={"Device.X_RDK_WebConfig."};
-    int objSize = sizeof(objects)/sizeof(objects[0]);
+    char *object ="Device.X_RDK_WebConfig.";
     parameterValStruct_t **paramVal = NULL;
     paramVal = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t *)*paramCount);
-    int i=0, j=0, k=0, isWildcard = 0, matchFound = 0;
+    int i=0, k=0, isWildcard = 0, matchFound = 0;
     int localCount = paramCount;
     BOOL RFC_ENABLE;
     WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
@@ -262,15 +261,9 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
         {
             isWildcard = 0;
         }
-        for(j=0; j<objSize; j++)
-        {
-            if(strstr(parameterNames[i],objects[j]) != NULL)
+            if(strstr(parameterNames[i],object) != NULL)
             {
                 matchFound = 1;
-                switch(j)
-                {
-                    case 0:
-                    {
                         if(isWildcard == 0)
                         {
                             paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
@@ -314,32 +307,26 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 		                        k++;
 					WebConfigLog("Webpa get : URL done\n");
 				}
-				else
+				/**else
 				{
 					WebConfigLog("Webpa get : URL not found\n");
 					WAL_FREE(paramVal[k]);
 					matchFound = 0;
-				}
+				}*/
                             }
 				 else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))	
 				{
-				char* b64buffer =  get_DB_BLOB_base64();;
-		    		WebConfigLog("B4 Get_Webconfig_Data\n");
-		  		if( (b64buffer == NULL) && strlen(b64buffer) >0 )
-				{
-		   			WebConfigLog("Webpa get : Datafetched %s\n", b64buffer);
-		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
-					paramVal[k]->parameterValue = strndup(b64buffer,MAX_PARAMETERVALUE_LEN);
-		                        paramVal[k]->type = ccsp_string;
-		                        k++;
-					WebConfigLog("Webpa get : Data done\n");	
-     				}
-     				else
-     				{
-        				WebConfigLog("Webpa get : Data not found\n");
-					WAL_FREE(paramVal[k]);
-					matchFound = 0;
-    				 }    
+					WebConfigLog("B4 Get_Webconfig_Data\n");
+					char* b64buffer =  get_DB_BLOB_base64();
+			  		if( (b64buffer != NULL) && strlen(b64buffer) >0 )
+					{
+			   			WebConfigLog("Webpa get : Datafetched %s\n", b64buffer);
+				                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
+						paramVal[k]->parameterValue = strdup(b64buffer);
+				                paramVal[k]->type = ccsp_string;
+				                k++;
+						WebConfigLog("Webpa get : Data done\n");	
+	     				}
 			      }
                             else
                             {
@@ -407,26 +394,21 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
                                 memset(paramVal[k], 0, sizeof(parameterValStruct_t));
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
-				char* b64buffer =  get_DB_BLOB_base64();;
+				char* b64buffer =  get_DB_BLOB_base64();
 		    		WebConfigLog("Wildcard get Get_Webconfig_Data\n");
-		  		if( (b64buffer == NULL) && strlen(b64buffer) >0 )
+		  		if( (b64buffer != NULL) && strlen(b64buffer) >0 )
 				{
 		   			WebConfigLog("Webpa get : Datafetched %s\n", b64buffer);
-		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
+		                        //paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
+					paramVal[k]->parameterValue = strdup(b64buffer);
 					WebConfigLog("Wildcard get : paramVal[k]->parameterValue:%s\n", paramVal[k]->parameterValue);
-					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
 		                        paramVal[k]->type = ccsp_string;
 		                        k++;
 					WebConfigLog("Webpa get : Data done\n");	
      				}
                             }
                         }
-                        break;
-                    }
-                }
-                break;
             }
-        }
         if(matchFound == 0)
         {
             if(!RFC_ENABLE)
