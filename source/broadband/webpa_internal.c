@@ -244,7 +244,7 @@ static void *WALInit(void *status)
 	char* strValue = NULL;
 	if (CCSP_SUCCESS == PSM_Get_Record_Value2(bus_handle, g_Subsystem, "eRT.com.cisco.spvtg.ccsp.webpa.Device.X_RDK_WebConfig.RfcEnable", NULL, &strValue))
 	{
-		WebConfigLog("strValue %s \n", strValue);
+		WebcfgDebug("strValue %s \n", strValue);
 		if(strValue != NULL)
 		{
 			walStrncpy(RfcEnable, strValue, sizeof(RfcEnable));
@@ -254,7 +254,7 @@ static void *WALInit(void *status)
 #endif
 	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
 	{
-	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigMultipartTask\n");
+	    WebcfgInfo("WebConfig Rfc is enabled, starting WebConfigMultipartTask\n");
 	    initWebConfigMultipartTask((unsigned long) status);
 	}
 	else

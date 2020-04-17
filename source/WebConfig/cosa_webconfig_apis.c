@@ -126,11 +126,11 @@ CosaWebConfigCreate
 
     pMyObject->Initialize   ((ANSC_HANDLE)pMyObject);
 	
-	WebConfigLog("------ pMyObject -------\n");
-	WebConfigLog("pMyObject->RfcEnable: %d\n",pMyObject->RfcEnable);
-	WebConfigLog("pMyObject->ForceSync: %s\n",pMyObject->ForceSync);
+	WebcfgDebug("------ pMyObject -------\n");
+	WebcfgDebug("pMyObject->RfcEnable: %d\n",pMyObject->RfcEnable);
+	WebcfgDebug("pMyObject->ForceSync: %s\n",pMyObject->ForceSync);
 	
-	WebConfigLog("------ pMyObject -------\n");
+	WebcfgDebug("------ pMyObject -------\n");
 	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
     return  (ANSC_HANDLE)pMyObject;
 }
@@ -167,25 +167,22 @@ CosaWebConfigInitialize
 {
     ANSC_STATUS                     returnStatus         = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject            = (PCOSA_DATAMODEL_WEBCONFIG )hThisObject;
-    WebConfigLog("-------- %s ----- Enter ------\n",__FUNCTION__);
+    WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
     pMyObject->MaxInstanceNumber        = 0;
     CHAR tmpbuf[ 128 ] = { 0 };
     char URL[256] = { 0 };
     BOOL bValue = FALSE;
-    WebConfigLog("CosaDmlGetRFCEnableFromDB\n");
+    WebcfgDebug("CosaDmlGetRFCEnableFromDB\n");
     CosaDmlGetRFCEnableFromDB(&bValue);
-    WebConfigLog("bValue : %d\n", bValue);
     if(bValue == TRUE)
     {
-	WebConfigLog("Update pMyObject->RfcEnable to true\n");
         pMyObject->RfcEnable = true;
     }
     else
     {
-	WebConfigLog("Update pMyObject->RfcEnable to false\n");
         pMyObject->RfcEnable = false;
     }
-    WebConfigLog("pMyObject->RfcEnable is : %d\n",pMyObject->RfcEnable);
+    WebcfgInfo("pMyObject->RfcEnable: %d\n",pMyObject->RfcEnable);
 	/*Removing RFC check for now as data re-load is not yet implemented*/
     //if(pMyObject->RfcEnable == true)
     //{
@@ -195,25 +192,24 @@ CosaWebConfigInitialize
 
 	_ansc_memset(pMyObject->ForceSyncTransID, 0, 256);
 	AnscCopyString( pMyObject->ForceSyncTransID, "" );
-        WebConfigLog("pMyObject->ForceSync:%s\n",pMyObject->ForceSync);
-	WebConfigLog("pMyObject->ForceSyncTransID:%s\n",pMyObject->ForceSync);
+        WebcfgDebug("pMyObject->ForceSync:%s\n",pMyObject->ForceSync);
+	WebcfgDebug("pMyObject->ForceSyncTransID:%s\n",pMyObject->ForceSync);
 
 	_ansc_memset(pMyObject->URL, 0, 256);
 	Get_Webconfig_URL(URL);
 	if( (URL !=NULL) && strlen(URL)>0 )
 	{
-		WebConfigLog("URL from DB %s\n", URL);
 		AnscCopyString(pMyObject->URL, URL);
-		WebConfigLog("pMyObject->URL:%s\n", pMyObject->URL);
+		WebcfgInfo("pMyObject->URL:%s\n", pMyObject->URL);
 	}
-	WebConfigLog("URL initialization done\n");
+	WebcfgDebug("URL initialization done\n");
 /*	else
 	{
-	    WebConfigLog("RFC disabled. Hence not loading ConfigFile entries\n");
+	    WebcfgInfo("RFC disabled. Hence not loading ConfigFile entries\n");
 	    pMyObject->PeriodicSyncCheckInterval = 0;
 	    pMyObject->pConfigFileContainer = NULL;
 	}*/
-    WebConfigLog("#### CosaWebConfigInitialize done. return %d\n", returnStatus);
+    WebcfgDebug("#### CosaWebConfigInitialize done. return %d\n", returnStatus);
 
     return returnStatus;
 }

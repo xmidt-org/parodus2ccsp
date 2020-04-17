@@ -697,7 +697,6 @@ char* get_deviceMAC()
 		WalInfo("deviceMAC is empty. getDeviceMac\n");
 		getDeviceMac();
 	}
-	WalInfo("get_deviceMAC returns %s\n", deviceMAC);
     	return deviceMAC;
 }
 #endif

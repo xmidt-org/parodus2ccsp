@@ -83,11 +83,11 @@ X_RDK_WebConfig_SetParamStringValue
         char*                       strValue
     )
 {
-	WebConfigLog(" %s : ENTER \n", __FUNCTION__ );
+	WebcfgDebug(" %s : ENTER \n", __FUNCTION__ );
 	RFC_ENABLE=Get_RfcEnable();
 	if(!RFC_ENABLE)
 	{
-		WebConfigLog("%s RfcEnable is disabled so, %s SET failed\n",__FUNCTION__,ParamName);
+		WebcfgError("%s RfcEnable is disabled so, %s SET failed\n",__FUNCTION__,ParamName);
 		return FALSE;
 	}
 	if( AnscEqualString(ParamName, "ForceSync", TRUE))
@@ -99,7 +99,7 @@ X_RDK_WebConfig_SetParamStringValue
 		}
 		else
 		{
-			WebConfigLog("setForceSync failed\n");
+			WebcfgError("setForceSync failed\n");
 		}
 	}
 
@@ -111,15 +111,15 @@ X_RDK_WebConfig_SetParamStringValue
                 }
                 else
                 {
-                        WebConfigLog("Set_Webconfig_URL failed\n");
+                        WebcfgError("Set_Webconfig_URL failed\n");
                 }
         }
 		if( AnscEqualString(ParamName, "Data", TRUE))
 	    {
-			WebConfigLog("Data set is Not supported\n");
+			WebcfgInfo("Data set is Not supported\n");
             return TRUE;
 		}
-	WebConfigLog(" %s : EXIT \n", __FUNCTION__ );
+	WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
 
 	return FALSE;
 }
@@ -133,40 +133,37 @@ X_RDK_WebConfig_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-	WebConfigLog("------- %s ----- ENTER ----\n",__FUNCTION__);
+	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
 	RFC_ENABLE=Get_RfcEnable();
 	if(!RFC_ENABLE)
 	{
-		WebConfigLog("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
+		WebcfgError("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
 		return 0;
 	}
 	/* check the parameter name and return the corresponding value */
 	if( AnscEqualString(ParamName, "ForceSync", TRUE))
 	{
-		WebConfigLog("ForceSync Get Not supported\n");
+		WebcfgInfo("ForceSync Get Not supported\n");
 		return 0;
 	}
         if( AnscEqualString(ParamName, "URL", TRUE))
         {
                 if(Get_Webconfig_URL(pValue))
                 {
-
-			
-			WebConfigLog("URL fetched : pValue %s\n", pValue);
-				return 0;
+			WebcfgInfo("URL fetched : pValue %s\n", pValue);
+			return 0;
                 }
         }
         if( AnscEqualString(ParamName, "Data", TRUE))
 	    {
-                WebConfigLog(("[%s] at [%d]parameter '%s'\n",__FUNCTION__,__LINE__, ParamName));
+                WebcfgDebug(("[%s] at [%d]parameter '%s'\n",__FUNCTION__,__LINE__, ParamName));
                 char * blobData = NULL;
 
                 blobData = get_DB_BLOB_base64();
 
                 if (blobData != NULL)
                 {
-                         WebConfigLog("The BlobSize is %zu\n",strlen(blobData));
-                         WebConfigLog("The Blob fetched is %s\n",blobData);
+                         WebcfgDebug("The Blob fetched is %s size %zu\n",blobData, strlen(blobData));
 
 			 if(*pUlSize <= strlen(blobData))
                          {
@@ -175,7 +172,7 @@ X_RDK_WebConfig_GetParamStringValue
 		         }
 		         /* collect value */
 		         AnscCopyString(pValue, blobData);
-                         WebConfigLog("The pValue is %s\n",pValue);
+                         WebcfgDebug("The pValue is %s\n",pValue);
 		         if(blobData != NULL)
 		         {
 			     free(blobData);
@@ -185,8 +182,8 @@ X_RDK_WebConfig_GetParamStringValue
                 return 0;
         }
 
-	WebConfigLog("------- %s ----- EXIT ----\n",__FUNCTION__);
- 	WebConfigLog(("Unsupported parameter '%s'\n", ParamName));
+	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
+ 	WebcfgError(("Unsupported parameter '%s'\n", ParamName));
 	return -1;
 }
 
@@ -197,7 +194,7 @@ BOOL isValidUrl
 {
 	if(strstr(pUrl, "https") == NULL)
 	{
-		WalError("Invalid URL\n");
+		WebcfgError("Invalid URL\n");
 		return FALSE;
 	}
 	return TRUE;

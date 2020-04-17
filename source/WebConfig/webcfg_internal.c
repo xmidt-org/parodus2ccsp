@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "webpa_internal.h"
-#include "webcfg_generic.h"
+#include <webcfg_generic.h>
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
