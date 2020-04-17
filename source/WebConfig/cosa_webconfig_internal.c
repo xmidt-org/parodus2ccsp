@@ -491,6 +491,12 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 					return CCSP_FAILURE;
 				}
 			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))
+			{
+				WebcfgError("%s is not writable\n",val[i].parameterName);
+				*faultParam = strdup(val[i].parameterName);
+				return CCSP_ERR_NOT_WRITABLE;
+			}
 			else if(!RFC_ENABLE)
 			{
 				WebcfgError("RFC disabled. Hence not proceeding with SET\n");
