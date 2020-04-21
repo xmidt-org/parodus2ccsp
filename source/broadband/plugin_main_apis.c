@@ -69,7 +69,7 @@
 #include "cosa_webpa_apis.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include "cosa_webconfig_apis.h"
-#include "webconfig_log.h"
+#include <webcfg_log.h>
 #endif
 #include "webpa_adapter.h"
 

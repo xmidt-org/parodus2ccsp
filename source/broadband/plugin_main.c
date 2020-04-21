@@ -63,23 +63,8 @@ COSA_Init
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamBoolValue",  X_RDK_WebConfig_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamBoolValue",  X_RDK_WebConfig_SetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamUlongValue",  X_RDK_WebConfig_GetParamUlongValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamIntValue",  X_RDK_WebConfig_GetParamIntValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamIntValue",  X_RDK_WebConfig_SetParamIntValue);
-
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntryCount", ConfigFile_GetEntryCount);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetEntry",ConfigFile_GetEntry);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_AddEntry", ConfigFile_AddEntry);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_DelEntry", ConfigFile_DelEntry);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_IsUpdated", ConfigFile_IsUpdated);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Synchronize" , ConfigFile_Synchronize);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetParamBoolValue", ConfigFile_GetParamBoolValue);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_GetParamStringValue", ConfigFile_GetParamStringValue);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_SetParamBoolValue", ConfigFile_SetParamBoolValue);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_SetParamStringValue", ConfigFile_SetParamStringValue);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Commit", ConfigFile_Commit);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Validate", ConfigFile_Validate);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ConfigFile_Rollback", ConfigFile_Rollback);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamStringValue",  X_RDK_WebConfig_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamStringValue",  X_RDK_WebConfig_GetParamStringValue);
 #endif
     /* Create backend framework */
     g_pCosaBEManager = (PCOSA_BACKEND_MANAGER_OBJECT)CosaBackEndManagerCreate();

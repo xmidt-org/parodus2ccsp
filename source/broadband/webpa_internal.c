@@ -11,9 +11,9 @@
 #include "webpa_internal.h"
 
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
-#include "webconfig_log.h"
+#include <webcfg_log.h>
+#include <webcfg.h>
 #endif
-
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -98,9 +98,6 @@ char *subObjectList[] =
 "Device.X_RDKCENTRAL-COM_Report.RadioInterfaceStatistics.",
 "Device.X_RDKCENTRAL-COM_Report.NeighboringAP.",
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesStatus.",
-#if defined(FEATURE_SUPPORT_WEBCONFIG)
-"Device.X_RDK_WebConfig.ConfigFile.",
-#endif
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic."
 }; 
 
@@ -141,6 +138,7 @@ static void waitUntilSystemReady();
 static void ccspSystemReadySignalCB(void* user_data);
 static int checkIfSystemReady();
 extern ANSC_HANDLE bus_handle;
+extern char        g_Subsystem[32];
 static void *WALInit(void *status);
 static void retryFailedComponentCaching();
 
@@ -243,20 +241,21 @@ static void *WALInit(void *status)
 	char RfcEnable[64];
 	memset(RfcEnable, 0, sizeof(RfcEnable));
 #ifdef RDKB_BUILD
-	if(0 == syscfg_init())
+	char* strValue = NULL;
+	if (CCSP_SUCCESS == PSM_Get_Record_Value2(bus_handle, g_Subsystem, "eRT.com.cisco.spvtg.ccsp.webpa.Device.X_RDK_WebConfig.RfcEnable", NULL, &strValue))
 	{
-	    syscfg_get( NULL, "WebConfigRfcEnabled", RfcEnable, sizeof(RfcEnable));
-            WebcfgDebug("RfcEnable is %s\n", RfcEnable);
-	}
-	else
-	{
-	    WebcfgError("syscfg_init failed\n");
+		WebcfgDebug("strValue %s \n", strValue);
+		if(strValue != NULL)
+		{
+			walStrncpy(RfcEnable, strValue, sizeof(RfcEnable));
+			((CCSP_MESSAGE_BUS_INFO *)bus_handle)->freefunc( strValue );
+		}
 	}
 #endif
 	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
 	{
-	    WebConfigLog("WebConfig Rfc is enabled, starting WebConfigTask\n");
-	    initWebConfigTask((int)status);
+	    WebcfgInfo("WebConfig Rfc is enabled, starting WebConfigMultipartTask\n");
+	    initWebConfigMultipartTask((unsigned long) status);
 	}
 	else
 	{

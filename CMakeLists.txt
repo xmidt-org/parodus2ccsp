@@ -56,6 +56,7 @@ include_directories(
 if (FEATURE_SUPPORT_WEBCONFIG)
 include_directories(
 		     ${INCLUDE_DIR}/curl
+		     ${INCLUDE_DIR}/webcfg
                      source/WebConfig
                     )
 endif (FEATURE_SUPPORT_WEBCONFIG)
@@ -146,6 +147,19 @@ ExternalProject_Add(curl
 )
 add_library(libcurl STATIC SHARED IMPORTED)
 add_dependencies(libcurl curl)
+
+# webcfg external dependency
+#-------------------------------------------------------------------------------
+ExternalProject_Add(webcfg
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/webcfg
+    GIT_REPOSITORY https://github.com/Comcast/webcfg.git
+    GIT_TAG "c227bfa1e129404f21fa0272f411c7a472a0f237"
+    CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
+                  -DBUILD_TESTING=OFF
+)
+add_library(libwebcfg STATIC SHARED IMPORTED)
+add_dependencies(libwebcfg webcfg)
+
 endif (FEATURE_SUPPORT_WEBCONFIG)
 
 # nanoMsg external dependency
