@@ -9,12 +9,15 @@
 #include "dslh_dmagnt_interface.h"
 #include "ccsp_trace.h"
 #include "plugin_main.h"
-
+#ifdef RDKB_BUILD
+#include "dm_pack_create_func.h"
+#endif
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
- #define  CCSP_DATAMODEL_XML_FILE           "/usr/ccsp/webpa/WebpaAgent.xml"
-
+#ifndef RDKB_BUILD
+#define  CCSP_DATAMODEL_XML_FILE           "/usr/ccsp/webpa/WebpaAgent.xml"
+#endif
 
 /*----------------------------------------------------------------------------*/
 /*                               Library Objects                              */
@@ -152,12 +155,21 @@ ANSC_STATUS ssp_engage()
         _ansc_sprintf(CrName, "%s", CCSP_DBUS_INTERFACE_CR);
     }
 
+#ifdef RDKB_BUILD
     returnStatus =
+        pDslhCpeController->RegisterCcspDataModel2
+#else
+	returnStatus =
         pDslhCpeController->RegisterCcspDataModel
+#endif
             (
                 (ANSC_HANDLE)pDslhCpeController,
                 CrName,                                    /* CCSP_DBUS_INTERFACE_CR, CCSP CR ID */
-                CCSP_DATAMODEL_XML_FILE,                   /* Data Model XML file. Can be empty if only base data model supported. */
+#ifdef RDKB_BUILD
+                DMPackCreateDataModelXML,                  /* Comcast generated code to create XML. */
+#else
+		CCSP_DATAMODEL_XML_FILE,                   /* Data Model XML file. Can be empty if only base data model supported. */
+#endif
                 CCSP_COMPONENT_NAME_WEBPAAGENT,            /* Component Name    */
                 CCSP_COMPONENT_VERSION_WEBPAAGENT,         /* Component Version */
                 CCSP_COMPONENT_PATH_WEBPAAGENT,            /* Component Path    */
