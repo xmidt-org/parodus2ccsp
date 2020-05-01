@@ -116,6 +116,11 @@ X_RDK_WebConfig_GetParamStringValue
         ULONG*                      pUlSize
     );
 
+BOOL isValidUrl
+    (
+        char *	pUrl
+    );
+
 
 BOOL Get_RfcEnable();
 BOOL RFC_ENABLE;

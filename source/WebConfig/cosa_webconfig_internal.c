@@ -474,7 +474,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 			}
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_URL) == 0) && (RFC_ENABLE == true))
 			{
-				WebcfgDebug("Processing Webcfg URL param\n");
+				WebcfgDebug("Processing Webcfg URL param %s\n", val[i].parameterValue);
 				if(isValidUrl(val[i].parameterValue) == TRUE)
 				{
 					ret = Set_Webconfig_URL(val[i].parameterValue);
@@ -488,7 +488,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				else
 				{
 					WebcfgError("Webcfg URL validation failed\n");
-					return CCSP_FAILURE;
+					return CCSP_ERR_INVALID_PARAMETER_VALUE;
 				}
 			}
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))
