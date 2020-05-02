@@ -693,9 +693,9 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
                 }
         }
 
-        writeID = (setType == WEBPA_ATOMIC_SET_XPC)? CCSP_COMPONENT_ID_XPC: CCSP_COMPONENT_ID_WebPA;
+        writeID = ((setType == WEBPA_ATOMIC_SET_XPC) || (setType == WEBPA_ATOMIC_SET_WEBCONFIG)) ? CCSP_COMPONENT_ID_XPC: CCSP_COMPONENT_ID_WebPA;
 
-        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
                 identifyRadioIndexToReset(paramCount,val,&bRestartRadio1,&bRestartRadio2);
                 bRadioRestartEn = TRUE;
@@ -719,7 +719,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
             ret = CcspBaseIf_setParameterValues(bus_handle, CompName, dbusPath, 0, writeID, val, paramCount, TRUE, &faultParam);
         }
 
-        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
                 if(ret == CCSP_SUCCESS) //signal apply settings thread only when set is success
                 {
