@@ -24,6 +24,7 @@
 #include <webcfg_log.h>
 #include <webcfg_db.h>
 #include <webcfg.h>
+#include <webcfg_generic.h>
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
@@ -512,4 +513,25 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 	}
 	WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 	return CCSP_SUCCESS;
+}
+
+int registerWebcfgEvent(WebConfigEventCallback webcfgEventCB)
+{
+	int ret = 0;
+
+	CcspBaseIf_SetCallback2(bus_handle, "webconfigSignal",
+            webcfgEventCB, NULL);
+
+	ret = CcspBaseIf_Register_Event(bus_handle, NULL, "webconfigSignal");
+	WebcfgInfo("registerWebcfgEvent ret is %d\n", ret);
+	if (ret != 100)
+	{
+		WebcfgError("CcspBaseIf_Register_Event failed for webconfigSignal\n");
+	}
+	else
+	{
+		WebcfgInfo("Registration with CCSP Bus is success, waiting for events from components\n");
+		return 1;
+	}
+	return 0;
 }
