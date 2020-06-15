@@ -985,6 +985,36 @@ void err_set_with_multiple_parameters_failure_in_wifi_rollback()
     cJSON_Delete(response);
 }
 
+void test_setValues()
+{
+	param_t *paramVal = (param_t *)malloc(sizeof(param_t));
+	paramVal->name = strdup("Device.WiFi.SSID.10001.Name");
+	paramVal->value = strdup("ssid");
+	paramVal->type = WDMP_STRING;
+	WDMP_STATUS wdmpRet;
+	int ret = 0;
+	getCompDetails();
+	parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterName, "Device.WiFI.SSID.1.Name",MAX_PARAMETER_LEN);
+    valueList[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterValue, "oldssid",MAX_PARAMETER_LEN);
+    valueList[0]->type = ccsp_string;
+
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
+	setValues(paramVal, 1, WEBPA_ATOMIC_SET_WEBCONFIG, "123456", NULL, &wdmpRet, &ret);
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -1012,7 +1042,8 @@ int main(void)
         cmocka_unit_test(err_set_with_multiple_parameters_different_component),
         cmocka_unit_test(err_set_with_multiple_parameters_failure_in_get),
         cmocka_unit_test(err_set_with_multiple_parameters_failure_in_rollback),
-        cmocka_unit_test(err_set_with_multiple_parameters_failure_in_wifi_rollback)	
+        cmocka_unit_test(err_set_with_multiple_parameters_failure_in_wifi_rollback),
+		cmocka_unit_test(test_setValues)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
