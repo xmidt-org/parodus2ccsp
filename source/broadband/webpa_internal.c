@@ -906,7 +906,23 @@ static int getMatchingSubComponentValArrayIndex(char *objectName)
 	}	
 	return index;
 }
-
+static int getObjectLevelFromParameter(char *parameterName)
+{
+	int count = 0, i = 0;
+	while(parameterName[i] != '\0')
+	{
+		if(parameterName[i] == '.')
+		{
+			count++;
+			if(count > 2)
+			{
+				return 2;
+			}
+		}
+		i++;
+	}
+	return count-1;
+}
 /**
  * @brief getComponentInfoFromCache Returns the component information from cache
  *
@@ -917,12 +933,40 @@ static int getMatchingSubComponentValArrayIndex(char *objectName)
  */
 static int getComponentInfoFromCache(char *parameterName, char *objectName, char *compName, char *dbusPath)
 {   
-	int index = -1;
+	int index = -1, level = 0;
 
 	if(NULL == objectName)
 		return index; 	
+	level = getObjectLevelFromParameter(parameterName);
+	if(level > 1)
+	{
+		getObjectName(parameterName, objectName, 2);
+		index = getMatchingSubComponentValArrayIndex(objectName);
+		WalPrint("objectLevel: 2, parameterName: %s, objectName: %s, matching index=%d\n",parameterName,objectName,index);
 	
-	getObjectName(parameterName, objectName, 1);
+		if(index != -1 )
+		{
+			strcpy(compName,SubComponentValArray[index].comp_name);
+			strcpy(dbusPath,SubComponentValArray[index].dbus_path); 
+		}
+	}
+	if(index < 0)
+	{
+		getObjectName(parameterName, objectName, 1);
+		index = getMatchingComponentValArrayIndex(objectName);
+		WalPrint("objectLevel: 1, parameterName: %s, objectName: %s, matching index: %d\n",parameterName,objectName,index);
+		 
+		if((index != -1) && (ComponentValArray[index].comp_size == 1))
+		{
+			strcpy(compName,ComponentValArray[index].comp_name);
+			strcpy(dbusPath,ComponentValArray[index].dbus_path);
+		}
+		else
+		{
+			index = -1;
+		}
+	}
+/*
 	index = getMatchingComponentValArrayIndex(objectName);
 	WalPrint("objectLevel: 1, parameterName: %s, objectName: %s, matching index: %d\n",parameterName,objectName,index);
 	 
@@ -943,6 +987,7 @@ static int getComponentInfoFromCache(char *parameterName, char *objectName, char
 			strcpy(dbusPath,SubComponentValArray[index].dbus_path); 
 		}
     	}
+*/
 	return index;	
 }
 
@@ -1248,7 +1293,7 @@ static void retryFailedComponentCaching()
 					}
 				}
 				free_componentStruct_t(bus_handle, size, ppComponents);
-			}while((retryCount > 1) && (retryCount <= 3));
+			}while((retryCount > 1) && (retryCount <= 4));
 		}
 
 		for(i = 0; i < count1 ; i++)
@@ -1296,7 +1341,7 @@ static void retryFailedComponentCaching()
 				}
 				free_componentStruct_t(bus_handle, size, ppComponents);
 
-			}while((retryCount > 1) && (retryCount <= 3));
+			}while((retryCount > 1) && (retryCount <= 4));
 		}
 
 		compCacheSuccessCnt = cnt;
