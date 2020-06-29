@@ -1139,6 +1139,9 @@ void processNotification(NotifyData *notifyData)
 	        		if (NULL != version) {
 	        			free(version);
 	        		}
+					if (NULL != timeStamp) {
+	        			free(timeStamp);
+	        		}
 	        	}
 	        		break;
 
@@ -1212,6 +1215,7 @@ void processNotification(NotifyData *notifyData)
 
 	    free(dest);
         }
+		cJSON_Delete(notifyPayload);
 }
 
 /*
@@ -1496,7 +1500,7 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
 		strcpy(*timeStamp, sbuf);
 		WalPrint("*timeStamp : %s\n",*timeStamp);
 	}
-
+	WAL_FREE(nodeData);
 	WalPrint("End of processConnectedClientNotification\n");
 
 }
@@ -1520,6 +1524,14 @@ static void freeNotifyMessage(NotifyData *notifyData)
 	}
 	else if(notifyData->type == CONNECTED_CLIENT_NOTIFY)
 	{
+		WalPrint("Free notifyData->u.node->nodeMacId\n");
+		WAL_FREE(notifyData->u.node->nodeMacId);
+		WalPrint("Free notifyData->u.node->status\n");
+		WAL_FREE(notifyData->u.node->status);
+		WalPrint("Free notifyData->u.node->interface\n");
+		WAL_FREE(notifyData->u.node->interface);
+		WalPrint("Free notifyData->u.node->hostname\n");
+		WAL_FREE(notifyData->u.node->hostname);
 		WalPrint("Free notifyData->u.node\n");
 		WAL_FREE(notifyData->u.node);
 	}
