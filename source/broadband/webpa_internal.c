@@ -399,12 +399,18 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
         }
 	WalPrint("index : %d\n",index);
 	// Cannot identify the component from cache, make DBUS call to fetch component
-	if(index == -1 || ComponentValArray[index].comp_size > 2) //anything above size > 2
+	if(index == -1 || ComponentValArray[index].comp_size > 2 || SubComponentValArray[index].comp_size > 2) //anything above size > 2
 	{
 		WalPrint("in if for size >2\n");
 		// GET Component for parameter from stack
-		if(index != -1)
+		if(ComponentValArray[index].comp_size > 2)
+		{
 		        WalPrint("ComponentValArray[index].comp_size : %d\n",ComponentValArray[index].comp_size);
+		}
+		else if(SubComponentValArray[index].comp_size > 2)
+		{
+		        WalPrint("SubComponentValArray[index].comp_size : %d\n",SubComponentValArray[index].comp_size);
+		}
 		retIndex = IndexMpa_WEBPAtoCPE(tempParamName);
 		if(retIndex == -1)
 		{
