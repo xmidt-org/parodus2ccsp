@@ -873,23 +873,25 @@ static void *applyWiFiSettingsTask()
 			bRestartRadio2 = FALSE;
 		
 			WalPrint("nreq : %d writeID : %d\n",nreq,writeID);
-			ret = CcspBaseIf_setParameterValues(bus_handle, RDKB_WIFI_FULL_COMPONENT_NAME, RDKB_WIFI_DBUS_PATH, 0, writeID, RadApplyParam, nreq, TRUE,&faultParam);
-			WalInfo("After SPV in applyWiFiSettings ret = %d\n",ret);
-			if ((ret != CCSP_SUCCESS) && (faultParam != NULL))
+			if(RadApplyParam != NULL && nreq > 0)
 			{
-				WalError("Failed to Set Apply Settings\n");
-				OnboardLog("Failed to Set Apply Settings\n");
-				WAL_FREE(faultParam);
-			}	
+				ret = CcspBaseIf_setParameterValues(bus_handle, RDKB_WIFI_FULL_COMPONENT_NAME, RDKB_WIFI_DBUS_PATH, 0, writeID, RadApplyParam, nreq, TRUE,&faultParam);
+				WalInfo("After SPV in applyWiFiSettings ret = %d\n",ret);
+				if ((ret != CCSP_SUCCESS) && (faultParam != NULL))
+				{
+					WalError("Failed to Set Apply Settings\n");
+					OnboardLog("Failed to Set Apply Settings\n");
+					WAL_FREE(faultParam);
+				}
 			
-			// Send transcation event notify to server
-			if(strlen(current_transaction_id) != 0)
-			{
-				processTransactionNotification(current_transaction_id);
+				// Send transcation event notify to server
+				if(strlen(current_transaction_id) != 0)
+				{
+					processTransactionNotification(current_transaction_id);
+				}
 			}
-
 			applySettingsFlag = FALSE;
-			WalPrint("applySettingsFlag is set to FALSE\n");
+		    WalPrint("applySettingsFlag is set to FALSE\n");
 		}
 
 		getCurrentTime(endPtr);
