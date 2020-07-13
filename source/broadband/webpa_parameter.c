@@ -840,8 +840,6 @@ static void *applyWiFiSettingsTask()
 	{
 		WalPrint("Before cond wait in applyWiFiSettings\n");
 		pthread_cond_wait(&applySetting_cond, &applySetting_mutex);
-		applySettingsFlag = TRUE;
-		WalPrint("applySettingsFlag is set to TRUE\n");
 		getCurrentTime(startPtr);
 		WalPrint("After cond wait in applyWiFiSettings\n");
 		if(bRadioRestartEn)
@@ -873,8 +871,10 @@ static void *applyWiFiSettingsTask()
 			bRestartRadio2 = FALSE;
 		
 			WalPrint("nreq : %d writeID : %d\n",nreq,writeID);
-			if(RadApplyParam != NULL && nreq > 0)
+			if(nreq > 0)
 			{
+				applySettingsFlag = TRUE;
+				WalPrint("applySettingsFlag is set to TRUE\n");
 				ret = CcspBaseIf_setParameterValues(bus_handle, RDKB_WIFI_FULL_COMPONENT_NAME, RDKB_WIFI_DBUS_PATH, 0, writeID, RadApplyParam, nreq, TRUE,&faultParam);
 				WalInfo("After SPV in applyWiFiSettings ret = %d\n",ret);
 				if ((ret != CCSP_SUCCESS) && (faultParam != NULL))
@@ -889,9 +889,14 @@ static void *applyWiFiSettingsTask()
 				{
 					processTransactionNotification(current_transaction_id);
 				}
+				nreq = 0;
+				applySettingsFlag = FALSE;
+				WalPrint("applySettingsFlag is set to FALSE\n");
 			}
-			applySettingsFlag = FALSE;
-		    WalPrint("applySettingsFlag is set to FALSE\n");
+			else
+			{
+				WalInfo("applyWifiSettings is not required.\n");
+			}
 		}
 
 		getCurrentTime(endPtr);
