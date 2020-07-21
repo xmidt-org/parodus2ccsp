@@ -124,6 +124,42 @@ const char * notifyparameters[]={
 "Device.MoCA.Interface.1.Enable",
 "Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
 "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
+"Device.WiFi.SSID.10003.SSID",
+"Device.WiFi.SSID.10103.SSID",
+"Device.WiFi.SSID.10005.SSID",
+"Device.WiFi.SSID.10105.SSID",
+"Device.WiFi.SSID.10003.Status",
+"Device.WiFi.SSID.10103.Status",
+"Device.WiFi.SSID.10005.Status",
+"Device.WiFi.SSID.10105.Status",
+"Device.WiFi.AccessPoint.10003.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10103.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10005.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10105.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10003.Security.RadiusServerIPAddr",
+"Device.WiFi.AccessPoint.10103.Security.RadiusServerIPAddr",
+"Device.WiFi.AccessPoint.10005.Security.RadiusServerIPAddr",
+"Device.WiFi.AccessPoint.10105.Security.RadiusServerIPAddr",
+"Device.WiFi.SSID.10003.BSSID",
+"Device.WiFi.SSID.10103.BSSID",
+"Device.WiFi.SSID.10005.BSSID",
+"Device.WiFi.SSID.10105.BSSID",
+"Device.WiFi.AccessPoint.10003.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10103.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10005.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10105.Security.ModeEnabled",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint",
+"Device.WiFi.Radio.10000.Channel",
+"Device.WiFi.Radio.10100.Channel",
+"Device.WiFi.Radio.10000.OperatingFrequencyBand",
+"Device.WiFi.Radio.10100.OperatingFrequencyBand",
+"Device.WiFi.Radio.10000.OperatingChannelBandwidth",
+"Device.WiFi.Radio.10100.OperatingChannelBandwidth",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.VLANID",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.LocalInterfaces",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.VLANID",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.LocalInterfaces",
 /* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"
@@ -1095,6 +1131,9 @@ void processNotification(NotifyData *notifyData)
 	        		if (NULL != version) {
 	        			free(version);
 	        		}
+					if (NULL != timeStamp) {
+						free(timeStamp);
+					}
 	        	}
 	        		break;
 
@@ -1168,6 +1207,7 @@ void processNotification(NotifyData *notifyData)
 
 	    free(dest);
         }
+		cJSON_Delete(notifyPayload);
 }
 
 /*
@@ -1452,7 +1492,7 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
 		strcpy(*timeStamp, sbuf);
 		WalPrint("*timeStamp : %s\n",*timeStamp);
 	}
-
+	WAL_FREE(nodeData);
 	WalPrint("End of processConnectedClientNotification\n");
 
 }
@@ -1471,11 +1511,36 @@ static void freeNotifyMessage(NotifyData *notifyData)
 	}
 	else if(notifyData->type == TRANS_STATUS)
 	{
+		if(notifyData->u.status->transId !=NULL)
+		{
+			WAL_FREE(notifyData->u.status->transId);
+			WalPrint("Free notifyData->u.status->transId\n");
+		}
 		WalPrint("Free notifyData->u.status\n");
 		WAL_FREE(notifyData->u.status);
 	}
 	else if(notifyData->type == CONNECTED_CLIENT_NOTIFY)
 	{
+		if(notifyData->u.node->nodeMacId != NULL)
+		{
+			WAL_FREE(notifyData->u.node->nodeMacId);
+			WalPrint("Free notifyData->u.node->nodeMacId\n");
+		}
+		if(notifyData->u.node->status != NULL)
+		{
+			WAL_FREE(notifyData->u.node->status);
+			WalPrint("Free notifyData->u.node->status\n");
+		}
+		if(notifyData->u.node->interface != NULL)
+		{
+			WAL_FREE(notifyData->u.node->interface);
+			WalPrint("Free notifyData->u.node->interface\n");
+		}
+		if(notifyData->u.node->hostname != NULL)
+		{
+			WAL_FREE(notifyData->u.node->hostname);
+			WalPrint("Free notifyData->u.node->hostname\n");
+		}
 		WalPrint("Free notifyData->u.node\n");
 		WAL_FREE(notifyData->u.node);
 	}

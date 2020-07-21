@@ -41,13 +41,18 @@ extern BOOL applySettingsFlag;
 /*----------------------------------------------------------------------------*/
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
 {
-    UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
+    UNUSED(parameterNames); UNUSED(paramCount);
+	*val = get_global_values();
+    *val_size = get_global_parameters_count();
+	function_called();
     return (int) mock();
 }
 
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam )
 {
     UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
+	*faultParam = get_global_faultParam();
+	function_called();
     return (int) mock();
 }
 /*----------------------------------------------------------------------------*/
@@ -96,7 +101,46 @@ void test_set_with_single_parameter()
     assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
     cJSON_Delete(response);
 }
+void test_set_with_webpa_parameter()
+{
+    char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WebpaAgent.Count\",\"value\":\"4\",\"dataType\":1}],\"command\":\"SET\"}";
+    char *resPayload = NULL;
+    cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
+    int count = 1;
+    int totalCount = 1;
 
+    getCompDetails();
+    parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*totalCount);
+    valueList[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterName, "Device.WebpaAgent.Count",MAX_PARAMETER_LEN);
+    valueList[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterValue, "3",MAX_PARAMETER_LEN);
+    valueList[0]->type = ccsp_int;
+
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, totalCount);
+    expect_function_call(getWebpaParameterValues);
+    will_return(getWebpaParameterValues, CCSP_SUCcess);
+
+   will_return(get_global_faultParam, NULL);
+    will_return(setWebpaParameterValues, CCSP_SUCCESS);
+    expect_function_call(setWebpaParameterValues);
+
+    processRequest(reqPayload, NULL, &resPayload);
+    WalInfo("resPayload : %s\n",resPayload);
+
+    assert_non_null(resPayload);
+    response = cJSON_Parse(resPayload);
+    assert_non_null(response);
+    paramArray = cJSON_GetObjectItem(response, "parameters");
+    assert_int_equal(count, cJSON_GetArraySize(paramArray));
+    resParamObj = cJSON_GetArrayItem(paramArray, 0);
+    assert_string_equal("Device.WebpaAgent.Count",cJSON_GetObjectItem(resParamObj, "name")->valuestring);
+    assert_string_equal("Success",cJSON_GetObjectItem(resParamObj, "message")->valuestring );
+    assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
+    cJSON_Delete(response);
+}
 void test_set_with_multiple_parameters()
 {
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WiFi.SSID.10001.name\",\"value\":\"DeviceXB3\",\"dataType\":0},{\"name\":\"Device.WiFi.AccessPoint.10002.Enable\",\"value\":\"false\",\"dataType\":3},{\"name\":\"Device.WiFi.Radio.10000.Enable\",\"value\":\"true\",\"dataType\":3}],\"command\":\"SET\"}";
@@ -940,6 +984,67 @@ void err_set_with_multiple_parameters_failure_in_wifi_rollback()
     }
     cJSON_Delete(response);
 }
+void test_setValues()
+{
+	param_t *paramVal = (param_t *)malloc(sizeof(param_t));
+	paramVal->name = strdup("Device.WiFi.SSID.10001.Name");
+	paramVal->value = strdup("ssid");
+	paramVal->type = WDMP_STRING;
+	WDMP_STATUS wdmpRet;
+	int ret = 0;
+	getCompDetails();
+	parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterName, "Device.WiFI.SSID.1.Name",MAX_PARAMETER_LEN);
+    valueList[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterValue, "oldssid",MAX_PARAMETER_LEN);
+    valueList[0]->type = ccsp_string;
+
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
+	setValues(paramVal, 1, WEBPA_ATOMIC_SET_WEBCONFIG, "123456", NULL, &wdmpRet, &ret);
+}
+
+void err_setValues()
+{
+	param_t *paramVal = (param_t *)malloc(sizeof(param_t));
+	paramVal->name = strdup("Device.NAT.Name");
+	paramVal->value = strdup("portmapping");
+	paramVal->type = WDMP_STRING;
+	WDMP_STATUS wdmpRet;
+	int ret = 0;
+	getCompDetails();
+	parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+strncpy(valueList[0]->parameterName, "Device.NAT.Name",MAX_PARAMETER_LEN);
+    valueList[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterValue, "portforwarding",MAX_PARAMETER_LEN);
+    valueList[0]->type = ccsp_string;
+
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_FAILURE);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
+	setValues(paramVal, 1, WEBPA_ATOMIC_SET_WEBCONFIG, "123456", NULL, &wdmpRet, &ret);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -948,6 +1053,7 @@ int main(void)
 {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_set_with_single_parameter),
+	cmocka_unit_test(test_set_with_webpa_parameter),
         cmocka_unit_test(test_set_with_multiple_parameters),
         cmocka_unit_test(test_set_with_multiple_parameters_different_components),
         cmocka_unit_test(err_set_with_wildcard_parameter),
@@ -967,6 +1073,9 @@ int main(void)
         cmocka_unit_test(err_set_with_multiple_parameters_failure_in_get),
         cmocka_unit_test(err_set_with_multiple_parameters_failure_in_rollback),
         cmocka_unit_test(err_set_with_multiple_parameters_failure_in_wifi_rollback)
+	cmocka_unit_test(err_set_with_multiple_parameters_failure_in_wifi_rollback),
+	cmocka_unit_test(test_setValues),
+	cmocka_unit_test(err_setValues)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
