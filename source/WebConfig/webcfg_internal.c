@@ -23,6 +23,7 @@
 #define DEVICE_BOOT_TIME             "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
 #define MODEL_NAME		     "Device.DeviceInfo.ModelName"
 #define PRODUCT_CLASS		     "Device.DeviceInfo.ProductClass"
+#define CONN_CLIENT_PARAM	     "Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -72,4 +73,7 @@ char * getFirmwareVersion()
 	return firmware;
 }
 
-
+char * getConnClientParamName()
+{
+	return CONN_CLIENT_PARAM;
+}
