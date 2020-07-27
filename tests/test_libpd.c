@@ -112,6 +112,37 @@ void err_sendNotification()
     sendNotification(payload, source, destination);
 }
 
+void test_getConnCloudStatus()
+{
+	char *status= strdup("online");
+	set_global_cloud_status(status);
+	will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+	int ret = getConnCloudStatus("14cxxxxxxx44");
+	assert_int_equal(1,ret);
+}
+
+void test_getConnCloudStatusOffline()
+{
+	char *status= strdup("offline");
+	set_global_cloud_status(status);
+	int ret = getConnCloudStatus("14cxxxxxxx44");
+	assert_int_equal(-1,ret);
+	will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+	will_return(libparodus_send, (intptr_t)1);
+    expect_function_call(libparodus_send);
+	ret = getConnCloudStatus("14cxxxxxxx44");
+	assert_int_equal(-1,ret);
+}
+
+void err_getConnCloudStatus()
+{
+	int ret = getConnCloudStatus(NULL);
+	assert_int_equal(-1,ret);
+	ret = getConnCloudStatus("");
+	assert_int_equal(-1,ret);
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -121,7 +152,10 @@ int main(void)
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_libpd_client_mgr),
         cmocka_unit_test(test_sendNotification),
-        cmocka_unit_test(err_sendNotification)
+        cmocka_unit_test(err_sendNotification),
+		cmocka_unit_test(test_getConnCloudStatus),
+		cmocka_unit_test(test_getConnCloudStatusOffline),
+		cmocka_unit_test(err_getConnCloudStatus)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
