@@ -37,7 +37,7 @@ void addRowTable(char *objectName, TableData *list,char **retObject, WDMP_STATUS
     char tempParamName[MAX_PARAMETERNAME_LEN] = { 0 };
 
     WalPrint("objectName : %s\n",objectName);
-    strncpy(paramName,objectName,sizeof(paramName));
+    walStrncpy(paramName,objectName,sizeof(paramName));
     WalPrint("paramName before mapping : %s\n",paramName);
     status=IndexMpa_WEBPAtoCPE(paramName);
     if(status == -1)
@@ -105,7 +105,7 @@ void deleteRowTable(char *object,WDMP_STATUS *retStatus)
     int ret = 0,status = 0;
     char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
     WalPrint("object : %s\n",object);
-    strncpy(paramName,object,sizeof(paramName));
+    walStrncpy(paramName,object,sizeof(paramName));
     WalPrint("paramName before mapping : %s\n",paramName);
     status=IndexMpa_WEBPAtoCPE(paramName);
     if(status == -1)
