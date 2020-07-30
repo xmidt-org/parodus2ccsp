@@ -439,6 +439,7 @@ void loadCfgFile()
 	char *cfg_file_content = NULL, *temp_ptr = NULL;
 	int ch_count = 0;
 	int flag = 0;
+	size_t sz;
 	fp = fopen(WEBPA_CFG_FILE, "r");
 	if (fp == NULL)
 	{
@@ -457,7 +458,13 @@ void loadCfgFile()
 	ch_count = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 	cfg_file_content = (char *) malloc(sizeof(char) * (ch_count + 1));
-	fread(cfg_file_content, 1, ch_count,fp);
+	sz = fread(cfg_file_content, 1, ch_count,fp);
+		if (sz == 0 && ferror(fp)) 
+		{	
+			fclose(fp);
+			WalError("fread failed.\n");
+			return WDMP_FAILURE;
+		}
 	cfg_file_content[ch_count] ='\0';
 	WalPrint("cfg_file_content : \n%s\n",cfg_file_content);
 	fclose(fp);
@@ -912,6 +919,7 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 	char *cJsonOut =NULL;
 	int len;
 	int configUpdateStatus = -1;
+	size_t sz;
 	fileRead = fopen( WEBPA_CFG_FILE, "r+" );    
 	if( fileRead == NULL ) 
 	{
@@ -924,7 +932,13 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 	fseek( fileRead, 0, SEEK_SET );
 	data = ( char* )malloc( len + 1 );
 	if (data != NULL) {
-		fread( data, 1, len, fileRead );
+		sz = fread( data, 1, len, fileRead );
+		if (sz == 0 && ferror(fileRead)) 
+			{
+				fclose(fileRead);
+				WalError("fread failed.\n");
+				return WDMP_FAILURE;
+			}
 	} else {
 		WalError("malloc() failed\n");
 	}

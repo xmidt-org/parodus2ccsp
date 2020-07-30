@@ -1374,7 +1374,10 @@ WDMP_STATUS check_ethernet_wan_status()
     else
 #endif
     {
-        waitForComponentReady(RDKB_ETHAGENT_COMPONENT_NAME,RDKB_ETHAGENT_DBUS_PATH);
+        if(waitForComponentReady(RDKB_ETHAGENT_COMPONENT_NAME,RDKB_ETHAGENT_DBUS_PATH) != CCSP_SUCCESS)
+		{
+			return ETH_FAILED;
+		}
         status = getParameterValue(ETH_WAN_STATUS_PARAM);
         if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
         {
