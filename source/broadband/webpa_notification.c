@@ -463,6 +463,7 @@ void loadCfgFile()
 		{	
 			fclose(fp);
 			WalError("fread failed.\n");
+			WAL_FREE(cfg_file_content);
 			return WDMP_FAILURE;
 		}
 	cfg_file_content[ch_count] ='\0';
@@ -937,6 +938,7 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 			{
 				fclose(fileRead);
 				WalError("fread failed.\n");
+				WAL_FREE(data);
 				return WDMP_FAILURE;
 			}
 	} else {
