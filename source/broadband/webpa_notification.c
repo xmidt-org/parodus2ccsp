@@ -190,7 +190,7 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
 void processDeviceStatusNotification(int status);
 static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason);
-
+void getDeviceMac();
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -456,6 +456,12 @@ void loadCfgFile()
 
 	fseek(fp, 0, SEEK_END);
 	ch_count = ftell(fp);
+	if (ch_count == (int)-1)
+    		{
+        		WalError("fread failed.\n");
+			fclose(fp);
+        		return WDMP_FAILURE;
+    		}
 	fseek(fp, 0, SEEK_SET);
 	cfg_file_content = (char *) malloc(sizeof(char) * (ch_count + 1));
 	sz = fread(cfg_file_content, 1, ch_count,fp);
@@ -495,6 +501,11 @@ void loadCfgFile()
 			/* replace corrupted config file with empty json of content {}. This file will get added/updated from addOrUpdateFirmwareVerToConfigFile to send firmware upgrade notification */
 
 			fp = fopen(WEBPA_CFG_FILE, "w");
+			if (fp == NULL)
+ 			{
+  				WalError("WEBPA_CFG_FILE is empty \n");
+ 				return;
+  			}
 			fprintf(fp, "{}");
 			fclose(fp);
 		}
@@ -930,6 +941,12 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 
 	fseek( fileRead, 0, SEEK_END );
 	len = ftell( fileRead );
+	if (len == (int)-1)
+    		{
+        		WalError("fread failed.\n");
+			fclose(fileRead);
+        		return WDMP_FAILURE;
+    		}
 	fseek( fileRead, 0, SEEK_SET );
 	data = ( char* )malloc( len + 1 );
 	if (data != NULL) {

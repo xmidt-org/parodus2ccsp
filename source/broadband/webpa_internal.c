@@ -398,7 +398,7 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
         }
 	WalPrint("index : %d\n",index);
 	// Cannot identify the component from cache, make DBUS call to fetch component
-	if(index == -1 || ComponentValArray[index].comp_size > 2 || SubComponentValArray[index].comp_size > 2) //anything above size > 2
+	if(index > 0 && ComponentValArray[index].comp_size > 2) //anything above size > 2
 	{
 		WalPrint("in if for size >2\n");
 		// GET Component for parameter from stack

@@ -190,7 +190,7 @@ X_RDK_WebConfig_GetParamStringValue
         }
 
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
- 	WebcfgError(("Unsupported parameter '%s'\n", ParamName));
+ 	WebcfgError("Unsupported parameter '%s'\n", ParamName);
 	return -1;
 }
 
