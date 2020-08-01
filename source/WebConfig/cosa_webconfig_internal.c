@@ -181,7 +181,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 	AnscCopyString( pMyObject->ForceSync, pString );
 	WebcfgDebug("pMyObject->ForceSync is %s\n", pMyObject->ForceSync);
 
-	if((pMyObject->ForceSync !=NULL) && (strlen(pMyObject->ForceSync)>0))
+	if(((pMyObject->ForceSync)[0] !='\0') && (strlen(pMyObject->ForceSync)>0))
 	{
 		if(strlen(pMyObject->ForceSyncTransID)>0)
 		{
@@ -219,7 +219,7 @@ int getForceSync(char** pString, char **transactionId )
 	PCOSA_DATAMODEL_WEBCONFIG pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 
-	if((pMyObject->ForceSync != NULL) && strlen(pMyObject->ForceSync)>0)
+	if(((pMyObject->ForceSync)[0] != '\0') && strlen(pMyObject->ForceSync)>0)
 	{
 		WebcfgDebug("%s ----- updating pString ------\n",__FUNCTION__);
 		*pString = strdup(pMyObject->ForceSync);
@@ -362,7 +362,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
 				char webcfg_url[256] = {0};
 				Get_Webconfig_URL(webcfg_url);
-				if( (webcfg_url !=NULL) && strlen(webcfg_url)>0 )
+				if( (webcfg_url[0] !='\0') && strlen(webcfg_url)>0 )
 				{
 					WebcfgDebug("webcfg_url fetched %s\n", webcfg_url);
 					paramVal[k]->parameterValue = strndup(webcfg_url,MAX_PARAMETERVALUE_LEN);

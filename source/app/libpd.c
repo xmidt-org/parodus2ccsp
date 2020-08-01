@@ -113,6 +113,18 @@ static void connect_parodus()
 	    	}
 	}
 }
+
+//set global conn status and to awake waiting getter threads
+void set_global_cloud_status(char *status)
+{
+	pthread_mutex_lock (&cloud_mut);
+	WalPrint("mutex lock in producer thread\n");
+	wakeUpFlag = 1;
+	cloud_status = status;
+	pthread_cond_signal(&cloud_con);
+	pthread_mutex_unlock (&cloud_mut);
+	WalPrint("mutex unlock in producer thread\n");
+}
 	
 static void parodus_receive()
 {
@@ -293,18 +305,6 @@ char *get_global_cloud_status()
 	pthread_mutex_unlock (&cloud_mut);
 	WalPrint("mutex unlock in consumer thread after cond wait\n");
 	return temp;
-}
-
-//set global conn status and to awake waiting getter threads
-void set_global_cloud_status(char *status)
-{
-	pthread_mutex_lock (&cloud_mut);
-	WalPrint("mutex lock in producer thread\n");
-	wakeUpFlag = 1;
-	cloud_status = status;
-	pthread_cond_signal(&cloud_con);
-	pthread_mutex_unlock (&cloud_mut);
-	WalPrint("mutex unlock in producer thread\n");
 }
 
 //send cloud-status upstream RETRIEVE request to parodus to check connectivity

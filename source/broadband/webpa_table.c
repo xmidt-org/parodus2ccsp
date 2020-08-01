@@ -276,8 +276,8 @@ int deleteRow(char *object)
 
     if (ret == CCSP_SUCCESS && size == 1)
     {
-        strcpy(compName,ppComponents[0]->componentName);
-        strcpy(dbusPath,ppComponents[0]->dbusPath);
+        walStrncpy(compName,ppComponents[0]->componentName,sizeof(compName));
+        walStrncpy(dbusPath,ppComponents[0]->dbusPath,sizeof(dbusPath));
         free_componentStruct_t(bus_handle, size, ppComponents);
     }
     else

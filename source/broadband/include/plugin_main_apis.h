@@ -67,7 +67,6 @@
 #include "ansc_platform.h"
 #include "cosa_apis.h"
 #include "dslh_cpeco_interface.h"
-#include "plugin_main_apis.h"
 #include "cosa_plugin_api.h"
 
 extern ANSC_HANDLE                        g_MessageBusHandle;

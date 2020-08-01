@@ -1011,7 +1011,7 @@ static void getObjectName(char *str, char *objectName, int objectLevel)
         strncpy(localStr,str,sizeof(localStr));
         int count = 1,len;
 
-        if(localStr)
+        if(localStr[0] != '\0')
         {	
                 tmpStr = strchr(localStr,'.');
                 while (tmpStr != NULL)
@@ -1384,6 +1384,7 @@ WDMP_STATUS check_ethernet_wan_status()
             WAL_FREE(status);
             return WDMP_SUCCESS;
         }
+		WAL_FREE(status);
     }
     return WDMP_FAILURE;
 }

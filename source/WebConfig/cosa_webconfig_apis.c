@@ -197,7 +197,7 @@ CosaWebConfigInitialize
 
 	_ansc_memset(pMyObject->URL, 0, 256);
 	Get_Webconfig_URL(URL);
-	if( (URL !=NULL) && strlen(URL)>0 )
+	if( (URL[0] !='\0') && strlen(URL)>0 )
 	{
 		AnscCopyString(pMyObject->URL, URL);
 		WebcfgInfo("pMyObject->URL:%s\n", pMyObject->URL);

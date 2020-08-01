@@ -110,6 +110,17 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
                 WAL_FREE(addList);
             }
         }
+		else
+		{
+			if(deleteList != NULL)
+			{
+				for(cnt = 0; cnt<rowCount; cnt++)
+				{
+					WAL_FREE(deleteList[cnt]);
+				}
+				WAL_FREE(deleteList);
+			}
+		}
     }
     if(isWalStatus == 1)
     {
@@ -439,6 +450,10 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
     }
     else
     {
+		if(writableList != NULL)
+		{
+			WAL_FREE(writableList);
+		}
         WalError("Failed in get of writable parameters. ret = %d\n",ret);
     }
     WalPrint("---------- End of contructRollbackTableData -----------\n");
@@ -482,7 +497,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
                 len = strlen(paramName);
                 if(parameterInfo[cnt]->writable == 1)
                 {
-                    strcpy(temp, parameterInfo[cnt]->parameterName);
+                    walStrncpy(temp, parameterInfo[cnt]->parameterName,sizeof(temp));
                     tempStr =temp + len;
                     WalPrint("tempStr : %s\n",tempStr);
                     if(strcmp(tempStr ,ALIAS_PARAM) == 0)

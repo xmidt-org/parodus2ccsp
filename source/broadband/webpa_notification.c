@@ -705,26 +705,6 @@ static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID)
 	return source;
 }
 
-/*
- * @brief To handle notification tasks
- */
-static void *notifyTask(void *status)
-{
-	pthread_detach(pthread_self());
-	getDeviceMac();
-	loadCfgFile();
-	processDeviceStatusNotification(*(int *)status);
-	RegisterNotifyCB(&notifyCallback);
-	sendNotificationForFactoryReset();
-	FactoryResetCloudSyncTask();
-	sendNotificationForFirmwareUpgrade();
-	setInitialNotify();
-	handleNotificationEvents();
-	WAL_FREE(status);
-	WalPrint("notifyTask ended!\n");
-	return NULL;
-}
-
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 char* get_deviceMAC()
 {
@@ -788,6 +768,27 @@ void getDeviceMac()
         }while((retryCount >= 1) && (retryCount <= 5));
     }
 }
+
+/*
+ * @brief To handle notification tasks
+ */
+static void *notifyTask(void *status)
+{
+	pthread_detach(pthread_self());
+	getDeviceMac();
+	loadCfgFile();
+	processDeviceStatusNotification(*(int *)status);
+	RegisterNotifyCB(&notifyCallback);
+	sendNotificationForFactoryReset();
+	FactoryResetCloudSyncTask();
+	sendNotificationForFirmwareUpgrade();
+	setInitialNotify();
+	handleNotificationEvents();
+	WAL_FREE(status);
+	WalPrint("notifyTask ended!\n");
+	return NULL;
+}
+
 /*
  * @brief notifyCallback is to check if notification event needs to be sent
  *  @param[in] paramNotify parameters to be notified .
