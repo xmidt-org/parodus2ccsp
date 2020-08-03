@@ -402,11 +402,11 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 	{
 		WalPrint("in if for size >2\n");
 		// GET Component for parameter from stack
-		if(ComponentValArray[index].comp_size > 2)
+		if(index > 0 && ComponentValArray[index].comp_size > 2)
 		{
 		        WalPrint("ComponentValArray[index].comp_size : %d\n",ComponentValArray[index].comp_size);
 		}
-		else if(SubComponentValArray[index].comp_size > 2)
+		else if(index > 0 && SubComponentValArray[index].comp_size > 2)
 		{
 		        WalPrint("SubComponentValArray[index].comp_size : %d\n",SubComponentValArray[index].comp_size);
 		}
