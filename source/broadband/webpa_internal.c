@@ -278,7 +278,7 @@ static void *WALInit(void *status)
 	    }
 		else
 		{
-		    strncpy(paramName,objectList[i],sizeof(paramName));
+		    walStrncpy(paramName,objectList[i],sizeof(paramName));
 		    ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,dst_pathname_cr, paramName,l_Subsystem, &ppComponents, &size);
 			
 		    if (ret == CCSP_SUCCESS)

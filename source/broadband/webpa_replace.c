@@ -475,7 +475,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
     componentStruct_t ** ppComponents = NULL;
     char *tempStr = NULL;
     char temp[MAX_PARAMETERNAME_LEN] = { 0 };
-    char *paramList[MAX_PARAMETERNAME_LEN] = { 0 };
+    char *paramList[2048] = { 0 };
 #if !defined(RDKB_EMU)
     strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
