@@ -116,7 +116,7 @@ int Get_Webconfig_URL( char *pString)
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     WebcfgDebug("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
-        if((pMyObject != NULL) && (pMyObject->URL != NULL) && (strlen(pMyObject->URL)>0))
+        if((pMyObject != NULL) &&  (strlen(pMyObject->URL)>0))
         {
 		WebcfgDebug("pMyObject->URL %s\n", pMyObject->URL);
                 WebcfgDebug("%s ----- updating pString ------\n",__FUNCTION__);
@@ -295,7 +295,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             {
 				char valuestr[256] = {0};
 				Get_Webconfig_URL(valuestr);
-				if( (valuestr != NULL) && strlen(valuestr) >0 )
+				if( strlen(valuestr) >0 )
 				{
 		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
 					paramVal[k]->parameterValue = strndup(valuestr,MAX_PARAMETERVALUE_LEN);
