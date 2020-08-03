@@ -348,7 +348,7 @@ static void addCachedData(char *objectName,TableData * addList,int rowCount)
 static void getTableRows(char *objectName,parameterValStruct_t **parameterval, int paramCount, int *numRows,char ***rowObjects)
 {
     int rows[MAX_ROW_COUNT] = {'\0'};
-    int len = 0, cnt = 0, cnt1=0, objLen = 0, index = 0, rowCount = 0;
+    int len = 0, cnt = 0, cnt1=-1, objLen = 0, index = 0, rowCount = 0;
     char subStr[MAX_PARAMETERNAME_LEN] = {'\0'};
     char tempName[MAX_PARAMETERNAME_LEN] = {'\0'};
     WalPrint("---------- Start of getTableRows -----------\n");
@@ -362,6 +362,7 @@ static void getTableRows(char *objectName,parameterValStruct_t **parameterval, i
         WalPrint("index : %d tempName : %s\n",index,tempName);
         if(cnt == 0)
         {
+			cnt1++;
             rows[cnt1] = index;
         }
         else if(rows[cnt1] != index)
@@ -475,7 +476,8 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
     componentStruct_t ** ppComponents = NULL;
     char *tempStr = NULL;
     char temp[MAX_PARAMETERNAME_LEN] = { 0 };
-    char *paramList[2048] = { 0 };
+    //TODO: Coverity Requirement stack space exceeds 10000 bytes use 2048bytes forMAX_PARAMETERNAME_LEN.
+    char *paramList[MAX_PARAMETERNAME_LEN] = { 0 };
 #if !defined(RDKB_EMU)
     strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif

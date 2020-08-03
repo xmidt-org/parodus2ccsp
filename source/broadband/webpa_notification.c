@@ -747,20 +747,21 @@ void getDeviceMac()
     if(strlen(deviceMAC) == 0)
     {
         do
-        {
-	    pthread_mutex_lock(&device_mac_mutex);
+        {	    
             backoffRetryTime = (int) pow(2, c) -1;
 #ifdef RDKB_BUILD
             token_t  token;
             int fd = s_sysevent_connect(&token);
             if(WDMP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
             {
+		pthread_mutex_lock(&device_mac_mutex);
                 macToLower(deviceMACValue, deviceMAC);
                 WalInfo("deviceMAC is %s\n", deviceMAC);
             }
             else
 #endif
             {
+		pthread_mutex_lock(&device_mac_mutex);
                 macID = getParameterValue(DEVICE_MAC);
                 if (macID != NULL)
                 {

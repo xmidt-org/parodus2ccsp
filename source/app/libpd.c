@@ -250,7 +250,7 @@ static void initParallelProcess()
         int err = 0, i = 0;
         pthread_t threadId[MAX_PARALLEL_THREADS-1];
         WalPrint("============ initParallelProcess ==============\n");
-        for(i=0; i<MAX_PARALLEL_THREADS-1; i++)
+        for(i=0; i<MAX_PARALLEL_THREADS; i++)
         {
                 err = pthread_create(&threadId[i], NULL, parallelProcessTask, (void *)threadId[i]);
                 if (err != 0)
@@ -509,7 +509,8 @@ static void get_parodus_url(char **parodus_url, char **client_url)
 	if (NULL != fp)
 	{
 		char str[255] = {'\0'};
-		while(fgets(str,sizeof(str), fp) != NULL)
+		//TODO :fgets is not allowed due to extra \n
+		while(fscanf(fp,"%s", str) != EOF)
 		{
 		    char *value = NULL;
 
