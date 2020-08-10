@@ -42,7 +42,7 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
     TableData * addList = NULL;
     char paramName[MAX_PARAMETERNAME_LEN] = {'\0'};
     WalPrint("<==========Start of replaceTable ========>\n ");
-    strncpy(paramName,objectName,sizeof(paramName));
+    walStrncpy(paramName,objectName,sizeof(paramName));
     WalPrint("paramName before Mapping : %s\n",paramName);
     // Index mapping 
     retIndex=IndexMpa_WEBPAtoCPE(paramName);
@@ -110,6 +110,17 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
                 WAL_FREE(addList);
             }
         }
+		else
+		{
+			if(deleteList != NULL)
+			{
+				for(cnt = 0; cnt<rowCount; cnt++)
+				{
+					WAL_FREE(deleteList[cnt]);
+				}
+				WAL_FREE(deleteList);
+			}
+		}
     }
     if(isWalStatus == 1)
     {
@@ -160,7 +171,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
     if (ret == CCSP_SUCCESS && size == 1)
     {
         WalInfo("parameterName: %s, CompName : %s, dbusPath : %s\n", objectName, ppComponents[0]->componentName, ppComponents[0]->dbusPath);
-        strncpy(paramName, objectName, sizeof(paramName));
+        walStrncpy(paramName, objectName, sizeof(paramName));
         parameterNames[0] = p;
         ret = CcspBaseIf_getParameterValues(bus_handle,	ppComponents[0]->componentName, ppComponents[0]->dbusPath,  parameterNames,	1, &val_size, &parameterval);
         WalPrint("ret = %d val_size = %d\n",ret,val_size);
@@ -264,7 +275,7 @@ static int addNewData(char *objectName,TableData * list,int paramcount)
     WalPrint("---------- Start of addNewData -----------\n");
     for(cnt =0; cnt < paramcount; cnt++)
     {				
-        strncpy(paramName,objectName,sizeof(paramName));
+        walStrncpy(paramName,objectName,sizeof(paramName));
         retObject[cnt] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
         addRowTable(paramName,&list[cnt],&retObject[cnt],&addRet);
         WalPrint("addRet : %d\n",addRet);
@@ -312,7 +323,7 @@ static void addCachedData(char *objectName,TableData * addList,int rowCount)
     for(cnt =0; cnt < rowCount; cnt++)
     {
         retRows[cnt] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
-        strncpy(paramName,objectName,sizeof(paramName));
+        walStrncpy(paramName,objectName,sizeof(paramName));
         addRowTable(paramName,&addList[cnt],&retRows[cnt],&addRet);
         WalPrint("addRet : %d\n",addRet);
         if(addRet == WDMP_SUCCESS)
@@ -337,7 +348,7 @@ static void addCachedData(char *objectName,TableData * addList,int rowCount)
 static void getTableRows(char *objectName,parameterValStruct_t **parameterval, int paramCount, int *numRows,char ***rowObjects)
 {
     int rows[MAX_ROW_COUNT] = {'\0'};
-    int len = 0, cnt = 0, cnt1=0, objLen = 0, index = 0, rowCount = 0;
+    int len = 0, cnt = 0, cnt1=-1, objLen = 0, index = 0, rowCount = 0;
     char subStr[MAX_PARAMETERNAME_LEN] = {'\0'};
     char tempName[MAX_PARAMETERNAME_LEN] = {'\0'};
     WalPrint("---------- Start of getTableRows -----------\n");
@@ -351,6 +362,7 @@ static void getTableRows(char *objectName,parameterValStruct_t **parameterval, i
         WalPrint("index : %d tempName : %s\n",index,tempName);
         if(cnt == 0)
         {
+			cnt1++;
             rows[cnt1] = index;
         }
         else if(rows[cnt1] != index)
@@ -439,6 +451,10 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
     }
     else
     {
+		if(writableList != NULL)
+		{
+			WAL_FREE(writableList);
+		}
         WalError("Failed in get of writable parameters. ret = %d\n",ret);
     }
     WalPrint("---------- End of contructRollbackTableData -----------\n");
@@ -460,6 +476,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
     componentStruct_t ** ppComponents = NULL;
     char *tempStr = NULL;
     char temp[MAX_PARAMETERNAME_LEN] = { 0 };
+    //TODO: Coverity Requirement stack space exceeds 10000 bytes use 2048bytes forMAX_PARAMETERNAME_LEN.
     char *paramList[MAX_PARAMETERNAME_LEN] = { 0 };
 #if !defined(RDKB_EMU)
     strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
@@ -482,7 +499,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
                 len = strlen(paramName);
                 if(parameterInfo[cnt]->writable == 1)
                 {
-                    strcpy(temp, parameterInfo[cnt]->parameterName);
+                    walStrncpy(temp, parameterInfo[cnt]->parameterName,sizeof(temp));
                     tempStr =temp + len;
                     WalPrint("tempStr : %s\n",tempStr);
                     if(strcmp(tempStr ,ALIAS_PARAM) == 0)

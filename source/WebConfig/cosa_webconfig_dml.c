@@ -163,7 +163,7 @@ X_RDK_WebConfig_GetParamStringValue
         }
         if( AnscEqualString(ParamName, "Data", TRUE))
 	    {
-                WebcfgDebug(("[%s] at [%d]parameter '%s'\n",__FUNCTION__,__LINE__, ParamName));
+                WebcfgDebug("[%s] at [%d]parameter '%s'\n",__FUNCTION__,__LINE__, ParamName);
                 char * blobData = NULL;
 
                 blobData = get_DB_BLOB_base64();
@@ -190,7 +190,7 @@ X_RDK_WebConfig_GetParamStringValue
         }
 
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
- 	WebcfgError(("Unsupported parameter '%s'\n", ParamName));
+ 	WebcfgError("Unsupported parameter '%s'\n", ParamName);
 	return -1;
 }
 

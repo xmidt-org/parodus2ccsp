@@ -113,6 +113,18 @@ static void connect_parodus()
 	    	}
 	}
 }
+
+//set global conn status and to awake waiting getter threads
+void set_global_cloud_status(char *status)
+{
+	pthread_mutex_lock (&cloud_mut);
+	WalPrint("mutex lock in producer thread\n");
+	wakeUpFlag = 1;
+	cloud_status = status;
+	pthread_cond_signal(&cloud_con);
+	pthread_mutex_unlock (&cloud_mut);
+	WalPrint("mutex unlock in producer thread\n");
+}
 	
 static void parodus_receive()
 {
@@ -238,7 +250,7 @@ static void initParallelProcess()
         int err = 0, i = 0;
         pthread_t threadId[MAX_PARALLEL_THREADS-1];
         WalPrint("============ initParallelProcess ==============\n");
-        for(i=0; i<MAX_PARALLEL_THREADS-1; i++)
+        for(i=0; i<MAX_PARALLEL_THREADS; i++)
         {
                 err = pthread_create(&threadId[i], NULL, parallelProcessTask, (void *)threadId[i]);
                 if (err != 0)
@@ -293,18 +305,6 @@ char *get_global_cloud_status()
 	pthread_mutex_unlock (&cloud_mut);
 	WalPrint("mutex unlock in consumer thread after cond wait\n");
 	return temp;
-}
-
-//set global conn status and to awake waiting getter threads
-void set_global_cloud_status(char *status)
-{
-	pthread_mutex_lock (&cloud_mut);
-	WalPrint("mutex lock in producer thread\n");
-	wakeUpFlag = 1;
-	cloud_status = status;
-	pthread_cond_signal(&cloud_con);
-	pthread_mutex_unlock (&cloud_mut);
-	WalPrint("mutex unlock in producer thread\n");
 }
 
 //send cloud-status upstream RETRIEVE request to parodus to check connectivity
@@ -509,6 +509,7 @@ static void get_parodus_url(char **parodus_url, char **client_url)
 	if (NULL != fp)
 	{
 		char str[255] = {'\0'};
+		//TODO :fgets is not allowed due to extra \n
 		while(fscanf(fp,"%s", str) != EOF)
 		{
 		    char *value = NULL;

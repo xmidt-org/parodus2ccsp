@@ -47,6 +47,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         WDMP_STATUS ret = WDMP_FAILURE, setRet = WDMP_FAILURE;
         int paramCount = 0, i = 0, wildcardParamCount = 0,nonWildcardParamCount = 0, retCount=0, index = 0, error = 0;
 	int ccspStatus = 0;
+	//TODO: Coverity Requirement stack space exceeds 10000 bytes use 2048bytes MAX_PARAMETERNAME_LEN.
         const char *getParamList[MAX_PARAMETERNAME_LEN];
         const char *wildcardGetParamList[MAX_PARAMETERNAME_LEN];
         WDMP_STATUS setCidStatus = WDMP_SUCCESS, setCmcStatus = WDMP_SUCCESS;
