@@ -24,7 +24,7 @@
 #define MODEL_NAME		     "Device.DeviceInfo.ModelName"
 #define PRODUCT_CLASS		     "Device.DeviceInfo.ProductClass"
 #define CONN_CLIENT_PARAM	     "Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client"
-#define LastREBOOT_REASON            "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason"
+#define LAST_REBOOT_REASON            "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -79,9 +79,9 @@ char * getConnClientParamName()
 	return CONN_CLIENT_PARAM;
 }
 
-char * getreboot_reason()
+char * getRebootReason()
 {
 	char *reboot_reason = NULL;
-	reboot_reason = getParameterValue(LastREBOOT_REASON);
+	reboot_reason = getParameterValue(LAST_REBOOT_REASON);
 	return reboot_reason;
 }
