@@ -668,6 +668,53 @@ void test_factory_reset_notification_with_cmc_512()
     sendNotificationForFactoryReset();
 }
 
+void test_processNotification()
+{
+	strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = CONNECTED_CLIENT_NOTIFY;
+	NodeData * node = NULL;
+	node = (NodeData *) malloc(sizeof(NodeData) * 1);
+	memset(node, 0, sizeof(NodeData));
+    node->nodeMacId = strdup("14cfe2142144");
+	node->status = strdup("Connected");
+	node->interface = strdup("eth0");
+	node->hostname = strdup("wifi");
+	notifyData->u.node = node;
+
+	 parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+	parameterValStruct_t **systemTime = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    systemTime[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    systemTime[0]->parameterName = strdup("Device.DeviceInfo.X_RDKCENTRAL-COM_SystemTime");
+    systemTime[0]->parameterValue =strdup("546543280");
+    systemTime[0]->type = ccsp_string;
+	getCompDetails();
+	will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+	will_return(get_global_values, systemTime);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+	processNotification(notifyData);
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -687,6 +734,7 @@ int main(void)
 	    cmocka_unit_test(test_manageable_notification),
 	    cmocka_unit_test(err_manageable_notification),
 	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
+		cmocka_unit_test(test_processNotification),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

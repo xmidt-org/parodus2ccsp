@@ -116,7 +116,8 @@ typedef enum
     EPON_FAILED,
     CM_FAILED,
     PSM_FAILED,
-    WIFI_FAILED
+    WIFI_FAILED,
+    ETH_FAILED
 } COMPONENT_STATUS;
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */

@@ -127,6 +127,42 @@ const char * notifyparameters[]={
 "Device.MoCA.Interface.1.Enable",
 "Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
 "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
+"Device.WiFi.SSID.10003.SSID",
+"Device.WiFi.SSID.10103.SSID",
+"Device.WiFi.SSID.10005.SSID",
+"Device.WiFi.SSID.10105.SSID",
+"Device.WiFi.SSID.10003.Status",
+"Device.WiFi.SSID.10103.Status",
+"Device.WiFi.SSID.10005.Status",
+"Device.WiFi.SSID.10105.Status",
+"Device.WiFi.AccessPoint.10003.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10103.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10005.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10105.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10003.Security.RadiusServerIPAddr",
+"Device.WiFi.AccessPoint.10103.Security.RadiusServerIPAddr",
+"Device.WiFi.AccessPoint.10005.Security.RadiusServerIPAddr",
+"Device.WiFi.AccessPoint.10105.Security.RadiusServerIPAddr",
+"Device.WiFi.SSID.10003.BSSID",
+"Device.WiFi.SSID.10103.BSSID",
+"Device.WiFi.SSID.10005.BSSID",
+"Device.WiFi.SSID.10105.BSSID",
+"Device.WiFi.AccessPoint.10003.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10103.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10005.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10105.Security.ModeEnabled",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint",
+"Device.WiFi.Radio.10000.Channel",
+"Device.WiFi.Radio.10100.Channel",
+"Device.WiFi.Radio.10000.OperatingFrequencyBand",
+"Device.WiFi.Radio.10100.OperatingFrequencyBand",
+"Device.WiFi.Radio.10000.OperatingChannelBandwidth",
+"Device.WiFi.Radio.10100.OperatingChannelBandwidth",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.VLANID",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.LocalInterfaces",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.VLANID",
+"Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.LocalInterfaces",
 /* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"
@@ -154,7 +190,7 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
 void processDeviceStatusNotification(int status);
 static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason);
-
+void getDeviceMac();
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -403,6 +439,7 @@ void loadCfgFile()
 	char *cfg_file_content = NULL, *temp_ptr = NULL;
 	int ch_count = 0;
 	int flag = 0;
+	size_t sz;
 	fp = fopen(WEBPA_CFG_FILE, "r");
 	if (fp == NULL)
 	{
@@ -419,9 +456,22 @@ void loadCfgFile()
 
 	fseek(fp, 0, SEEK_END);
 	ch_count = ftell(fp);
+	if (ch_count == (int)-1)
+    		{
+        		WalError("fread failed.\n");
+			fclose(fp);
+        		return WDMP_FAILURE;
+    		}
 	fseek(fp, 0, SEEK_SET);
 	cfg_file_content = (char *) malloc(sizeof(char) * (ch_count + 1));
-	fread(cfg_file_content, 1, ch_count,fp);
+	sz = fread(cfg_file_content, 1, ch_count,fp);
+		if (sz == 0 && ferror(fp)) 
+		{	
+			fclose(fp);
+			WalError("fread failed.\n");
+			WAL_FREE(cfg_file_content);
+			return WDMP_FAILURE;
+		}
 	cfg_file_content[ch_count] ='\0';
 	WalPrint("cfg_file_content : \n%s\n",cfg_file_content);
 	fclose(fp);
@@ -451,6 +501,11 @@ void loadCfgFile()
 			/* replace corrupted config file with empty json of content {}. This file will get added/updated from addOrUpdateFirmwareVerToConfigFile to send firmware upgrade notification */
 
 			fp = fopen(WEBPA_CFG_FILE, "w");
+			if (fp == NULL)
+ 			{
+  				WalError("WEBPA_CFG_FILE is empty \n");
+ 				return;
+  			}
 			fprintf(fp, "{}");
 			fclose(fp);
 		}
@@ -669,26 +724,6 @@ static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID)
 	return source;
 }
 
-/*
- * @brief To handle notification tasks
- */
-static void *notifyTask(void *status)
-{
-	pthread_detach(pthread_self());
-	getDeviceMac();
-	loadCfgFile();
-	processDeviceStatusNotification(*(int *)status);
-	RegisterNotifyCB(&notifyCallback);
-	sendNotificationForFactoryReset();
-	FactoryResetCloudSyncTask();
-	sendNotificationForFirmwareUpgrade();
-	setInitialNotify();
-	handleNotificationEvents();
-	WAL_FREE(status);
-	WalPrint("notifyTask ended!\n");
-	return NULL;
-}
-
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 char* get_deviceMAC()
 {
@@ -712,20 +747,21 @@ void getDeviceMac()
     if(strlen(deviceMAC) == 0)
     {
         do
-        {
-	    pthread_mutex_lock(&device_mac_mutex);
+        {	    
             backoffRetryTime = (int) pow(2, c) -1;
 #ifdef RDKB_BUILD
             token_t  token;
             int fd = s_sysevent_connect(&token);
             if(WDMP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
             {
+		pthread_mutex_lock(&device_mac_mutex);
                 macToLower(deviceMACValue, deviceMAC);
                 WalInfo("deviceMAC is %s\n", deviceMAC);
             }
             else
 #endif
             {
+		pthread_mutex_lock(&device_mac_mutex);
                 macID = getParameterValue(DEVICE_MAC);
                 if (macID != NULL)
                 {
@@ -752,6 +788,27 @@ void getDeviceMac()
         }while((retryCount >= 1) && (retryCount <= 5));
     }
 }
+
+/*
+ * @brief To handle notification tasks
+ */
+static void *notifyTask(void *status)
+{
+	pthread_detach(pthread_self());
+	getDeviceMac();
+	loadCfgFile();
+	processDeviceStatusNotification(*(int *)status);
+	RegisterNotifyCB(&notifyCallback);
+	sendNotificationForFactoryReset();
+	FactoryResetCloudSyncTask();
+	sendNotificationForFirmwareUpgrade();
+	setInitialNotify();
+	handleNotificationEvents();
+	WAL_FREE(status);
+	WalPrint("notifyTask ended!\n");
+	return NULL;
+}
+
 /*
  * @brief notifyCallback is to check if notification event needs to be sent
  *  @param[in] paramNotify parameters to be notified .
@@ -875,6 +932,7 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 	char *cJsonOut =NULL;
 	int len;
 	int configUpdateStatus = -1;
+	size_t sz;
 	fileRead = fopen( WEBPA_CFG_FILE, "r+" );    
 	if( fileRead == NULL ) 
 	{
@@ -884,10 +942,23 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 
 	fseek( fileRead, 0, SEEK_END );
 	len = ftell( fileRead );
+	if (len == (int)-1)
+    		{
+        		WalError("fread failed.\n");
+			fclose(fileRead);
+        		return WDMP_FAILURE;
+    		}
 	fseek( fileRead, 0, SEEK_SET );
 	data = ( char* )malloc( len + 1 );
 	if (data != NULL) {
-		fread( data, 1, len, fileRead );
+		sz = fread( data, 1, len, fileRead );
+		if (sz == 0 && ferror(fileRead)) 
+			{
+				fclose(fileRead);
+				WalError("fread failed.\n");
+				WAL_FREE(data);
+				return WDMP_FAILURE;
+			}
 	} else {
 		WalError("malloc() failed\n");
 	}
@@ -1103,6 +1174,9 @@ void processNotification(NotifyData *notifyData)
 	        		if (NULL != version) {
 	        			free(version);
 	        		}
+					if (NULL != timeStamp) {
+						free(timeStamp);
+					}
 	        	}
 	        		break;
 
@@ -1176,6 +1250,7 @@ void processNotification(NotifyData *notifyData)
 
 	    free(dest);
         }
+		cJSON_Delete(notifyPayload);
 }
 
 /*
@@ -1460,7 +1535,7 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
 		strcpy(*timeStamp, sbuf);
 		WalPrint("*timeStamp : %s\n",*timeStamp);
 	}
-
+	WAL_FREE(nodeData);
 	WalPrint("End of processConnectedClientNotification\n");
 
 }
@@ -1479,11 +1554,36 @@ static void freeNotifyMessage(NotifyData *notifyData)
 	}
 	else if(notifyData->type == TRANS_STATUS)
 	{
+		if(notifyData->u.status->transId !=NULL)
+		{
+			WAL_FREE(notifyData->u.status->transId);
+			WalPrint("Free notifyData->u.status->transId\n");
+		}
 		WalPrint("Free notifyData->u.status\n");
 		WAL_FREE(notifyData->u.status);
 	}
 	else if(notifyData->type == CONNECTED_CLIENT_NOTIFY)
 	{
+		if(notifyData->u.node->nodeMacId != NULL)
+		{
+			WAL_FREE(notifyData->u.node->nodeMacId);
+			WalPrint("Free notifyData->u.node->nodeMacId\n");
+		}
+		if(notifyData->u.node->status != NULL)
+		{
+			WAL_FREE(notifyData->u.node->status);
+			WalPrint("Free notifyData->u.node->status\n");
+		}
+		if(notifyData->u.node->interface != NULL)
+		{
+			WAL_FREE(notifyData->u.node->interface);
+			WalPrint("Free notifyData->u.node->interface\n");
+		}
+		if(notifyData->u.node->hostname != NULL)
+		{
+			WAL_FREE(notifyData->u.node->hostname);
+			WalPrint("Free notifyData->u.node->hostname\n");
+		}
 		WalPrint("Free notifyData->u.node\n");
 		WAL_FREE(notifyData->u.node);
 	}

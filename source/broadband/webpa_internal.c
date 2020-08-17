@@ -278,7 +278,7 @@ static void *WALInit(void *status)
 	    }
 		else
 		{
-		    strncpy(paramName,objectList[i],sizeof(paramName));
+		    walStrncpy(paramName,objectList[i],sizeof(paramName));
 		    ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,dst_pathname_cr, paramName,l_Subsystem, &ppComponents, &size);
 			
 		    if (ret == CCSP_SUCCESS)
@@ -322,7 +322,7 @@ static void *WALInit(void *status)
 
 	for(i = 0; i < len; i++)
 	{
-		strncpy(paramName,subObjectList[i],sizeof(paramName));
+		walStrncpy(paramName,subObjectList[i],sizeof(paramName));
 		ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,
 					dst_pathname_cr, paramName, l_Subsystem, &ppComponents, &size);
 			
@@ -384,7 +384,7 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
 	snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);
-	strncpy(tempParamName, parameterName,sizeof(tempParamName));
+	walStrncpy(tempParamName, parameterName,sizeof(tempParamName));
 	WalPrint("======= start of getComponentDetails ========\n");
 	if(cachingStatus == 1)
 	{
@@ -398,12 +398,18 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
         }
 	WalPrint("index : %d\n",index);
 	// Cannot identify the component from cache, make DBUS call to fetch component
-	if(index == -1 || ComponentValArray[index].comp_size > 2) //anything above size > 2
+	if(index == -1 || ComponentValArray[index].comp_size > 2 || SubComponentValArray[index].comp_size > 2) //anything above size > 2
 	{
 		WalPrint("in if for size >2\n");
 		// GET Component for parameter from stack
-		if(index != -1)
+		if(index > 0 && ComponentValArray[index].comp_size > 2)
+		{
 		        WalPrint("ComponentValArray[index].comp_size : %d\n",ComponentValArray[index].comp_size);
+		}
+		else if(index > 0 && SubComponentValArray[index].comp_size > 2)
+		{
+		        WalPrint("SubComponentValArray[index].comp_size : %d\n",SubComponentValArray[index].comp_size);
+		}
 		retIndex = IndexMpa_WEBPAtoCPE(tempParamName);
 		if(retIndex == -1)
 		{
@@ -676,7 +682,7 @@ int IndexMpa_WEBPAtoCPE(char *pParameterName)
 					j = 2;
 					len =WIFI_INDEX_MAP_SIZE;
 				}
-				for (j; j < len; j++)
+				for (; j < len; j++)
 				{
 					if (IndexMap[j].WebPaInstanceNumber == instNum)
 					{
@@ -905,7 +911,23 @@ static int getMatchingSubComponentValArrayIndex(char *objectName)
 	}	
 	return index;
 }
-
+static int getObjectLevelFromParameter(char *parameterName)
+{
+	int count = 0, i = 0;
+	while(parameterName[i] != '\0')
+	{
+		if(parameterName[i] == '.')
+		{
+			count++;
+			if(count > 2)
+			{
+				return 2;
+			}
+		}
+		i++;
+	}
+	return count-1;
+}
 /**
  * @brief getComponentInfoFromCache Returns the component information from cache
  *
@@ -916,12 +938,40 @@ static int getMatchingSubComponentValArrayIndex(char *objectName)
  */
 static int getComponentInfoFromCache(char *parameterName, char *objectName, char *compName, char *dbusPath)
 {   
-	int index = -1;
+	int index = -1, level = 0;
 
 	if(NULL == objectName)
 		return index; 	
+	level = getObjectLevelFromParameter(parameterName);
+	if(level > 1)
+	{
+		getObjectName(parameterName, objectName, 2);
+		index = getMatchingSubComponentValArrayIndex(objectName);
+		WalPrint("objectLevel: 2, parameterName: %s, objectName: %s, matching index=%d\n",parameterName,objectName,index);
 	
-	getObjectName(parameterName, objectName, 1);
+		if(index != -1 )
+		{
+			strcpy(compName,SubComponentValArray[index].comp_name);
+			strcpy(dbusPath,SubComponentValArray[index].dbus_path); 
+		}
+	}
+	if(index < 0)
+	{
+		getObjectName(parameterName, objectName, 1);
+		index = getMatchingComponentValArrayIndex(objectName);
+		WalPrint("objectLevel: 1, parameterName: %s, objectName: %s, matching index: %d\n",parameterName,objectName,index);
+		 
+		if((index != -1) && (ComponentValArray[index].comp_size == 1))
+		{
+			strcpy(compName,ComponentValArray[index].comp_name);
+			strcpy(dbusPath,ComponentValArray[index].dbus_path);
+		}
+		else
+		{
+			index = -1;
+		}
+	}
+/*
 	index = getMatchingComponentValArrayIndex(objectName);
 	WalPrint("objectLevel: 1, parameterName: %s, objectName: %s, matching index: %d\n",parameterName,objectName,index);
 	 
@@ -942,6 +992,7 @@ static int getComponentInfoFromCache(char *parameterName, char *objectName, char
 			strcpy(dbusPath,SubComponentValArray[index].dbus_path); 
 		}
     	}
+*/
 	return index;	
 }
 
@@ -957,10 +1008,10 @@ static void getObjectName(char *str, char *objectName, int objectLevel)
 {
         char *tmpStr;
         char localStr[MAX_PARAMETERNAME_LEN]={'\0'};
-        strncpy(localStr,str,sizeof(localStr));
+        walStrncpy(localStr,str,sizeof(localStr));
         int count = 1,len;
 
-        if(localStr)
+        if(localStr[0] != '\0')
         {	
                 tmpStr = strchr(localStr,'.');
                 while (tmpStr != NULL)
@@ -1206,7 +1257,7 @@ static void retryFailedComponentCaching()
 
 		for(i = 0; i < count ; i++)
 		{
-			strncpy(paramName,failedCompList[i],sizeof(paramName));
+			walStrncpy(paramName,failedCompList[i],sizeof(paramName));
 			WalPrint("Retrying for component %s\n",paramName);
 			retryCount = 1;
 			do
@@ -1247,12 +1298,12 @@ static void retryFailedComponentCaching()
 					}
 				}
 				free_componentStruct_t(bus_handle, size, ppComponents);
-			}while((retryCount > 1) && (retryCount <= 3));
+			}while((retryCount > 1) && (retryCount <= 4));
 		}
 
 		for(i = 0; i < count1 ; i++)
 		{
-			strncpy(paramName,failedSubCompList[i],sizeof(paramName));
+			walStrncpy(paramName,failedSubCompList[i],sizeof(paramName));
 			WalPrint("Retrying for sub-component %s\n",paramName);
 			retryCount = 1;
 			do
@@ -1295,7 +1346,7 @@ static void retryFailedComponentCaching()
 				}
 				free_componentStruct_t(bus_handle, size, ppComponents);
 
-			}while((retryCount > 1) && (retryCount <= 3));
+			}while((retryCount > 1) && (retryCount <= 4));
 		}
 
 		compCacheSuccessCnt = cnt;
@@ -1323,7 +1374,10 @@ WDMP_STATUS check_ethernet_wan_status()
     else
 #endif
     {
-        waitForComponentReady(RDKB_ETHAGENT_COMPONENT_NAME,RDKB_ETHAGENT_DBUS_PATH);
+        if(waitForComponentReady(RDKB_ETHAGENT_COMPONENT_NAME,RDKB_ETHAGENT_DBUS_PATH) != CCSP_SUCCESS)
+		{
+			return ETH_FAILED;
+		}
         status = getParameterValue(ETH_WAN_STATUS_PARAM);
         if(status != NULL && strncmp(status, "true", strlen("true")) == 0)
         {
@@ -1333,6 +1387,7 @@ WDMP_STATUS check_ethernet_wan_status()
             WAL_FREE(status);
             return WDMP_SUCCESS;
         }
+		WAL_FREE(status);
     }
     return WDMP_FAILURE;
 }

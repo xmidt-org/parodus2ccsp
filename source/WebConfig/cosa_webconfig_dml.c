@@ -105,14 +105,21 @@ X_RDK_WebConfig_SetParamStringValue
 
         if( AnscEqualString(ParamName, "URL", TRUE))
         {
-                if(Set_Webconfig_URL(strValue))
-                {
-                        return TRUE;
-                }
-                else
-                {
-                        WebcfgError("Set_Webconfig_URL failed\n");
-                }
+		if(isValidUrl(strValue) == TRUE)
+		{
+			if(Set_Webconfig_URL(strValue))
+			{
+				return TRUE;
+			}
+			else
+			{
+				WebcfgError("Set_Webconfig_URL failed\n");
+			}	
+		}
+		else
+		{
+			WebcfgError("Webcfg URL validation failed\n");
+		}
         }
 		if( AnscEqualString(ParamName, "Data", TRUE))
 	    {
@@ -156,7 +163,7 @@ X_RDK_WebConfig_GetParamStringValue
         }
         if( AnscEqualString(ParamName, "Data", TRUE))
 	    {
-                WebcfgDebug(("[%s] at [%d]parameter '%s'\n",__FUNCTION__,__LINE__, ParamName));
+                WebcfgDebug("[%s] at [%d]parameter '%s'\n",__FUNCTION__,__LINE__, ParamName);
                 char * blobData = NULL;
 
                 blobData = get_DB_BLOB_base64();
@@ -183,18 +190,19 @@ X_RDK_WebConfig_GetParamStringValue
         }
 
 	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
- 	WebcfgError(("Unsupported parameter '%s'\n", ParamName));
+ 	WebcfgError("Unsupported parameter '%s'\n", ParamName);
 	return -1;
 }
 
 BOOL isValidUrl
     (
-        PCHAR                       pUrl
+        char *	pUrl
     )
 {
+	WebcfgDebug("Validate URL %s\n", pUrl);
 	if(strstr(pUrl, "https") == NULL)
 	{
-		WebcfgError("Invalid URL\n");
+		WebcfgError("Invalid URL, HTTPS is only allowed\n");
 		return FALSE;
 	}
 	return TRUE;

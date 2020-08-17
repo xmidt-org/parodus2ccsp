@@ -24,6 +24,7 @@
 #include <webcfg_log.h>
 #include <webcfg_db.h>
 #include <webcfg.h>
+#include <webcfg_generic.h>
 
 #define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
 #define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
@@ -115,7 +116,7 @@ int Get_Webconfig_URL( char *pString)
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     WebcfgDebug("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
-        if((pMyObject != NULL) && (pMyObject->URL != NULL) && (strlen(pMyObject->URL)>0))
+        if((pMyObject != NULL) &&  (strlen(pMyObject->URL)>0))
         {
 		WebcfgDebug("pMyObject->URL %s\n", pMyObject->URL);
                 WebcfgDebug("%s ----- updating pString ------\n",__FUNCTION__);
@@ -180,7 +181,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 	AnscCopyString( pMyObject->ForceSync, pString );
 	WebcfgDebug("pMyObject->ForceSync is %s\n", pMyObject->ForceSync);
 
-	if((pMyObject->ForceSync !=NULL) && (strlen(pMyObject->ForceSync)>0))
+	if(((pMyObject->ForceSync)[0] !='\0') && (strlen(pMyObject->ForceSync)>0))
 	{
 		if(strlen(pMyObject->ForceSyncTransID)>0)
 		{
@@ -218,7 +219,7 @@ int getForceSync(char** pString, char **transactionId )
 	PCOSA_DATAMODEL_WEBCONFIG pMyObject = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
 
-	if((pMyObject->ForceSync != NULL) && strlen(pMyObject->ForceSync)>0)
+	if(((pMyObject->ForceSync)[0] != '\0') && strlen(pMyObject->ForceSync)>0)
 	{
 		WebcfgDebug("%s ----- updating pString ------\n",__FUNCTION__);
 		*pString = strdup(pMyObject->ForceSync);
@@ -294,7 +295,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             {
 				char valuestr[256] = {0};
 				Get_Webconfig_URL(valuestr);
-				if( (valuestr != NULL) && strlen(valuestr) >0 )
+				if( strlen(valuestr) >0 )
 				{
 		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
 					paramVal[k]->parameterValue = strndup(valuestr,MAX_PARAMETERVALUE_LEN);
@@ -361,7 +362,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
 				char webcfg_url[256] = {0};
 				Get_Webconfig_URL(webcfg_url);
-				if( (webcfg_url !=NULL) && strlen(webcfg_url)>0 )
+				if( (webcfg_url[0] !='\0') && strlen(webcfg_url)>0 )
 				{
 					WebcfgDebug("webcfg_url fetched %s\n", webcfg_url);
 					paramVal[k]->parameterValue = strndup(webcfg_url,MAX_PARAMETERVALUE_LEN);
@@ -474,7 +475,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 			}
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_URL) == 0) && (RFC_ENABLE == true))
 			{
-				WebcfgDebug("Processing Webcfg URL param\n");
+				WebcfgDebug("Processing Webcfg URL param %s\n", val[i].parameterValue);
 				if(isValidUrl(val[i].parameterValue) == TRUE)
 				{
 					ret = Set_Webconfig_URL(val[i].parameterValue);
@@ -488,7 +489,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				else
 				{
 					WebcfgError("Webcfg URL validation failed\n");
-					return CCSP_FAILURE;
+					return CCSP_ERR_INVALID_PARAMETER_VALUE;
 				}
 			}
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))
@@ -512,4 +513,25 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 	}
 	WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 	return CCSP_SUCCESS;
+}
+
+int registerWebcfgEvent(WebConfigEventCallback webcfgEventCB)
+{
+	int ret = 0;
+
+	CcspBaseIf_SetCallback2(bus_handle, "webconfigSignal",
+            webcfgEventCB, NULL);
+
+	ret = CcspBaseIf_Register_Event(bus_handle, NULL, "webconfigSignal");
+	WebcfgInfo("registerWebcfgEvent ret is %d\n", ret);
+	if (ret != 100)
+	{
+		WebcfgError("CcspBaseIf_Register_Event failed for webconfigSignal\n");
+	}
+	else
+	{
+		WebcfgInfo("Registration with CCSP Bus is success, waiting for events from components\n");
+		return 1;
+	}
+	return 0;
 }

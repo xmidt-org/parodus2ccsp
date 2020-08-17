@@ -693,9 +693,9 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
                 }
         }
 
-        writeID = (setType == WEBPA_ATOMIC_SET_XPC)? CCSP_COMPONENT_ID_XPC: CCSP_COMPONENT_ID_WebPA;
+        writeID = ((setType == WEBPA_ATOMIC_SET_XPC) || (setType == WEBPA_ATOMIC_SET_WEBCONFIG)) ? CCSP_COMPONENT_ID_XPC: CCSP_COMPONENT_ID_WebPA;
 
-        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
                 identifyRadioIndexToReset(paramCount,val,&bRestartRadio1,&bRestartRadio2);
                 bRadioRestartEn = TRUE;
@@ -719,7 +719,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
             ret = CcspBaseIf_setParameterValues(bus_handle, CompName, dbusPath, 0, writeID, val, paramCount, TRUE, &faultParam);
         }
 
-        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
                 if(ret == CCSP_SUCCESS) //signal apply settings thread only when set is success
                 {
@@ -840,8 +840,6 @@ static void *applyWiFiSettingsTask()
 	{
 		WalPrint("Before cond wait in applyWiFiSettings\n");
 		pthread_cond_wait(&applySetting_cond, &applySetting_mutex);
-		applySettingsFlag = TRUE;
-		WalPrint("applySettingsFlag is set to TRUE\n");
 		getCurrentTime(startPtr);
 		WalPrint("After cond wait in applyWiFiSettings\n");
 		if(bRadioRestartEn)
@@ -873,23 +871,32 @@ static void *applyWiFiSettingsTask()
 			bRestartRadio2 = FALSE;
 		
 			WalPrint("nreq : %d writeID : %d\n",nreq,writeID);
-			ret = CcspBaseIf_setParameterValues(bus_handle, RDKB_WIFI_FULL_COMPONENT_NAME, RDKB_WIFI_DBUS_PATH, 0, writeID, RadApplyParam, nreq, TRUE,&faultParam);
-			WalInfo("After SPV in applyWiFiSettings ret = %d\n",ret);
-			if ((ret != CCSP_SUCCESS) && (faultParam != NULL))
+			if(nreq > 0)
 			{
-				WalError("Failed to Set Apply Settings\n");
-				OnboardLog("Failed to Set Apply Settings\n");
-				WAL_FREE(faultParam);
-			}	
+				applySettingsFlag = TRUE;
+				WalPrint("applySettingsFlag is set to TRUE\n");
+				ret = CcspBaseIf_setParameterValues(bus_handle, RDKB_WIFI_FULL_COMPONENT_NAME, RDKB_WIFI_DBUS_PATH, 0, writeID, RadApplyParam, nreq, TRUE,&faultParam);
+				WalInfo("After SPV in applyWiFiSettings ret = %d\n",ret);
+				if ((ret != CCSP_SUCCESS) && (faultParam != NULL))
+				{
+					WalError("Failed to Set Apply Settings\n");
+					OnboardLog("Failed to Set Apply Settings\n");
+					WAL_FREE(faultParam);
+				}
 			
-			// Send transcation event notify to server
-			if(strlen(current_transaction_id) != 0)
-			{
-				processTransactionNotification(current_transaction_id);
+				// Send transcation event notify to server
+				if(strlen(current_transaction_id) != 0)
+				{
+					processTransactionNotification(current_transaction_id);
+				}
+				nreq = 0;
+				applySettingsFlag = FALSE;
+				WalPrint("applySettingsFlag is set to FALSE\n");
 			}
-
-			applySettingsFlag = FALSE;
-			WalPrint("applySettingsFlag is set to FALSE\n");
+			else
+			{
+				WalInfo("applyWifiSettings is not required.\n");
+			}
 		}
 
 		getCurrentTime(endPtr);
