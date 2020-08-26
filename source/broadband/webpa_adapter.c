@@ -379,7 +379,11 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 WalPrint("Request:> ParamCount = %zu\n",reqObj->u.tableReq->rowCnt);
                                 resObj->paramCnt = reqObj->u.tableReq->rowCnt;
                                 WalPrint("Response:> paramCnt = %zu\n", resObj->paramCnt);
-                                resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
+				if(resObj->paramCnt == 0)
+					resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*1);
+				else
+                                	resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
+
                                 resObj->timeSpan = NULL;
                                 WalPrint("Request:> Object Name = %s\n",reqObj->u.tableReq->objectName);
 
@@ -403,7 +407,11 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 WalPrint("Request:> ParamCount = %zu\n",reqObj->u.tableReq->rowCnt);
                                 resObj->paramCnt = reqObj->u.tableReq->rowCnt;
                                 WalPrint("Response:> paramCnt = %zu\n", resObj->paramCnt);
-                                resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
+				if(resObj->paramCnt == 0)
+					resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*1);
+				else
+                                	resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
+
                                 resObj->timeSpan = NULL;
                                 WalPrint("Request:> Object Name = %s\n",reqObj->u.tableReq->objectName);
 
