@@ -31,7 +31,7 @@ extern int numLoops;
  */
 #define WalError(...)                   cimplog_error(LOGGING_MODULE, __VA_ARGS__)
 #define WalInfo(...)                    cimplog_info(LOGGING_MODULE, __VA_ARGS__)
-#define WalPrint(...)                   cimplog_debug(LOGGING_MODULE, __VA_ARGS__)
+#define WalPrint(...)                   cimplog_info(LOGGING_MODULE, __VA_ARGS__)
 #ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
 #define OnboardLog(...)                 onboarding_log(LOGGING_MODULE, __VA_ARGS__)
 #else
