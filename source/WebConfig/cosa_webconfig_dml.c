@@ -123,17 +123,17 @@ X_RDK_WebConfig_SetParamStringValue
         }
 		if( AnscEqualString(ParamName, "Data", TRUE))
 	    {
-			WebcfgInfo("Data set is Not supported\n");
+			WebcfgDebug("Data set is Not supported\n");
             return TRUE;
 		}
 		if( AnscEqualString(ParamName, "SupportedDocs", TRUE))
                 {
-			WebcfgInfo("SupportedDocs set is Not supported\n");
+			WebcfgDebug("SupportedDocs set is Not supported\n");
                         return TRUE;
                 }
                 if( AnscEqualString(ParamName, "SupportedSchemaVersion", TRUE))
                 {
-			WebcfgInfo("SupportedSchemaVersion set is Not supported\n");
+			WebcfgDebug("SupportedSchemaVersion set is Not supported\n");
                         return TRUE;
                 }
 	WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
