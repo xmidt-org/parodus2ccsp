@@ -23,6 +23,7 @@
 #include "cosa_webconfig_internal.h"
 #include <webcfg_log.h>
 #include <webcfg_db.h>
+#include <webcfg_metadata.h>
 #include <webcfg.h>
 #include <webcfg_generic.h>
 
@@ -30,6 +31,8 @@
 #define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
 #define WEBCONFIG_PARAM_FORCE_SYNC   	    "Device.X_RDK_WebConfig.ForceSync"
 #define WEBCONFIG_PARAM_DATA   	    	    "Device.X_RDK_WebConfig.Data"
+#define WEBCONFIG_PARAM_SUPPORTED_DOCS	    "Device.X_RDK_WebConfig.SupportedDocs"
+#define WEBCONFIG_PARAM_SUPPORTED_VERSION   "Device.X_RDK_WebConfig.SupportedSchemaVersion"
 
 static char *paramRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.Device.X_RDK_WebConfig.RfcEnable";
 
@@ -316,6 +319,40 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				                k++;
 	     				}
 			      }
+                            else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_SUPPORTED_DOCS) == 0) && (RFC_ENABLE == true))
+                            {
+                                  WebcfgDebug("B4 Get_Webconfig_Supported_Docs\n");
+                                  char* docvalue =  getsupportedDocs();
+                                  paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SUPPORTED_DOCS, MAX_PARAMETERNAME_LEN);
+                                  if( (docvalue != NULL) && strlen(docvalue) >0 )
+                                  {
+                                      WebcfgDebug("Webpa get : Datafetched %s\n", docvalue);
+                                      paramVal[k]->parameterValue = strdup(docvalue);
+				  }
+                                  else
+				  {
+				      paramVal[k]->parameterValue = strdup("");
+				  }
+                                  paramVal[k]->type = ccsp_string;
+				  k++;
+                            }
+                            else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_SUPPORTED_VERSION) == 0) && (RFC_ENABLE == true))
+                            {
+                                  WebcfgDebug("B4 Get_Webconfig_Supported_Version\n");
+                                  char* versionvalue = getsupportedVersion();
+                                  paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SUPPORTED_VERSION, MAX_PARAMETERNAME_LEN);
+                                  if( (versionvalue != NULL) && strlen(versionvalue) >0 )
+                                  {
+                                      WebcfgDebug("Webpa get : Datafetched %s\n", versionvalue);
+                                      paramVal[k]->parameterValue = strdup(versionvalue);
+                                  }
+                                  else
+				  {
+				      paramVal[k]->parameterValue = strdup("");
+				  }
+                                  paramVal[k]->type = ccsp_string;
+				  k++;
+                            }
                             else
                             {
                                 WAL_FREE(paramVal[k]);
@@ -327,7 +364,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             if(RFC_ENABLE)
                             {
 				WebcfgDebug("Updating localCount %d in wildcard GET case\n", localCount);
-                                localCount = localCount+3;
+                                localCount = localCount+5;
                             }
 				WebcfgDebug("Updated localCount %d\n", localCount);
                             paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
@@ -383,9 +420,47 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				{
 					WebcfgDebug("Webpa get : Datafetched %s\n", b64buffer);
 					paramVal[k]->parameterValue = strdup(b64buffer);
-					paramVal[k]->type = ccsp_string;
-		                        k++;
+				}
+				else
+				{
+					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+				}
+                                paramVal[k]->type = ccsp_string;
+                                k++;
+
+				WebcfgDebug("Webpa wildcard get for SupportedDocs\n");
+				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SUPPORTED_DOCS, MAX_PARAMETERNAME_LEN);
+				char* docvalue =  getsupportedDocs();
+				if( (docvalue != NULL) && strlen(docvalue) >0 )
+				{
+					WebcfgDebug("Webpa get : Datafetched %s\n", docvalue);
+					paramVal[k]->parameterValue = strdup(docvalue);
      				}
+				else
+				{
+					paramVal[k]->parameterValue = strdup("");
+				}
+                                paramVal[k]->type = ccsp_string;
+				k++;
+
+				WebcfgDebug("Webpa wildcard get for SupportedVersions\n");
+				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SUPPORTED_VERSION, MAX_PARAMETERNAME_LEN);
+				char* versionvalue =  getsupportedVersion();
+				if( (versionvalue != NULL) && strlen(versionvalue) >0 )
+				{
+					WebcfgDebug("Webpa get : Datafetched %s\n", versionvalue);
+					paramVal[k]->parameterValue = strdup(versionvalue);
+}
+				else
+				{
+					paramVal[k]->parameterValue = strdup("");
+				}
+                                paramVal[k]->type = ccsp_string;
+				k++;
                             }
                         }
             }
@@ -493,6 +568,18 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				}
 			}
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))
+			{
+				WebcfgError("%s is not writable\n",val[i].parameterName);
+				*faultParam = strdup(val[i].parameterName);
+				return CCSP_ERR_NOT_WRITABLE;
+			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_SUPPORTED_DOCS) == 0) && (RFC_ENABLE == true))
+			{
+				WebcfgError("%s is not writable\n",val[i].parameterName);
+				*faultParam = strdup(val[i].parameterName);
+				return CCSP_ERR_NOT_WRITABLE;
+			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_SUPPORTED_VERSION) == 0) && (RFC_ENABLE == true))
 			{
 				WebcfgError("%s is not writable\n",val[i].parameterName);
 				*faultParam = strdup(val[i].parameterName);
