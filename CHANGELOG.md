@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Added support for override functions to support drop root capabilities for WebPA process
 - Modified logic to increase factory reset notification retransmission interval.  
 - Added support for Webconfig feature to fetch config from cloud, process and apply settings
 - Avoid repeated factory reset notification when cmc is 512
