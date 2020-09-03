@@ -101,33 +101,40 @@ Webpa_SetParamStringValue
         	{
         	#ifdef USE_NOTIFY_COMPONENT
         		WalInfo("...Connected client notification..\n");
-                        WalPrint(" \n WebPA : Connected-Client Received \n");
+                        WalInfo(" \n WebPA : Connected-Client Received \n");
                         p_notify_param_name = strtok_r(pString, ",", &st);
-                        WalPrint("PString value for X_RDKCENTRAL-COM_Connected-Client:%s\n", pString);
+                        WalInfo("PString value for X_RDKCENTRAL-COM_Connected-Client:%s\n", pString);
 
                         p_interface_name = strtok_r(NULL, ",", &st);
                         p_mac_id = strtok_r(NULL, ",", &st);
                         p_status = strtok_r(NULL, ",", &st);
                         p_hostname = strtok_r(NULL, ",", &st);
 
-                        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
-                        WalPrint(" \n Notification : Interface = %s \n", p_interface_name);
-                        WalPrint(" \n Notification : MAC = %s \n", p_mac_id);
-                        WalPrint(" \n Notification : Status = %s \n", p_status);
-                        WalPrint(" \n Notification : HostName = %s \n", p_hostname);
+			if(p_hostname !=NULL && p_interface_name !=NULL)
+			{
+		                WalInfo(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
+		                WalInfo(" \n Notification : Interface = %s \n", p_interface_name);
+		                WalInfo(" \n Notification : MAC = %s \n", p_mac_id);
+		                WalInfo(" \n Notification : Status = %s \n", p_status);
+		                WalInfo(" \n Notification : HostName = %s \n", p_hostname);
 
-                        notifyCbFnPtr = getNotifyCB();
+		                notifyCbFnPtr = getNotifyCB();
 
-                        if (NULL == notifyCbFnPtr)
-                        {
-                                WalError("Fatal: notifyCbFnPtr is NULL\n");
-                                return FALSE;
-                        }
-                        else
-                        {
-                                // Data received from stack is not sent upstream to server for Connected Client
-                                sendConnectedClientNotification(p_mac_id, p_status, p_interface_name, p_hostname);
-                        }
+		                if (NULL == notifyCbFnPtr)
+		                {
+		                        WalError("Fatal: notifyCbFnPtr is NULL\n");
+		                        return FALSE;
+		                }
+		                else
+		                {
+		                        // Data received from stack is not sent upstream to server for Connected Client
+		                        sendConnectedClientNotification(p_mac_id, p_status, p_interface_name, p_hostname);
+		                }
+			}
+			else
+			{
+				WalError("Received insufficient data to process connected client notification\n");
+			}
 
         #endif
         		return TRUE;
