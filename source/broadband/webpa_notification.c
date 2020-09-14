@@ -36,6 +36,7 @@
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
 #define FP_PARAM                  "Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable"
 #define CLOUD_STATUS 				"cloud-status"
+#define MAX_NOTIFY_DATA_LEN                   64
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -1631,3 +1632,33 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	}
 }
 
+WDMP_STATUS validate_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname)
+{
+
+	if(notify_param_name !=NULL && (strlen(notify_param_name) >= MAX_NOTIFY_DATA_LEN))
+	{
+		return WDMP_FAILURE;
+	}
+
+	if(interface_name !=NULL && (strlen(interface_name) >= MAX_NOTIFY_DATA_LEN))
+	{
+		return WDMP_FAILURE;
+	}
+
+	if(mac_id !=NULL && (strlen(mac_id) >= MAX_NOTIFY_DATA_LEN))
+	{
+		return WDMP_FAILURE;
+	}
+
+	if(status !=NULL && (strlen(status) >= MAX_NOTIFY_DATA_LEN))
+	{
+		return WDMP_FAILURE;
+	}
+
+	if(hostname !=NULL && (strlen(hostname) >= MAX_NOTIFY_DATA_LEN))
+	{
+		return WDMP_FAILURE;
+	}
+
+	return WDMP_SUCCESS;
+}

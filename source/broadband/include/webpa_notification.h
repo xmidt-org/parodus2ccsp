@@ -115,3 +115,11 @@ int RegisterNotifyCB(notifyCB cb);
 
 void * getNotifyCB();
 
+/**
+ * @brief Validate connected client notification data based on max length.
+ *
+ * @param[in] notification data values.
+ * @return status.
+ */
+WDMP_STATUS validate_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname);
+
