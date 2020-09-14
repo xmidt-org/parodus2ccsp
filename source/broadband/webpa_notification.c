@@ -1635,27 +1635,28 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 WDMP_STATUS validate_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname)
 {
 
-	if(notify_param_name !=NULL && (strlen(notify_param_name) >= MAX_NOTIFY_DATA_LEN))
+	if(strlen(notify_param_name) >= MAX_NOTIFY_DATA_LEN)
 	{
 		return WDMP_FAILURE;
 	}
 
-	if(interface_name !=NULL && (strlen(interface_name) >= MAX_NOTIFY_DATA_LEN))
+	if(strlen(interface_name) >= MAX_NOTIFY_DATA_LEN)
 	{
 		return WDMP_FAILURE;
 	}
 
-	if(mac_id !=NULL && (strlen(mac_id) >= MAX_NOTIFY_DATA_LEN))
+	if(strlen(mac_id) != 12)
+	{
+		WalError("mac validation failed\n");
+		return WDMP_FAILURE;
+	}
+
+	if(strlen(status) >= MAX_NOTIFY_DATA_LEN)
 	{
 		return WDMP_FAILURE;
 	}
 
-	if(status !=NULL && (strlen(status) >= MAX_NOTIFY_DATA_LEN))
-	{
-		return WDMP_FAILURE;
-	}
-
-	if(hostname !=NULL && (strlen(hostname) >= MAX_NOTIFY_DATA_LEN))
+	if(strlen(hostname) >= MAX_NOTIFY_DATA_LEN)
 	{
 		return WDMP_FAILURE;
 	}

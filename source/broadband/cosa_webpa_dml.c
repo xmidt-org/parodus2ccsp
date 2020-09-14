@@ -110,7 +110,7 @@ Webpa_SetParamStringValue
                         p_status = strtok_r(NULL, ",", &st);
                         p_hostname = strtok_r(NULL, ",", &st);
 
-			if(p_hostname !=NULL && p_interface_name !=NULL)
+			if(p_hostname !=NULL && p_notify_param_name !=NULL && p_interface_name !=NULL && p_mac_id !=NULL && p_status !=NULL)
 			{
 				if(validate_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname) == WDMP_SUCCESS)
 				{
