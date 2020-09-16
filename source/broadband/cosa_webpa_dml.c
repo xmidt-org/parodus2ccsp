@@ -99,11 +99,14 @@ Webpa_SetParamStringValue
 
         if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Connected-Client", TRUE))
         	{
+		   WalInfo("Write ID is %ld\n", GET_CURRENT_WRITE_ENTITY());
+		   if( GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_NOTIFY_COMP )
+		   {
         	#ifdef USE_NOTIFY_COMPONENT
         		WalInfo("...Connected client notification..\n");
                         WalPrint(" \n WebPA : Connected-Client Received \n");
                         p_notify_param_name = strtok_r(pString, ",", &st);
-                        WalPrint("PString value for X_RDKCENTRAL-COM_Connected-Client:%s\n", pString);
+                        WalInfo("PString value for X_RDKCENTRAL-COM_Connected-Client:%s\n", pString);
 
                         p_interface_name = strtok_r(NULL, ",", &st);
                         p_mac_id = strtok_r(NULL, ",", &st);
@@ -114,11 +117,11 @@ Webpa_SetParamStringValue
 			{
 				if(validate_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname) == WDMP_SUCCESS)
 				{
-				        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
-				        WalPrint(" \n Notification : Interface = %s \n", p_interface_name);
-				        WalPrint(" \n Notification : MAC = %s \n", p_mac_id);
-				        WalPrint(" \n Notification : Status = %s \n", p_status);
-				        WalPrint(" \n Notification : HostName = %s \n", p_hostname);
+				        WalInfo(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
+				        WalInfo(" \n Notification : Interface = %s \n", p_interface_name);
+				        WalInfo(" \n Notification : MAC = %s \n", p_mac_id);
+				        WalInfo(" \n Notification : Status = %s \n", p_status);
+				        WalInfo(" \n Notification : HostName = %s \n", p_hostname);
 
 				        notifyCbFnPtr = getNotifyCB();
 
@@ -145,6 +148,12 @@ Webpa_SetParamStringValue
 
         #endif
         		return TRUE;
+		   }
+		   else
+		   {
+			WalError("Operation not allowed\n");
+			return FALSE;
+		   }
         	}
 
 
