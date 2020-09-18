@@ -12,6 +12,9 @@
 #define WEBPA_PARAM_PROTOCOL_VERSION        "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
 #define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
 
+#ifndef RDKB_BUILD
+#define CCSP_COMPONENT_ID_NOTIFY_COMP	     1
+#endif
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
 void (*notifyCbFnPtr)(NotifyData*) = NULL;
