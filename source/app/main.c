@@ -15,6 +15,7 @@
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
 #endif
+#include "privilege.h"
 
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
@@ -48,7 +49,8 @@ int main()
 	signal(SIGALRM, sig_handler);
 #endif
 	const char *pComponentName = WEBPA_COMPONENT_NAME;
-	WalInfo("********** Starting component: %s **********\n ", pComponentName); 
+	WalInfo("********** Starting component: %s **********\n ", pComponentName);
+	drop_root_privilege(); 
 	/* Backend Manager for Webpa Creation and Initilization 
     CosaWebpaBEManagerCreate( );*/
 	WalInfo("B4 msgBusInit\n");
