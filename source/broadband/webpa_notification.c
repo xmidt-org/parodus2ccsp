@@ -1652,7 +1652,7 @@ WDMP_STATUS validate_notify_data(char *notify_param_name, char* interface_name,c
 		return WDMP_FAILURE;
 	}
 
-	if(strlen(status) >= 8)
+	if(strlen(status) >= 16)
 	{
 		WalError("status validation failed\n");
 		return WDMP_FAILURE;
