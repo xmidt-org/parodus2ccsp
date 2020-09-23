@@ -121,5 +121,13 @@ void * getNotifyCB();
  * @param[in] notification data values.
  * @return status.
  */
-WDMP_STATUS validate_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname);
+WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname);
+
+/**
+ * @brief Validate webpa notification data based on max length.
+ *
+ * @param[in] notification data values.
+ * @return status.
+ */
+WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *write_id);
 

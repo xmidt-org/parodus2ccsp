@@ -1631,7 +1631,7 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	}
 }
 
-WDMP_STATUS validate_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname)
+WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname)
 {
 
 	if(strlen(notify_param_name) >= WEBPA_NOTIFY_EVENT_MAX_LENGTH)
@@ -1661,6 +1661,23 @@ WDMP_STATUS validate_notify_data(char *notify_param_name, char* interface_name,c
 	if(strlen(hostname) >= WEBPA_NOTIFY_EVENT_MAX_LENGTH)
 	{
 		WalError("hostname validation failed\n");
+		return WDMP_FAILURE;
+	}
+
+	return WDMP_SUCCESS;
+}
+
+WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *write_id)
+{
+	if(strlen(notify_param_name) >= WEBPA_NOTIFY_EVENT_MAX_LENGTH)
+	{
+		WalError("notify_param_name validation failed\n");
+		return WDMP_FAILURE;
+	}
+
+	if(strlen(write_id) > 16)
+	{
+		WalError("write_id validation failed\n");
 		return WDMP_FAILURE;
 	}
 

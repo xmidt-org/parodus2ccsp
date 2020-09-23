@@ -51,65 +51,80 @@ Webpa_SetParamStringValue
 	
         if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_WebPA_Notification", TRUE))
         {
-        #ifdef USE_NOTIFY_COMPONENT
+		if( GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_NOTIFY_COMP )
+		{
+		#ifdef USE_NOTIFY_COMPONENT
 
-                WalPrint(" \n WebPA : Notification Received \n");
-                char *tmpStr, *notifyStr;
-                tmpStr = notifyStr = strdup(pString);
+		        WalInfo(" \n WebPA : Notification Received \n");
+		        char *tmpStr, *notifyStr;
+		        tmpStr = notifyStr = strdup(pString);
 
-                p_notify_param_name = strsep(&notifyStr, ",");
-                p_write_id = strsep(&notifyStr,",");
-                p_new_val = strsep(&notifyStr,",");
-                p_old_val = strsep(&notifyStr,",");
-                p_val_type = strsep(&notifyStr, ",");
+		        p_notify_param_name = strsep(&notifyStr, ",");
+		        p_write_id = strsep(&notifyStr,",");
+		        p_new_val = strsep(&notifyStr,",");
+		        p_old_val = strsep(&notifyStr,",");
+		        p_val_type = strsep(&notifyStr, ",");
 
-                if(p_val_type !=NULL && p_write_id !=NULL)
-                {
-                        value_type = atoi(p_val_type);
-                        write_id = atoi(p_write_id);
+		        if(p_notify_param_name != NULL && p_val_type !=NULL && p_write_id !=NULL)
+		        {
+				if(validate_webpa_notification_data(p_notify_param_name, p_write_id) == WDMP_SUCCESS)
+				{
+				        value_type = atoi(p_val_type);
+				        write_id = atoi(p_write_id);
 
-                        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
-                        WalPrint(" \n Notification : Value Type = %d \n", value_type);
-                        WalPrint(" \n Notification : Component ID = %d \n", write_id);
-#if 0 /*Removing Logging of Password due to security requirement*/
-                        WalPrint(" \n Notification : New Value = %s \n", p_new_val);
-                        WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
-#endif
+				        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
+				        WalPrint(" \n Notification : Value Type = %d \n", value_type);
+				        WalPrint(" \n Notification : Component ID = %d \n", write_id);
+		#if 0 /*Removing Logging of Password due to security requirement*/
+				        WalPrint(" \n Notification : New Value = %s \n", p_new_val);
+				        WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
+		#endif
 
-			if(NULL != p_notify_param_name && (strcmp(p_notify_param_name, WiFi_FactoryResetRadioAndAp)== 0))
-			{
-				// sleep for 90s to delay the notification and give wifi time to reset and apply to driver
-				WalInfo("Delay wifi factory reset notification by 90s so that wifi is reset completely\n");
-				sleep(90);
-			}
+					if(NULL != p_notify_param_name && (strcmp(p_notify_param_name, WiFi_FactoryResetRadioAndAp)== 0))
+					{
+						// sleep for 90s to delay the notification and give wifi time to reset and apply to driver
+						WalInfo("Delay wifi factory reset notification by 90s so that wifi is reset completely\n");
+						sleep(90);
+					}
 
-                        param.parameterName = p_notify_param_name;
-                        param.oldValue = p_old_val;
-                        param.newValue = p_new_val;
-                        param.type = value_type;
-                        param.writeID = write_id;
+				        param.parameterName = p_notify_param_name;
+				        param.oldValue = p_old_val;
+				        param.newValue = p_new_val;
+				        param.type = value_type;
+				        param.writeID = write_id;
 
-                        ccspWebPaValueChangedCB(&param,0,NULL);
-                }
-                else
-                {
-                        WalError("Received insufficient data to process notification\n");
-                }
-                WAL_FREE(tmpStr);
-        #endif
-                return TRUE;
-        }    
+				        ccspWebPaValueChangedCB(&param,0,NULL);
+				}
+				else
+				{
+					WalError("Received incorrect data for notification\n");
+				}
+		        }
+		        else
+		        {
+		                WalError("Received insufficient data to process notification\n");
+		        }
+		        WAL_FREE(tmpStr);
+		#endif
+		        return TRUE;
+		}
+		else
+		{
+			WalInfo("Write ID is %ld\n", GET_CURRENT_WRITE_ENTITY());
+			WalError("Operation not allowed\n");
+			return FALSE;
+		}
+	}
 
         if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Connected-Client", TRUE))
         	{
-		   WalInfo("Write ID is %ld\n", GET_CURRENT_WRITE_ENTITY());
 		   if( GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_NOTIFY_COMP )
 		   {
         	#ifdef USE_NOTIFY_COMPONENT
         		WalInfo("...Connected client notification..\n");
                         WalPrint(" \n WebPA : Connected-Client Received \n");
                         p_notify_param_name = strtok_r(pString, ",", &st);
-                        WalInfo("PString value for X_RDKCENTRAL-COM_Connected-Client:%s\n", pString);
+                        WalPrint("PString value for X_RDKCENTRAL-COM_Connected-Client:%s\n", pString);
 
                         p_interface_name = strtok_r(NULL, ",", &st);
                         p_mac_id = strtok_r(NULL, ",", &st);
@@ -118,13 +133,13 @@ Webpa_SetParamStringValue
 
 			if(p_hostname !=NULL && p_notify_param_name !=NULL && p_interface_name !=NULL && p_mac_id !=NULL && p_status !=NULL)
 			{
-				if(validate_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname) == WDMP_SUCCESS)
+				if(validate_conn_client_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname) == WDMP_SUCCESS)
 				{
-				        WalInfo(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
-				        WalInfo(" \n Notification : Interface = %s \n", p_interface_name);
-				        WalInfo(" \n Notification : MAC = %s \n", p_mac_id);
-				        WalInfo(" \n Notification : Status = %s \n", p_status);
-				        WalInfo(" \n Notification : HostName = %s \n", p_hostname);
+				        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
+				        WalPrint(" \n Notification : Interface = %s \n", p_interface_name);
+				        WalPrint(" \n Notification : MAC = %s \n", p_mac_id);
+				        WalPrint(" \n Notification : Status = %s \n", p_status);
+				        WalPrint(" \n Notification : HostName = %s \n", p_hostname);
 
 				        notifyCbFnPtr = getNotifyCB();
 
@@ -154,6 +169,7 @@ Webpa_SetParamStringValue
 		   }
 		   else
 		   {
+			WalInfo("Write ID is %ld\n", GET_CURRENT_WRITE_ENTITY());
 			WalError("Operation not allowed\n");
 			return FALSE;
 		   }
