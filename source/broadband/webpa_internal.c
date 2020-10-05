@@ -222,6 +222,18 @@ void walStrncpy(char *destStr, const char *srcStr, size_t destSize)
     destStr[destSize-1] = '\0';
 }
 
+#ifdef FEATURE_SUPPORT_WEBCONFIG
+int operationalStatus = 0;
+void set_global_operationalStatus(int status)
+{
+    operationalStatus = status;
+}
+
+int get_global_operationalStatus(void)
+{
+    return operationalStatus;
+}
+#endif
 static void *WALInit(void *status)
 {
 	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
@@ -238,11 +250,12 @@ static void *WALInit(void *status)
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	//Function to start webConfig operation after system ready.
 	WebcfgInfo("FEATURE_SUPPORT_WEBCONFIG is enabled, device status %d\n", (int)status);
+	set_global_operationalStatus(status);
 	char RfcEnable[64];
 	memset(RfcEnable, 0, sizeof(RfcEnable));
 #ifdef RDKB_BUILD
 	char* strValue = NULL;
-	if (CCSP_SUCCESS == PSM_Get_Record_Value2(bus_handle, g_Subsystem, "eRT.com.cisco.spvtg.ccsp.webpa.Device.X_RDK_WebConfig.RfcEnable", NULL, &strValue))
+	if (CCSP_SUCCESS == PSM_Get_Record_Value2(bus_handle, g_Subsystem, "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable", NULL, &strValue))
 	{
 		WebcfgDebug("strValue %s \n", strValue);
 		if(strValue != NULL)

@@ -31,7 +31,7 @@
 #define WEBCONFIG_PARAM_FORCE_SYNC   	    "Device.X_RDK_WebConfig.ForceSync"
 #define WEBCONFIG_PARAM_DATA   	    	    "Device.X_RDK_WebConfig.Data"
 
-static char *paramRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.Device.X_RDK_WebConfig.RfcEnable";
+static char *paramRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable";
 
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 extern ANSC_HANDLE bus_handle;
@@ -59,18 +59,21 @@ int setRfcEnable(BOOL bValue)
 			set_global_shutdown(false);
 			pthread_mutex_unlock(get_global_sync_mutex());
 			WebcfgInfo("RfcEnable dynamic change from false to true. start initWebConfigMultipartTask.\n");
-			initWebConfigMultipartTask(0);
+			initWebConfigMultipartTask((unsigned long)get_global_operationalStatus());
 		}
 	}
 	else
 	{
 		sprintf(buf, "%s", "false");
 		WebcfgInfo("Received RFC disable. updating g_shutdown\n");
-		/* sending signal to kill initWebConfigMultipartTask thread*/
-		pthread_mutex_lock (get_global_sync_mutex());
-		set_global_shutdown(true);
-		pthread_cond_signal(get_global_sync_condition());
-		pthread_mutex_unlock(get_global_sync_mutex());
+		if(pMyObject->RfcEnable == true)
+		{
+			/* sending signal to kill initWebConfigMultipartTask thread*/
+			pthread_mutex_lock (get_global_sync_mutex());
+			set_global_shutdown(true);
+			pthread_cond_signal(get_global_sync_condition());
+			pthread_mutex_unlock(get_global_sync_mutex());
+		}
 	}  
 #ifdef RDKB_BUILD
 	retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, paramRFCEnable, ccsp_string, buf);
