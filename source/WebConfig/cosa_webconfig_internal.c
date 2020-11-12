@@ -538,3 +538,22 @@ int registerWebcfgEvent(WebConfigEventCallback webcfgEventCB)
 	}
 	return 0;
 }
+
+int unregisterWebcfgEvent()
+{
+	int ret = 0;
+
+	ret = CcspBaseIf_UnRegister_Event(bus_handle, NULL, "webconfigSignal");
+	WebcfgInfo("unregisterWebcfgEvent ret is %d\n", ret);
+	if (ret != 100)
+	{
+		WebcfgError("CcspBaseIf_UnRegister_Event failed for webconfigSignal\n");
+	}
+	else
+	{
+		WebcfgInfo("Un Registration with CCSP Bus is success\n");
+		return 1;
+	}
+	return 0;
+} 
+
