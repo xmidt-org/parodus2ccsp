@@ -124,4 +124,32 @@ BOOL isValidUrl
 
 BOOL Get_RfcEnable();
 BOOL RFC_ENABLE;
+
+/***********************************************************************
+
+ APIs for Object:
+
+    X_RDK_WebConfig.SupplementaryServicesUrls.
+
+    *  Supplementary_Services_Urls_GetParamStringValue
+    *  Supplementary_Services_Urls_SetParamStringValue
+
+***********************************************************************/
+
+BOOL
+Supplementary_Services_Urls_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    );
+
+ULONG
+Supplementary_Services_Urls_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
 #endif

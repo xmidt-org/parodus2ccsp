@@ -27,12 +27,14 @@
 #include <webcfg.h>
 #include <webcfg_generic.h>
 
-#define WEBCONFIG_PARAM_RFC_ENABLE          "Device.X_RDK_WebConfig.RfcEnable"
-#define WEBCONFIG_PARAM_URL                 "Device.X_RDK_WebConfig.URL"
-#define WEBCONFIG_PARAM_FORCE_SYNC   	    "Device.X_RDK_WebConfig.ForceSync"
-#define WEBCONFIG_PARAM_DATA   	    	    "Device.X_RDK_WebConfig.Data"
-#define WEBCONFIG_PARAM_SUPPORTED_DOCS	    "Device.X_RDK_WebConfig.SupportedDocs"
-#define WEBCONFIG_PARAM_SUPPORTED_VERSION   "Device.X_RDK_WebConfig.SupportedSchemaVersion"
+#define WEBCONFIG_PARAM_RFC_ENABLE               "Device.X_RDK_WebConfig.RfcEnable"
+#define WEBCONFIG_PARAM_URL                      "Device.X_RDK_WebConfig.URL"
+#define WEBCONFIG_PARAM_FORCE_SYNC   	         "Device.X_RDK_WebConfig.ForceSync"
+#define WEBCONFIG_PARAM_DATA   	    	         "Device.X_RDK_WebConfig.Data"
+#define WEBCONFIG_PARAM_SUPPORTED_DOCS	         "Device.X_RDK_WebConfig.SupportedDocs"
+#define WEBCONFIG_PARAM_SUPPORTED_VERSION        "Device.X_RDK_WebConfig.SupportedSchemaVersion"
+#define WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICES   "Device.X_RDK_WebConfig.SupplementaryServicesUrls."
+#define WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY  "Device.X_RDK_WebConfig.SupplementaryServicesUrls.Telemetry"
 
 static char *paramRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable";
 
@@ -175,6 +177,100 @@ int Set_Webconfig_URL( char *pString)
         }
 
         WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
+        return 1;
+}
+
+char* extractSupplementaryDocname(char* name)
+{
+        int count = 3 ;
+        char * str = strdup(name);
+        char* token = strtok(str, ".");
+        while(count > 0)
+        {
+               token = strtok(NULL, ".");
+               count--;
+        }
+
+        WebcfgInfo("The token value is %s\n",token);
+        return token;
+}
+
+int Get_Supplementary_URL( char *name, char *pString)
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WebcfgDebug("-------- %s ----- Enter-- ---\n",__FUNCTION__);
+
+        if((pMyObject != NULL) &&  (strlen(pMyObject->Telemetry)>0) && (strncasecmp(name, "Telemetry",strlen(name)+1)) == 0)
+        {
+		WebcfgDebug("pMyObject->Telemetry %s\n", pMyObject->Telemetry);
+                WebcfgDebug("%s ----- updating pString ------\n",__FUNCTION__);
+
+		AnscCopyString( pString,pMyObject->Telemetry );
+		WebcfgDebug("pString %s\n",pString);
+        }
+        else
+        {
+		char *tempDBUrl = NULL;
+                int   retPsmGet    = CCSP_SUCCESS;
+		char *tempParam = (char *) malloc (sizeof(char)*MAX_BUFF_SIZE);
+
+                snprintf(tempParam, MAX_BUFF_SIZE, "%s%s", WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICES, name);
+                WebcfgInfo("tempParam is %s\n", tempParam);
+                retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, tempParam, NULL, &tempDBUrl);
+		WebcfgDebug("tempDBUrl is %s\n", tempDBUrl);
+                if (retPsmGet == CCSP_SUCCESS)
+                {
+			WebcfgDebug("retPsmGet success\n");
+			AnscCopyString( pString,tempDBUrl);
+                        WebcfgDebug("pString %s\n",pString);
+			free(tempParam);
+                }
+                else
+                {
+                        WebcfgError("psm_get failed ret %d for parameter %s%s\n", retPsmGet, WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICES, name);
+			free(tempParam);
+                        return 0;
+                }
+        }
+
+        WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
+        return 1;
+}
+
+int Set_Supplementary_URL( char *name, char *pString)
+{
+    PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
+    WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
+    int retPsmSet = CCSP_FAILURE;
+    char *tempParam = (char *) malloc (sizeof(char)*MAX_BUFF_SIZE);
+
+        if ((strncasecmp(name, "Telemetry",strlen(name)+1)) == 0)
+        {
+                memset( pMyObject->Telemetry, 0, sizeof( pMyObject->Telemetry ));
+                AnscCopyString( pMyObject->Telemetry, pString );
+                snprintf(tempParam, MAX_BUFF_SIZE, "%s%s", WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICES, name);
+		WebcfgInfo("tempParam is %s\n", tempParam);
+		retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, tempParam, ccsp_string, pString);
+        }
+        else
+        {
+                WebcfgError("Invalid supplementary doc name\n");
+                return 0;
+        }
+
+        if (retPsmSet != CCSP_SUCCESS)
+        {
+                WebcfgError("psm_set failed ret %d for parameter %s%s and value %s\n", retPsmSet, WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICES, name, pString);
+                free(tempParam);
+                return 0;
+        }
+        else
+        {
+                WebcfgDebug("psm_set success ret %d for parameter %s%s and value %s\n",retPsmSet, WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICES, name, pString);
+        }
+
+        WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
+	free(tempParam);
         return 1;
 }
 
@@ -366,6 +462,23 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                                   paramVal[k]->type = ccsp_string;
 				  k++;
                             }
+                            else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY) == 0) && (RFC_ENABLE == true))
+                            {
+				char valuestr[256] = {0};
+				Get_Supplementary_URL(extractSupplementaryDocname(WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY), valuestr);
+				paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, MAX_PARAMETERNAME_LEN);
+				if( strlen(valuestr) >0 )
+				{
+                                        paramVal[k]->parameterValue = strndup(valuestr,MAX_PARAMETERVALUE_LEN);
+				}
+				else
+				{
+					WebcfgDebug("Webpa get : Get_Supplementary_URL %s is null\n", valuestr);
+					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+				}
+				paramVal[k]->type = ccsp_string;
+				k++;
+                            }
                             else
                             {
                                 WAL_FREE(paramVal[k]);
@@ -377,7 +490,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             if(RFC_ENABLE)
                             {
 				WebcfgDebug("Updating localCount %d in wildcard GET case\n", localCount);
-                                localCount = localCount+5;
+                                localCount = localCount+6;
                             }
 				WebcfgDebug("Updated localCount %d\n", localCount);
                             paramVal = (parameterValStruct_t **) realloc(paramVal, sizeof(parameterValStruct_t *)*localCount);
@@ -474,6 +587,24 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				}
                                 paramVal[k]->type = ccsp_string;
 				k++;
+
+				WebcfgDebug("Webpa wildcard get for Telemetry URL\n");
+				paramVal[k] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+                                memset(paramVal[k], 0, sizeof(parameterValStruct_t));
+                                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, MAX_PARAMETERNAME_LEN);
+				char telemetry_url[256] = {0};
+				Get_Supplementary_URL(extractSupplementaryDocname(WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY), telemetry_url);
+				if( (telemetry_url[0] !='\0') && strlen(telemetry_url)>0 )
+				{
+					WebcfgDebug("webcfg_url fetched %s\n", telemetry_url);
+					paramVal[k]->parameterValue = strndup(telemetry_url,MAX_PARAMETERVALUE_LEN);
+				}
+				else
+				{
+					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+				}
+                                paramVal[k]->type = ccsp_string;
+                                k++;
                             }
                         }
             }
@@ -567,7 +698,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				if(isValidUrl(val[i].parameterValue) == TRUE)
 				{
 					ret = Set_Webconfig_URL(val[i].parameterValue);
-					WebcfgDebug("After Set_Webconfig_UR ret %d\n", ret);
+					WebcfgDebug("After Set_Webconfig_URL ret %d\n", ret);
 					if(ret != 1)
 					{
 						WebcfgError("Set_Webconfig_URL failed\n");
@@ -597,6 +728,25 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				WebcfgError("%s is not writable\n",val[i].parameterName);
 				*faultParam = strdup(val[i].parameterName);
 				return CCSP_ERR_NOT_WRITABLE;
+			}
+			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY) == 0) && (RFC_ENABLE == true))
+			{
+				WebcfgDebug("Processing Telemetry URL param %s\n", val[i].parameterValue);
+				if(isValidUrl(val[i].parameterValue) == TRUE)
+				{
+					ret = Set_Supplementary_URL(extractSupplementaryDocname(WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY), val[i].parameterValue);
+					WebcfgDebug("After Set_Webconfig_URL ret %d\n", ret);
+					if(ret != 1)
+					{
+						WebcfgError("Set_Supplementry_URL failed\n");
+						return CCSP_FAILURE;
+					}
+				}
+				else
+				{
+					WebcfgError("Telemetry URL validation failed\n");
+					return CCSP_ERR_INVALID_PARAMETER_VALUE;
+				}
 			}
 			else if(!RFC_ENABLE)
 			{

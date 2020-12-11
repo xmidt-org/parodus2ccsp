@@ -79,8 +79,11 @@ int setRfcEnable(BOOL bValue);
 BOOL CosaDmlGetRFCEnableFromDB(BOOL *pbValue);
 int Get_Webconfig_URL( char *pString);
 int Set_Webconfig_URL( char *pString);
+int Get_Supplementary_URL( char *name, char *pString);
+int Set_Supplementary_URL( char *name, char *pString);
 int getForceSync(char** pString, char **transactionId );
 int setForceSync(char* pString, char *transactionId,int *pStatus);
+char* extractSupplementaryDocname(char* name);
 
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 

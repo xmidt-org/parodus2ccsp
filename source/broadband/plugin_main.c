@@ -65,6 +65,8 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamBoolValue",  X_RDK_WebConfig_SetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamStringValue",  X_RDK_WebConfig_SetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamStringValue",  X_RDK_WebConfig_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Supplementary_Services_Urls_SetParamStringValue",  Supplementary_Services_Urls_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Supplementary_Services_Urls_GetParamStringValue",  Supplementary_Services_Urls_GetParamStringValue);
 #endif
     /* Create backend framework */
     g_pCosaBEManager = (PCOSA_BACKEND_MANAGER_OBJECT)CosaBackEndManagerCreate();
