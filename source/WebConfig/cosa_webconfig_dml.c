@@ -292,7 +292,8 @@ Supplementary_Services_Urls_SetParamStringValue
 
 	if( AnscEqualString(ParamName, "Telemetry", TRUE))
         {
-		if(isValidUrl(strValue) == TRUE)
+		WebcfgInfo("strValue is%s\n-url", strValue);
+		if(isValidUrl(strValue) == TRUE || strcmp(strValue,"") == 0)
 		{
 
 			if(Set_Supplementary_URL(ParamName, strValue))
