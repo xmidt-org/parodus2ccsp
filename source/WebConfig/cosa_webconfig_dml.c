@@ -267,15 +267,15 @@ BOOL isValidUrl
 
  APIs for Object:
 
-    X_RDK_WebConfig.SupplementaryServicesUrls.
+    X_RDK_WebConfig.SupplementaryServiceUrls.
 
-    *  Supplementary_Services_Urls_GetParamStringValue
-    *  Supplementary_Services_Urls_SetParamStringValue
+    *  Supplementary_Service_Urls_GetParamStringValue
+    *  Supplementary_Service_Urls_SetParamStringValue
 
 ***********************************************************************/
 
 BOOL
-Supplementary_Services_Urls_SetParamStringValue
+Supplementary_Service_Urls_SetParamStringValue
     (
         ANSC_HANDLE                 hInsContext,
         char*                       ParamName,
@@ -317,7 +317,7 @@ Supplementary_Services_Urls_SetParamStringValue
 }
 
 ULONG
-Supplementary_Services_Urls_GetParamStringValue
+Supplementary_Service_Urls_GetParamStringValue
     (
         ANSC_HANDLE                 hInsContext,
         char*                       ParamName,
