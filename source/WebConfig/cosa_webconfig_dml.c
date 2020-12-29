@@ -92,6 +92,16 @@ X_RDK_WebConfig_SetParamStringValue
 	}
 	if( AnscEqualString(ParamName, "ForceSync", TRUE))
 	{
+		if(AnscEqualString(strValue, "telemetry", TRUE))
+        	{
+			char telemetryUrl[256] = {0};
+			Get_Supplementary_URL("Telemetry", telemetryUrl);
+			if(telemetryUrl[0] =='\0')
+			{
+				WebcfgError("%s Telemetry url is null so, %s SET failed\n",__FUNCTION__,ParamName);
+				return FALSE;
+			}		
+		}	
 		/* save update to backup */
 		if(setForceSync(strValue, "", 0) == 1)
 		{
