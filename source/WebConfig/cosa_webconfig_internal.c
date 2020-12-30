@@ -185,7 +185,7 @@ int Get_Supplementary_URL( char *name, char *pString)
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     WebcfgDebug("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
-        if((pMyObject != NULL) &&  (strlen(pMyObject->Telemetry)>0) && (strncasecmp(name, "Telemetry",strlen(name)+1)) == 0)
+        if((pMyObject != NULL) &&  (strlen(pMyObject->Telemetry)>0) && (strncmp(name, "Telemetry",strlen(name)+1)) == 0)
         {
 		WebcfgDebug("pMyObject->Telemetry %s\n", pMyObject->Telemetry);
                 WebcfgDebug("%s ----- updating pString ------\n",__FUNCTION__);
@@ -659,6 +659,16 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				WebcfgDebug("Processing Force Sync param\n");
 				if((val[i].parameterValue !=NULL) && (strlen(val[i].parameterValue)>0))
 				{
+					if(strcmp(val[i].parameterValue, "telemetry") == 0)
+					{
+						char telemetryUrl[256] = {0};
+						Get_Supplementary_URL("Telemetry", telemetryUrl);
+						if(telemetryUrl[0] =='\0')
+						{
+							WebcfgError("Force Sync param failed due to telemtry url is null\n");
+							return CCSP_CR_ERR_UNSUPPORTED_NAMESPACE;
+						}
+					}
 					ret = setForceSync(val[i].parameterValue, transactionId, &session_status);
 					WebcfgDebug("After setForceSync ret %d\n", ret);
 				}
