@@ -24,7 +24,9 @@
 #define MODEL_NAME		     "Device.DeviceInfo.ModelName"
 #define PRODUCT_CLASS		     "Device.DeviceInfo.ProductClass"
 #define CONN_CLIENT_PARAM	     "Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client"
-#define LAST_REBOOT_REASON            "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason"
+#define LAST_REBOOT_REASON           "Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason"
+#define PARTNER_ID                   "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.PartnerId"
+#define ACCOUNT_ID                   "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -84,4 +86,18 @@ char * getRebootReason()
 	char *reboot_reason = NULL;
 	reboot_reason = getParameterValue(LAST_REBOOT_REASON);
 	return reboot_reason;
+}
+
+char * getPartnerID()
+{
+	char *partnerId = NULL;
+	partnerId = getParameterValue(PARTNER_ID);
+	return partnerId;
+}
+
+char * getAccountID()
+{
+	char *accountId = NULL;
+	accountId = getParameterValue(ACCOUNT_ID);
+	return accountId;
 }
