@@ -41,6 +41,7 @@ static char *paramRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 extern ANSC_HANDLE bus_handle;
 extern char        g_Subsystem[32];
+static int supplementary_flag = 0;
 
 BOOL Get_RfcEnable()
 {
@@ -259,6 +260,15 @@ int Set_Supplementary_URL( char *name, char *pString)
         return 1;
 }
 
+int get_supplementary_flag()
+{
+	return supplementary_flag;
+}
+
+void set_supplementary_flag(int flag)
+{
+	supplementary_flag = flag;
+}
 
 int setForceSync(char* pString, char *transactionId,int *pStatus)
 {
@@ -663,7 +673,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 					{
 						char telemetryUrl[256] = {0};
 						Get_Supplementary_URL("Telemetry", telemetryUrl);
-						if(telemetryUrl[0] =='\0')
+						if(strncmp(telemetryUrl,"NULL",strlen("NULL")) == 0)
 						{
 							WebcfgError("Force Sync param failed due to telemtry url is null\n");
 							return CCSP_CR_ERR_UNSUPPORTED_NAMESPACE;
@@ -727,8 +737,10 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 			else if((strcmp(val[i].parameterName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY) == 0) && (RFC_ENABLE == true))
 			{
 				WebcfgDebug("Processing Telemetry URL param %s\n", val[i].parameterValue);
-				if(isValidUrl(val[i].parameterValue) == TRUE)
+				set_supplementary_flag(1);
+				if(isValidUrl(val[i].parameterValue) == TRUE || strncmp(val[i].parameterValue,"NULL",strlen("NULL")) == 0)
 				{
+					set_supplementary_flag(0);
 					ret = Set_Supplementary_URL("Telemetry", val[i].parameterValue);
 					WebcfgDebug("After Set_Webconfig_URL ret %d\n", ret);
 					if(ret != 1)

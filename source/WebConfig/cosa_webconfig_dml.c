@@ -96,7 +96,7 @@ X_RDK_WebConfig_SetParamStringValue
         	{
 			char telemetryUrl[256] = {0};
 			Get_Supplementary_URL("Telemetry", telemetryUrl);
-			if(telemetryUrl[0] =='\0')
+			if(strncmp(telemetryUrl,"NULL",strlen("NULL")) == 0)
 			{
 				WebcfgError("%s Telemetry url is null so, %s SET failed\n",__FUNCTION__,ParamName);
 				return FALSE;
@@ -267,6 +267,10 @@ BOOL isValidUrl
 	WebcfgDebug("Validate URL %s\n", pUrl);
 	if(strstr(pUrl, "https") == NULL)
 	{
+		if(1 == get_supplementary_flag() && strncmp(pUrl,"NULL", strlen("NULL")) == 0)
+		{
+			return TRUE;
+		}
 		WebcfgError("Invalid URL, HTTPS is only allowed\n");
 		return FALSE;
 	}
@@ -302,10 +306,12 @@ Supplementary_Service_Urls_SetParamStringValue
 
 	if( AnscEqualString(ParamName, "Telemetry", TRUE))
         {
-		WebcfgInfo("strValue is%s\n-url", strValue);
-		if(isValidUrl(strValue) == TRUE || strcmp(strValue,"") == 0)
+		WebcfgInfo("strValue is%s-url\n", strValue);
+		set_supplementary_flag(1);
+		if(isValidUrl(strValue) == TRUE || strncmp(strValue,"NULL",strlen("NULL")) == 0)
 		{
 
+			set_supplementary_flag(0);
 			if(Set_Supplementary_URL(ParamName, strValue))
 			{
 				return TRUE;
