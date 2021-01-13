@@ -306,7 +306,7 @@ Supplementary_Service_Urls_SetParamStringValue
 
 	if( AnscEqualString(ParamName, "Telemetry", TRUE))
         {
-		WebcfgInfo("strValue is%s-url\n", strValue);
+		WebcfgDebug("strValue is%s-url\n", strValue);
 		set_supplementary_flag(1);
 		if(isValidUrl(strValue) == TRUE || strncmp(strValue,"NULL",strlen("NULL")) == 0)
 		{
@@ -351,7 +351,6 @@ Supplementary_Service_Urls_GetParamStringValue
 
 	if( AnscEqualString(ParamName, "Telemetry", TRUE))
         {
-		WebcfgInfo("Inside getvalues\n");
                 if(Get_Supplementary_URL(ParamName, pValue))
                 {
 			WebcfgInfo("URL fetched : pValue %s\n", pValue);

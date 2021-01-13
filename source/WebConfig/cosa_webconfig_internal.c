@@ -201,7 +201,7 @@ int Get_Supplementary_URL( char *name, char *pString)
 		char *tempParam = (char *) malloc (sizeof(char)*MAX_BUFF_SIZE);
 
                 snprintf(tempParam, MAX_BUFF_SIZE, "%s%s", WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICE, name);
-                WebcfgInfo("tempParam is %s\n", tempParam);
+                WebcfgDebug("tempParam is %s\n", tempParam);
                 retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, tempParam, NULL, &tempDBUrl);
 		WebcfgDebug("tempDBUrl is %s\n", tempDBUrl);
                 if (retPsmGet == CCSP_SUCCESS)
@@ -235,7 +235,7 @@ int Set_Supplementary_URL( char *name, char *pString)
                 memset( pMyObject->Telemetry, 0, sizeof( pMyObject->Telemetry ));
                 AnscCopyString( pMyObject->Telemetry, pString );
                 snprintf(tempParam, MAX_BUFF_SIZE, "%s%s", WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICE, name);
-		WebcfgInfo("tempParam is %s\n", tempParam);
+		WebcfgDebug("tempParam is %s\n", tempParam);
 		retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, tempParam, ccsp_string, pString);
         }
         else
