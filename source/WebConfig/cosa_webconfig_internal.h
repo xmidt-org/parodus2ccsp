@@ -85,7 +85,6 @@ int get_supplementary_flag();
 void set_supplementary_flag(int flag);
 int getForceSync(char** pString, char **transactionId );
 int setForceSync(char* pString, char *transactionId,int *pStatus);
-char* extractSupplementaryDocname(char* name);
 
 int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 
