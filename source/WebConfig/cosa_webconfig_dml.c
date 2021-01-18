@@ -296,7 +296,7 @@ Supplementary_Service_Urls_SetParamStringValue
         char*                       strValue
     )
 {
-	WebcfgDebug(" %s : ENTER \n", __FUNCTION__ );
+	WebcfgDebug("------- %s ----- ENTER ----\n", __FUNCTION__ );
 	RFC_ENABLE=Get_RfcEnable();
 	if(!RFC_ENABLE)
 	{
@@ -341,7 +341,7 @@ Supplementary_Service_Urls_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-	WebcfgInfo("------- %s ----- ENTER ----\n",__FUNCTION__);
+	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
 	RFC_ENABLE=Get_RfcEnable();
 	if(!RFC_ENABLE)
 	{
