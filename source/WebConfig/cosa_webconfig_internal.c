@@ -186,7 +186,7 @@ int Get_Supplementary_URL( char *name, char *pString)
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     WebcfgDebug("-------- %s ----- Enter-- ---\n",__FUNCTION__);
 
-        if((pMyObject != NULL) &&  (strlen(pMyObject->Telemetry)>0) && (strncmp(name, "Telemetry",strlen(name)+1)) == 0)
+        if((pMyObject != NULL) &&  (strlen(pMyObject->Telemetry)>0) && ((name != NULL) && strncmp(name, "Telemetry",strlen(name)+1)) == 0)
         {
 		WebcfgDebug("pMyObject->Telemetry %s\n", pMyObject->Telemetry);
                 WebcfgDebug("%s ----- updating pString ------\n",__FUNCTION__);
@@ -227,11 +227,11 @@ int Set_Supplementary_URL( char *name, char *pString)
 {
     PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
     WebcfgDebug("-------- %s ----- Enter ------\n",__FUNCTION__);
-    int retPsmSet = CCSP_FAILURE;
-    char *tempParam = (char *) malloc (sizeof(char)*MAX_BUFF_SIZE);
+    int retPsmSet = CCSP_FAILURE;  
+    char *tempParam = (char *) malloc (sizeof(char)*MAX_BUFF_SIZE);	      
 
-        if ((strncasecmp(name, "Telemetry",strlen(name)+1)) == 0)
-        {
+        if ((name != NULL) && (strncmp(name, "Telemetry",strlen(name)+1)) == 0)
+        {		
                 memset( pMyObject->Telemetry, 0, sizeof( pMyObject->Telemetry ));
                 AnscCopyString( pMyObject->Telemetry, pString );
                 snprintf(tempParam, MAX_BUFF_SIZE, "%s%s", WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICE, name);
@@ -241,13 +241,18 @@ int Set_Supplementary_URL( char *name, char *pString)
         else
         {
                 WebcfgError("Invalid supplementary doc name\n");
+		if(tempParam != NULL){
+			free(tempParam);
+		}
                 return 0;
         }
 
         if (retPsmSet != CCSP_SUCCESS)
         {
                 WebcfgError("psm_set failed ret %d for parameter %s%s and value %s\n", retPsmSet, WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICE, name, pString);
-                free(tempParam);
+                if(tempParam != NULL){
+			free(tempParam);
+		}
                 return 0;
         }
         else
@@ -256,8 +261,10 @@ int Set_Supplementary_URL( char *name, char *pString)
         }
 
         WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
-	free(tempParam);
-        return 1;
+	if(tempParam != NULL){
+		free(tempParam);
+	}
+	return 1;
 }
 
 int get_supplementary_flag()

@@ -308,7 +308,7 @@ Supplementary_Service_Urls_SetParamStringValue
         {
 		WebcfgDebug("strValue is%s-url\n", strValue);
 		set_supplementary_flag(1);
-		if(isValidUrl(strValue) == TRUE || strncmp(strValue,"NULL",strlen("NULL")) == 0)
+		if(isValidUrl(strValue) == TRUE )
 		{
 
 			set_supplementary_flag(0);
