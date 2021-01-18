@@ -14,6 +14,10 @@
 #include <webcfg_generic.h>
 #endif
 
+#ifdef RDKB_BUILD
+#include "print_uptime.h"
+#endif
+
 #define CONTENT_TYPE_JSON       "application/json"
 #define DEVICE_PROPS_FILE   "/etc/device.properties"
 #define MAX_PARALLEL_THREADS    1
@@ -80,7 +84,7 @@ static void connect_parodus()
 #ifdef RDKB_BUILD
 	                    if (access("/tmp/webpa_start", F_OK) == -1 && errno == ENOENT)
 	                    {
-	                            system("print_uptime \"boot_to_WEBPA_READY_uptime\" \"/rdklogs/logs/WEBPAlog.txt.0\"");
+	                            print_uptime("boot_to_WEBPA_READY_uptime", NULL);
 
 	                            if((fd = creat("/tmp/webpa_start", S_IRUSR | S_IWUSR)) == -1)
 	                            {
