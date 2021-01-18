@@ -46,6 +46,7 @@
     char                        URL[256];                                    \
     char 		    ForceSync[256];					\
     char 		    ForceSyncTransID[256];					\
+    char                        Telemetry[256];						\
 	ANSC_HANDLE                     hIrepFolderWebConfig;                                         \
     ANSC_HANDLE                     hIrepFolderWebConfigMapCont;                                       \
 

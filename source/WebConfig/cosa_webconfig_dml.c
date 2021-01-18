@@ -92,6 +92,16 @@ X_RDK_WebConfig_SetParamStringValue
 	}
 	if( AnscEqualString(ParamName, "ForceSync", TRUE))
 	{
+		if(AnscEqualString(strValue, "telemetry", TRUE))
+        	{
+			char telemetryUrl[256] = {0};
+			Get_Supplementary_URL("Telemetry", telemetryUrl);
+			if(strncmp(telemetryUrl,"NULL",strlen("NULL")) == 0)
+			{
+				WebcfgError("%s Telemetry url is null so, %s SET failed\n",__FUNCTION__,ParamName);
+				return FALSE;
+			}		
+		}	
 		/* save update to backup */
 		if(setForceSync(strValue, "", 0) == 1)
 		{
@@ -122,7 +132,7 @@ X_RDK_WebConfig_SetParamStringValue
 		}
         }
 		if( AnscEqualString(ParamName, "Data", TRUE))
-	    {
+	        {
 			WebcfgDebug("Data set is Not supported\n");
             return TRUE;
 		}
@@ -136,6 +146,7 @@ X_RDK_WebConfig_SetParamStringValue
 			WebcfgDebug("SupportedSchemaVersion set is Not supported\n");
                         return TRUE;
                 }
+
 	WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
 
 	return FALSE;
@@ -256,9 +267,100 @@ BOOL isValidUrl
 	WebcfgDebug("Validate URL %s\n", pUrl);
 	if(strstr(pUrl, "https") == NULL)
 	{
+		if(1 == get_supplementary_flag() && strncmp(pUrl,"NULL", strlen("NULL")) == 0)
+		{
+			return TRUE;
+		}
 		WebcfgError("Invalid URL, HTTPS is only allowed\n");
 		return FALSE;
 	}
 	return TRUE;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    X_RDK_WebConfig.SupplementaryServiceUrls.
+
+    *  Supplementary_Service_Urls_GetParamStringValue
+    *  Supplementary_Service_Urls_SetParamStringValue
+
+***********************************************************************/
+
+BOOL
+Supplementary_Service_Urls_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    )
+{
+	WebcfgDebug("------- %s ----- ENTER ----\n", __FUNCTION__ );
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebcfgError("%s RfcEnable is disabled so, %s SET failed\n",__FUNCTION__,ParamName);
+		return FALSE;
+	}
+
+	if( AnscEqualString(ParamName, "Telemetry", TRUE))
+        {
+		WebcfgDebug("strValue is%s-url\n", strValue);
+		set_supplementary_flag(1);
+		if(isValidUrl(strValue) == TRUE )
+		{
+
+			set_supplementary_flag(0);
+			if(Set_Supplementary_URL(ParamName, strValue))
+			{
+				return TRUE;
+			}
+			else
+			{
+				WebcfgError("Set_Supplementary_URL failed\n");
+			}
+		}
+		else
+		{
+			WebcfgError("Supplementary URL validation failed\n");
+		}
+        }
+
+	WebcfgDebug(" %s : EXIT \n", __FUNCTION__ );
+
+	return FALSE;
+}
+
+ULONG
+Supplementary_Service_Urls_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+	WebcfgDebug("------- %s ----- ENTER ----\n",__FUNCTION__);
+	RFC_ENABLE=Get_RfcEnable();
+	if(!RFC_ENABLE)
+	{
+		WebcfgError("------- %s ----- RfcEnable is disabled so, %s Get from DB failed\n",__FUNCTION__,ParamName);
+		return 0;
+	}
+
+	if( AnscEqualString(ParamName, "Telemetry", TRUE))
+        {
+                if(Get_Supplementary_URL(ParamName, pValue))
+                {
+			WebcfgInfo("URL fetched : pValue %s\n", pValue);
+			return 0;
+                }
+        }
+
+	WebcfgDebug("------- %s ----- EXIT ----\n",__FUNCTION__);
+	WebcfgError("Unsupported parameter '%s'\n", ParamName);
+	return -1;
+
 }
 
