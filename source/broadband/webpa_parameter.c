@@ -829,8 +829,10 @@ static void *applyWiFiSettingsTask()
 	
     pthread_detach(pthread_self());
         
-	parameterValStruct_t val_set[2] = { 
+	parameterValStruct_t val_set[4] = { 
+					{"Device.WiFi.Radio.1.X_CISCO_COM_ApplySettingSSID","1", ccsp_int},
 					{"Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting", "true", ccsp_boolean},
+					{"Device.WiFi.Radio.2.X_CISCO_COM_ApplySettingSSID","2", ccsp_int},
 					{"Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting", "true", ccsp_boolean} };
 	
 	//Identify the radio and apply settings
@@ -848,20 +850,20 @@ static void *applyWiFiSettingsTask()
 			{
 				WalPrint("Need to restart both the Radios\n");
 				RadApplyParam = val_set;
-				nreq = 2;
+				nreq = 4;
 			}
 
 			else if(bRestartRadio1) 
 			{
 				WalPrint("Need to restart Radio 1\n");
 				RadApplyParam = val_set;
-				nreq = 1;
+				nreq = 2;
 			}
 			else if(bRestartRadio2) 
 			{
 				WalPrint("Need to restart Radio 2\n");
-				RadApplyParam = &val_set[1];
-				nreq = 1;
+				RadApplyParam = &val_set[2];
+				nreq = 2;
 			}
 		
 			// Reset radio flags
