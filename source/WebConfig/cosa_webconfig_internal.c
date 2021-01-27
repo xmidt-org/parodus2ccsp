@@ -298,26 +298,36 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             {
 				char valuestr[256] = {0};
 				Get_Webconfig_URL(valuestr);
-				if( (valuestr != NULL) && strlen(valuestr) >0 )
+				paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
+				if( strlen(valuestr) >0 )
 				{
-		                        paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_URL, MAX_PARAMETERNAME_LEN);
 					paramVal[k]->parameterValue = strndup(valuestr,MAX_PARAMETERVALUE_LEN);
-		                        paramVal[k]->type = ccsp_string;
-		                        k++;
 				}
+				else
+				{
+					WebcfgDebug("Webpa get : Get_Webconfig_URL %s is null\n", valuestr);
+					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+				}
+				paramVal[k]->type = ccsp_string;
+				k++;
                             }
-				 else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))	
+				 else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_DATA) == 0) && (RFC_ENABLE == true))
 				{
 					WebcfgDebug("B4 Get_Webconfig_Data\n");
 					char* b64buffer =  get_DB_BLOB_base64();
-			  		if( (b64buffer != NULL) && strlen(b64buffer) >0 )
+					paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
+					if( (b64buffer != NULL) && strlen(b64buffer) >0 )
 					{
 						WebcfgDebug("Webpa get : Datafetched %s\n", b64buffer);
-				                paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_DATA, MAX_PARAMETERNAME_LEN);
-						paramVal[k]->parameterValue = strdup(b64buffer);
-				                paramVal[k]->type = ccsp_string;
-				                k++;
+				                paramVal[k]->parameterValue = strdup(b64buffer);
 	     				}
+					else
+					{
+						WebcfgDebug("Webpa get : B4 Get_Webconfig_Data %s is empty\n", b64buffer);
+						paramVal[k]->parameterValue = strdup("");
+					}
+					paramVal[k]->type = ccsp_string;
+					k++;
 			      }
                             else
                             {
@@ -386,9 +396,13 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
 				{
 					WebcfgDebug("Webpa get : Datafetched %s\n", b64buffer);
 					paramVal[k]->parameterValue = strdup(b64buffer);
-					paramVal[k]->type = ccsp_string;
-		                        k++;
-     				}
+				}
+				else
+				{
+					paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
+				}
+				paramVal[k]->type = ccsp_string;
+				k++;
                             }
                         }
             }
