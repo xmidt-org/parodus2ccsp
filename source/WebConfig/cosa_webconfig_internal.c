@@ -389,7 +389,7 @@ int getWebConfigParameterValues(char **parameterNames, int paramCount, int *val_
                             }
 			    else if((strcmp(parameterNames[i], WEBCONFIG_PARAM_FORCE_SYNC) == 0) && (RFC_ENABLE == true))
                             {
-				WebcfgError("Force Sync GET is not supported\n");
+				WebcfgDebug("Force Sync GET is not supported\n");
                                 paramVal[k]->parameterName = strndup(WEBCONFIG_PARAM_FORCE_SYNC, MAX_PARAMETERNAME_LEN);
 				paramVal[k]->parameterValue = strndup("",MAX_PARAMETERVALUE_LEN);
                                 paramVal[k]->type = ccsp_string;
