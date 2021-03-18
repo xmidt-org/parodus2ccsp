@@ -411,7 +411,7 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
         }
 	WalPrint("index : %d\n",index);
 	// Cannot identify the component from cache, make DBUS call to fetch component
-	if(index == -1 || ComponentValArray[index].comp_size > 2 || SubComponentValArray[index].comp_size > 2) //anything above size > 2
+	if(index == -1 || ComponentValArray[index].comp_size > 2 || SubComponentValArray[index].comp_size >= 2) //comp size anything > 2 and sub comp size >1 . TCCBR-5475 allows dbus calls when sub comp size>1.
 	{
 		WalPrint("in if for size >2\n");
 		// GET Component for parameter from stack
@@ -419,7 +419,7 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 		{
 		        WalPrint("ComponentValArray[index].comp_size : %d\n",ComponentValArray[index].comp_size);
 		}
-		else if(index > 0 && SubComponentValArray[index].comp_size > 2)
+		else if(index > 0 && SubComponentValArray[index].comp_size >= 2)
 		{
 		        WalPrint("SubComponentValArray[index].comp_size : %d\n",SubComponentValArray[index].comp_size);
 		}
