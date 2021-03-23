@@ -171,7 +171,7 @@ X_RDK_WebConfig_GetParamStringValue
 	/* check the parameter name and return the corresponding value */
 	if( AnscEqualString(ParamName, "ForceSync", TRUE))
 	{
-		WebcfgInfo("ForceSync Get Not supported\n");
+		WebcfgDebug("ForceSync Get Not supported\n");
 		return 0;
 	}
         if( AnscEqualString(ParamName, "URL", TRUE))
