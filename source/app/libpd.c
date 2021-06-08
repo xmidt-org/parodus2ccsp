@@ -16,6 +16,7 @@
 
 #ifdef RDKB_BUILD
 #include "print_uptime.h"
+#include <sys/sysinfo.h>
 #endif
 
 #define CONTENT_TYPE_JSON       "application/json"
@@ -84,7 +85,11 @@ static void connect_parodus()
 #ifdef RDKB_BUILD
 	                    if (access("/tmp/webpa_start", F_OK) == -1 && errno == ENOENT)
 	                    {
-	                            print_uptime("boot_to_WEBPA_READY_uptime", NULL);
+				    struct sysinfo l_sSysInfo;
+				    sysinfo(&l_sSysInfo);
+				    char uptime[16] = {0};
+				    snprintf(uptime, sizeof(uptime), "%ld", l_sSysInfo.uptime);
+	                            print_uptime("boot_to_WEBPA_READY_uptime", NULL, uptime);
 
 	                            if((fd = creat("/tmp/webpa_start", S_IRUSR | S_IWUSR)) == -1)
 	                            {
