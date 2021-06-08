@@ -14,6 +14,7 @@
 
 cmake_minimum_required(VERSION 2.8.7)
 
+#project(parodus2ccsp VERSION 1.0.3)
 project(parodus2ccsp)
 include(ExternalProject)
 
