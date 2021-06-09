@@ -65,7 +65,14 @@ int setRfcEnable(BOOL bValue)
 			set_global_shutdown(false);
 			pthread_mutex_unlock(get_global_sync_mutex());
 			WebcfgInfo("RfcEnable dynamic change from false to true. start initWebConfigMultipartTask.\n");
-			initWebConfigMultipartTask((unsigned long)get_global_operationalStatus());
+			if(get_global_mpThreadId() == NULL)
+			{
+				initWebConfigMultipartTask((unsigned long)get_global_operationalStatus());
+			}
+			else
+	    		{
+				WebcfgInfo("Webconfig is already started, so not starting again for dynamic rfc change.\n");
+	    		}
 		}
 	}
 	else
