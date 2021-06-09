@@ -43,7 +43,7 @@
 /*----------------------------------------------------------------------------*/
 extern char deviceMAC[32];
 extern wakeUpFlag;
-int numLoops = 1;
+extern int numLoops;
 extern pthread_mutex_t cloud_mut;
 extern pthread_cond_t cloud_con;
 extern cloud_status;
@@ -736,6 +736,8 @@ int main(void)
 	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
     };
+
+    numLoops = 1;
 
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

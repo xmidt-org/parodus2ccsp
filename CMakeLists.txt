@@ -257,6 +257,7 @@ ExternalProject_Add(CcspCommonLibrary
     PREFIX ${PREFIX_DIR}/CcspCommonLibrary
     GIT_REPOSITORY https://github.com/rdkcmf/rdkb-CcspCommonLibrary.git
     GIT_TAG "a3117b5c45532a24507557886910cdaa9d0c411c"
+    PATCH_COMMAND patch -p1 < ${PATCHES_DIR}/ccsp.patch
     CONFIGURE_COMMAND COMMAND <SOURCE_DIR>/autogen.sh --quiet CPPFLAGS=${CCSP_HEADERS}
                                                       --prefix=${INSTALL_DIR}
                                                       --includedir=${INCLUDE_DIR}
@@ -272,25 +273,25 @@ ExternalProject_Add(CcspCommonLibrary
 ExternalProject_Add_Step(
   CcspCommonLibrary CopyHeaders
   COMMAND ${CMAKE_COMMAND} -E make_directory ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/debug_api/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/ansc/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/asn.1/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/http/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/stun/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/tls/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/web/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/cosa/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/cosa/package/slap/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/cosa/package/system/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/custom ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/components/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/components/common/MessageBusHelper/include ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/util_api/slap/components/SlapVarConverter/slap_vco_global.h ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_exported_api.h ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_global.h ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_interface.h ${INCLUDE_DIR}/ccsp
-  COMMAND sudo ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_internal_api.h ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/debug_api/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/ansc/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/asn.1/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/http/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/stun/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/tls/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/util_api/web/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/cosa/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/cosa/package/slap/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/cosa/package/system/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/custom ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/components/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/source/ccsp/components/common/MessageBusHelper/include ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/util_api/slap/components/SlapVarConverter/slap_vco_global.h ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_exported_api.h ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_global.h ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_interface.h ${INCLUDE_DIR}/ccsp
+  COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/source/ccsp/components/common/PoamIrepFolder/poam_irepfo_internal_api.h ${INCLUDE_DIR}/ccsp
   DEPENDEES install
 )
 
