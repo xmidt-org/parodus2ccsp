@@ -267,8 +267,15 @@ static void *WALInit(void *status)
 #endif
 	if(RfcEnable[0] != '\0' && strncmp(RfcEnable, "true", strlen("true")) == 0)
 	{
-	    WebcfgInfo("WebConfig Rfc is enabled, starting WebConfigMultipartTask\n");
-	    initWebConfigMultipartTask((unsigned long) status);
+	    if(get_global_mpThreadId() == NULL) 
+	    {
+	    	WebcfgInfo("WebConfig Rfc is enabled, starting WebConfigMultipartTask\n");
+	    	initWebConfigMultipartTask((unsigned long) status);
+ 	    }
+	    else
+	    {
+		WebcfgInfo("Webconfig is already started, so not starting after systemready\n");
+	    }
 	}
 	else
 	{
