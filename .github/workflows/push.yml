@@ -55,7 +55,7 @@ jobs:
       - name: Test
         working-directory: build
         run: |
-          ARGS=-VV build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make test
+          ARGS=-VV make test
 
       - name: Merge GCOV Reports for Sonarcloud
         working-directory: build
