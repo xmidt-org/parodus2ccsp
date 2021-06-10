@@ -42,14 +42,14 @@ int numLoops;
 void getCompDetails()
 {
     int i=0;
-    int compSizeList[] = {1,1,1,2,1,1};
-    char *compNameList[] = {RDKB_WIFI_FULL_COMPONENT_NAME,"eRT.com.cisco.spvtg.ccsp.webpaagent","com.ccsp.webpa","com.ccsp.pam","com.ccsp.nat","com.ccsp.lmlite"};
-    char *dbusPathList[] = {RDKB_WIFI_DBUS_PATH,"/com/ccsp/webpa","/com/ccsp/pam","/com/ccsp/nat","/com/ccsp/lmlite"};
-    char *objList[]={"Device.WiFi.","Device.WebpaAgent.","Device.Webpa.","Device.DeviceInfo.","Device.NAT.","Device.Hosts."};
-    int subCompSizeList[] = {1,1};
-    char *subCompNameList[] = {"com.ccsp.webpa","com.ccsp.nat"};
-    char *subDbusPathList[] = {"/com/ccsp/webpa","/com/ccsp/nat"};
-    char *subObjList[]={"Device.DeviceInfo.Webpa.","Device.NAT.PortMapping."};
+    int compSizeList[6] = {1,1,1,2,1,1};
+    char *compNameList[6] = {RDKB_WIFI_FULL_COMPONENT_NAME,"eRT.com.cisco.spvtg.ccsp.webpaagent","com.ccsp.webpa","com.ccsp.pam","com.ccsp.nat","com.ccsp.lmlite"};
+    char *dbusPathList[6] = {RDKB_WIFI_DBUS_PATH,"/com/ccsp/webpa","/com/ccsp/pam","/com/ccsp/nat","/com/ccsp/lmlite","/com/ccsp/lmlite"};
+    char *objList[6]={"Device.WiFi.","Device.WebpaAgent.","Device.Webpa.","Device.DeviceInfo.","Device.NAT.","Device.Hosts."};
+    int subCompSizeList[2] = {1,1};
+    char *subCompNameList[2] = {"com.ccsp.webpa","com.ccsp.nat"};
+    char *subDbusPathList[2] = {"/com/ccsp/webpa","/com/ccsp/nat"};
+    char *subObjList[2]={"Device.DeviceInfo.Webpa.","Device.NAT.PortMapping."};
 
     cachingStatus = 1;
     compCacheSuccessCnt = 6;
