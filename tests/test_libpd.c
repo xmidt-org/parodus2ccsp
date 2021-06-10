@@ -77,8 +77,8 @@ unsigned int sleep(unsigned int seconds)
 {
     struct timespec delay;
 
-    delay.tv_sec = seconds / 100;
-    delay.tv_nsec = seconds % 100 * 10000000;
+    delay.tv_sec = seconds / 1000;
+    delay.tv_nsec = seconds % 1000 * 1000000;
 
     nanosleep( &delay, NULL );
 
