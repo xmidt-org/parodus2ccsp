@@ -32,6 +32,10 @@
 #include "mock_stack.h"
 
 #define MAX_PARAMETER_LEN			512
+
+
+extern componentStruct_t **getDeviceInfoCompDetails();
+
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
