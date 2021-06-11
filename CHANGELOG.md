@@ -5,11 +5,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Update to use msgpack version 3.1.0 to eliminate compiler warnings/errors
 - Added fix to incorrect boot uptime value in BootTime.log
 - print_uptime library is linked and replaced print_uptime system call with function call
 - Added support for override functions to support drop root capabilities for WebPA process
+
+## [1.0.2]
+
 - Modified logic to increase factory reset notification retransmission interval.  
 - Added support for Webconfig feature to fetch config from cloud, process and apply settings
+
+## [1.0.1]
+
 - Avoid repeated factory reset notification when cmc is 512
 - Removed "Device.TR069Notify" parameter from component caching
 - Removed turn on notification for 'Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client' parameter when mesh/plume or cujo is enabled
@@ -44,4 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Initial creation
 
-[Unreleased]: https://github.com/Comcast/parodus2ccsp/compare/953ff88c5ad415ca486fe06164e794efa8021c5d...HEAD
+[Unreleased]: https://github.com/xmidt-org/parodus2ccsp/compare/1.0.2...HEAD
+[1.0.2]: https://github.com/xmidt-org/parodus2ccsp/compare/1.0.1...1.0.2
+[1.0.1]: https://github.com/xmidt-org/parodus2ccsp/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/xmidt-org/parodus2ccsp/compare/953ff88c5ad415ca486fe06164e794efa8021c5d...1.0.0

@@ -38,15 +38,25 @@
 #define MAX_PARAMETER_LEN			512
 #define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
+
+extern componentStruct_t **getDeviceInfoCompDetails();
+extern void loadCfgFile();
+extern void set_global_cloud_status(char*);
+extern void processDeviceStatusNotification(int);
+extern void getCompDetails();
+extern void sendNotificationForFactoryReset();
+extern void sendNotificationForFirmwareUpgrade();
+extern void processNotification(NotifyData *notifyData);
+extern void* FactoryResetCloudSync();
+
+
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 extern char deviceMAC[32];
-extern wakeUpFlag;
-int numLoops = 1;
-extern pthread_mutex_t cloud_mut;
-extern pthread_cond_t cloud_con;
-extern cloud_status;
+extern int wakeUpFlag;
+extern int numLoops;
+extern char* cloud_status;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -66,7 +76,7 @@ int pthread_cond_signal(pthread_cond_t *cloud_con)
 
 int pthread_cond_timedwait(pthread_cond_t *cloud_con, pthread_mutex_t *cloud_mut, const struct timespec *ts )
 {
-    pthread_cond_signal(&cloud_con);
+    pthread_cond_signal(cloud_con);
     wakeUpFlag=1;
     if(numLoops==1)
     {
@@ -98,6 +108,19 @@ int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **fa
     UNUSED(faultParam); UNUSED(paramCount); UNUSED(val);
     return (int) mock();
 }
+
+unsigned int sleep(unsigned int seconds)
+{
+    struct timespec delay;
+
+    delay.tv_sec = seconds / 1000;
+    delay.tv_nsec = seconds % 1000 * 1000000;
+
+    nanosleep( &delay, NULL );
+
+    return seconds;
+}
+
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/
@@ -736,6 +759,8 @@ int main(void)
 	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
     };
+
+    numLoops = 1;
 
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

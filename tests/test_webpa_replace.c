@@ -79,6 +79,18 @@ int deleteRow(char *object)
     function_called();
     return (int) mock();
 }
+
+unsigned int sleep(unsigned int seconds)
+{
+    struct timespec delay;
+
+    delay.tv_sec = seconds / 1000;
+    delay.tv_nsec = seconds % 1000 * 1000000;
+
+    nanosleep( &delay, NULL );
+
+    return seconds;
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
 /*----------------------------------------------------------------------------*/
