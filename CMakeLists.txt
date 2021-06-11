@@ -179,7 +179,7 @@ add_dependencies(libnanomsg nanomsg)
 ExternalProject_Add(msgpack
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/msgpack
     GIT_REPOSITORY https://github.com/msgpack/msgpack-c.git
-    GIT_TAG "29b9505cb76710802e130d5b8403ec1b40de1c8d"
+    GIT_TAG "b6803a5fecbe321458faafd6a079dac466614ff9"  # 3.1.0
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
                   -DMSGPACK_ENABLE_CXX=OFF
                   -DMSGPACK_BUILD_EXAMPLES=OFF
