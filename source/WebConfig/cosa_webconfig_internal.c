@@ -294,12 +294,18 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 
 	if(((pMyObject->ForceSync)[0] !='\0') && (strlen(pMyObject->ForceSync)>0))
 	{
-		if(strlen(pMyObject->ForceSyncTransID)>0)
+		if(get_bootSync())
+		{
+			WebcfgInfo("Bootup sync is already in progress, Ignoring this request.\n");
+			*pStatus = 1;
+			return 0;
+		}
+		else if(strlen(pMyObject->ForceSyncTransID)>0)
 		{
 			WebcfgInfo("Force sync is already in progress, Ignoring this request.\n");
 			*pStatus = 1;
 			return 0;
-		}
+		}	
 		else
 		{
 			/* sending signal to initWebConfigMultipartTask to update the sync time interval*/
