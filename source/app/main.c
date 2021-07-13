@@ -9,6 +9,7 @@
 #include "signal.h"
 #include "webpa_adapter.h"
 #include "libpd.h"
+#include "webpa_rbus.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include <curl/curl.h>
 #endif
@@ -29,7 +30,7 @@ static void sig_handler(int sig);
 
 int main()
 {
-        int ret = -1;
+        //int ret = -1;
 
 #ifdef INCLUDE_BREAKPAD
     breakpad_ExceptionHandler();
@@ -53,18 +54,30 @@ int main()
 	/* Backend Manager for Webpa Creation and Initilization 
     CosaWebpaBEManagerCreate( );*/
 	WalInfo("B4 msgBusInit\n");
-	msgBusInit(pComponentName);
-	WalInfo("After msgBusInit\n");
-	ret = waitForOperationalReadyCondition();
+	if(isRbusEnabled())
+	{
+		WalInfo("daemonize Webpa\n");
+		daemonize();
+		WalInfo("webpaRbusInit\n");
+		webpaRbusInit(pComponentName);
+		system("touch /tmp/webpa_initialized");
+		regWebpaDataModel();
+	}
+	else
+	{
+		msgBusInit(pComponentName); //ccsp init
+	}
+	WalInfo("After BusInit\n");
+	//ret = waitForOperationalReadyCondition();
 	libpd_client_mgr();
 	WalInfo("Syncing backend manager with DB....\n");
-	CosaWebpaSyncDB();
+	//CosaWebpaSyncDB();
 	WalInfo("Webpa banckend manager is in sync with DB\n");
 
-	initComponentCaching(ret);
+	//initComponentCaching(ret);
 	// Initialize Apply WiFi Settings handler
-	initApplyWiFiSettings();
-	initNotifyTask(ret);
+	//initApplyWiFiSettings();
+	//initNotifyTask(ret);
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 #endif

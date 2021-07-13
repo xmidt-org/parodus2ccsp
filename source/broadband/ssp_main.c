@@ -28,7 +28,7 @@ char  g_Subsystem[32] = {0};
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
-static void daemonize(void);
+//static void daemonize(void);
 
 
 /*----------------------------------------------------------------------------*/
@@ -164,7 +164,7 @@ if ( bRunAsDaemon )
 /**
  * @brief daemonize is a continous loop running in the background waiting to cater component requests.
  */
-static void daemonize(void) {
+void daemonize(void) {
 	
 	switch (fork()) {
 	case 0:
