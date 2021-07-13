@@ -25,17 +25,18 @@
 #include <wdmp-c.h>
 #include <cimplog.h>
 
+#define buffLen 1024
+#define maxParamLen 128
+
+#define NUM_WEBPA_ELEMENTS 6
+
 // Data elements provided by webpa
 
 #define WEBPA_NOTIFY_PARAM "Device.Webpa.X_RDKCENTRAL-COM_WebPA_Notification"
 #define WEBPA_CONNECTED_CLIENT_PARAM "Device.Webpa.X_RDKCENTRAL-COM_Connected-Client"
-#define WEBPA_VERSIOB_PARAM "Device.X_RDKCENTRAL-COM_Webpa.Version"
+#define WEBPA_VERSION_PARAM "Device.X_RDKCENTRAL-COM_Webpa.Version"
 #define WEBPA_CMC_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC"
 #define WEBPA_CID_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_CID"
 #define WEBPA_SYNCVERSION_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
-
-bool isRbusEnabled();
-
-WDMP_STATUS webpaRbusInit(const char *pComponentName);
 
 #endif
