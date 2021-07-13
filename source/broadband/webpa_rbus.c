@@ -20,10 +20,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <rbus/rbus.h>
-#include <rbus/rbus_object.h>
-#include <rbus/rbus_property.h>
-#include <rbus/rbus_value.h>
 #include <stdlib.h>
 #include <wdmp-c.h>
 #include <cimplog.h>
@@ -45,6 +41,11 @@ static bool isRbus = false ;
 bool get_global_isRbus(void)
 {
     return isRbus;
+}
+
+rbusHandle_t get_global_rbus_handle(void)
+{
+     return rbus_handle;
 }
 
 bool isRbusEnabled() 

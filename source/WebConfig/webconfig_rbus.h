@@ -17,32 +17,24 @@
  * limitations under the License.
 */
 
-#ifndef _WEBPA_RBUS_H_
-#define _WEBPA_RBUS_H_
+#ifndef _WEBCONFIG_RBUS_H_
+#define _WEBCONFIG_RBUS_H_
 
 #include <stdio.h>
-#include <rbus/rbus.h>
-#include <rbus/rbus_object.h>
-#include <rbus/rbus_property.h>
-#include <rbus/rbus_value.h>
-
 #include "webpa_adapter.h"
 #include <wdmp-c.h>
 #include <cimplog.h>
 
-// Data elements provided by webpa
+// Data elements provided by webconfig
 
-#define WEBPA_NOTIFY_PARAM "Device.Webpa.X_RDKCENTRAL-COM_WebPA_Notification"
-#define WEBPA_CONNECTED_CLIENT_PARAM "Device.Webpa.X_RDKCENTRAL-COM_Connected-Client"
-#define WEBPA_VERSIOB_PARAM "Device.X_RDKCENTRAL-COM_Webpa.Version"
-#define WEBPA_CMC_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC"
-#define WEBPA_CID_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_CID"
-#define WEBPA_SYNCVERSION_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
+#define WEBCONFIG_RBUS_PARAM_RFC_ENABLE                  "Device.X_RDK_WebConfig.RfcEnable"
+#define WEBCONFIG_RBUS_PARAM_FORCE_SYNC   	         "Device.X_RDK_WebConfig.ForceSync"
+#define WEBCONFIG_RBUS_PARAM_URL                         "Device.X_RDK_WebConfig.URL"
+#define WEBCONFIG_RBUS_PARAM_DATA   	    	         "Device.X_RDK_WebConfig.Data"
+#define WEBCONFIG_RBUS_PARAM_SUPPORTED_DOCS	         "Device.X_RDK_WebConfig.SupportedDocs"
+#define WEBCONFIG_RBUS_PARAM_SUPPORTED_VERSION           "Device.X_RDK_WebConfig.SupportedSchemaVersion"
+#define WEBCONFIG_RBUS_PARAM_SUPPLEMENTARY_TELEMETRY     "Device.X_RDK_WebConfig.SupplementaryServiceUrls.Telemetry"
 
-bool isRbusEnabled();
-
-WDMP_STATUS webpaRbusInit(const char *pComponentName);
-
-rbusHandle_t get_global_rbus_handle(void);
+WDMP_STATUS regWebConfigDataModel();
 
 #endif

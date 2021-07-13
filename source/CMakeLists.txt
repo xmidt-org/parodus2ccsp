@@ -21,7 +21,7 @@ set(SOURCES ${SOURCES} broadband/dm_pack_datamodel.c)
 endif()
 
 if (FEATURE_SUPPORT_WEBCONFIG)
-set(SOURCES ${SOURCES} WebConfig/cosa_webconfig_dml.c WebConfig/cosa_webconfig_apis.c WebConfig/cosa_webconfig_internal.c WebConfig/webcfg_internal.c)
+set(SOURCES ${SOURCES} WebConfig/cosa_webconfig_dml.c WebConfig/cosa_webconfig_apis.c WebConfig/cosa_webconfig_internal.c WebConfig/webcfg_internal.c WebConfig/webconfig_rbus.c)
  execute_process(
     COMMAND patch -p1 --forward --ignore-whitespace
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/source/arch"
