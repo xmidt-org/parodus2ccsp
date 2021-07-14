@@ -23,6 +23,9 @@
 #include <stdlib.h>
 #include <wdmp-c.h>
 #include <webcfg_log.h>
+#include <webcfg_db.h>
+#include <webcfg_metadata.h>
+#include <webcfg_generic.h>
 
 #include "webpa_adapter.h"
 #include "webconfig_rbus.h"
@@ -173,102 +176,19 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
     }
     else if(strncmp(paramName, WEBCONFIG_PARAM_DATA, maxParamLen) == 0)
     {
-        WebcfgInfo("Inside BinData datamodel handler \n");
-
-        if(type_t == RBUS_STRING)
-        {
-            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
-            if(data)
-            {
-                WebcfgInfo("Call BinData datamodel function  with data %s \n", data);
-
-                if (BinDataVal)
-                {
-                    free(BinDataVal);
-                    BinDataVal = NULL;
-                }
-                BinDataVal = strdup(data);
-                free(data);
-                WebcfgInfo("BinDataVal after processing %s\n", BinDataVal);
-            }
-            else
-            {
-                WebcfgError("set value type is invalid\n");
-                retStatus = RBUS_ERROR_INVALID_INPUT;
-            }
-        }
-        else
-        {
-            WebcfgError("Unexpected value type for property %s \n", paramName);
-            retStatus = RBUS_ERROR_INVALID_INPUT;
-        }
+        WebcfgError("Data Set is not allowed\n");
+        retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
 
     }
     else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) == 0)
     {
-        WebcfgInfo("Inside SupportedDocs datamodel handler \n");
-
-        if(type_t == RBUS_STRING)
-        {
-            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
-            if(data)
-            {
-                WebcfgInfo("Call SupportedDocs datamodel function  with data %s \n", data);
-
-                if (SupportedDocsVal)
-                {
-                    free(SupportedDocsVal);
-                    SupportedDocsVal = NULL;
-                }
-                SupportedDocsVal = strdup(data);
-                free(data);
-                WebcfgInfo("SupportedDocsVal after processing %s\n", SupportedDocsVal);
-            }
-            else
-            {
-                WebcfgError("set value type is invalid\n");
-                retStatus = RBUS_ERROR_INVALID_INPUT;
-            }
-        }
-        else
-        {
-            WebcfgError("Unexpected value type for property %s \n", paramName);
-            retStatus = RBUS_ERROR_INVALID_INPUT;
-        }
-
+        WebcfgError("SupportedDocs Set is not allowed\n");
+        retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
     }
     else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) == 0)
     {
-        WebcfgInfo("Inside SupportedVersion datamodel handler \n");
-
-        if(type_t == RBUS_STRING)
-        {
-            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
-            if(data)
-            {
-                WebcfgInfo("Call SupportedVersion datamodel function  with data %s \n", data);
-
-                if (SupportedVersionVal)
-                {
-                    free(SupportedVersionVal);
-                    SupportedVersionVal = NULL;
-                }
-                SupportedVersionVal = strdup(data);
-                free(data);
-                WebcfgInfo("SupportedVersionVal after processing %s\n", SupportedVersionVal);
-            }
-            else
-            {
-                WebcfgError("set value type is invalid\n");
-                retStatus = RBUS_ERROR_INVALID_INPUT;
-            }
-        }
-        else
-        {
-            WebcfgError("Unexpected value type for property %s \n", paramName);
-            retStatus = RBUS_ERROR_INVALID_INPUT;
-        }
-
+        WebcfgError("SupportedSchemaVersion Set is not allowed\n");
+        retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
     }
     else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0)
     {
@@ -380,6 +300,9 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
     {
         rbusValue_t value;
         rbusValue_Init(&value);
+
+        BinDataVal = get_DB_BLOB_base64();
+
         if(BinDataVal)
         {
             rbusValue_SetString(value, BinDataVal);
@@ -397,6 +320,9 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
     {
         rbusValue_t value;
         rbusValue_Init(&value);
+
+        SupportedDocsVal = getsupportedDocs();
+
         if(SupportedDocsVal)
         {
             rbusValue_SetString(value, SupportedDocsVal);
@@ -414,6 +340,9 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
     {
         rbusValue_t value;
         rbusValue_Init(&value);
+
+        SupportedVersionVal = getsupportedVersion();
+
         if(SupportedVersionVal)
         {
             rbusValue_SetString(value, SupportedVersionVal);
