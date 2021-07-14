@@ -25,16 +25,15 @@
 #include <cimplog.h>
 #include "webpa_adapter.h"
 #include "webpa_rbus.h"
-#define buffLen 1024
-#define maxParamLen 128
-
-#define NUM_WEBPA_ELEMENTS 3
 
 static rbusHandle_t rbus_handle;
 
-static char* CMCVal = NULL ;
+static uint32_t  CMCVal = 0 ;
 static char* CIDVal = NULL ;
 static char* syncVersionVal = NULL ;
+static char* ConnClientVal = NULL ;
+static char* notifyVal = NULL ;
+static char* VersionVal = NULL ;
 
 static bool isRbus = false ;
 
@@ -95,8 +94,13 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
     (void) opts;
 
     char const* paramName = rbusProperty_GetName(prop);
-    if((strncmp(paramName, WEBPA_CMC_PARAM, maxParamLen) != 0) && (strncmp(paramName, WEBPA_CID_PARAM, maxParamLen) != 0)
-            && (strncmp(paramName, WEBPA_SYNCVERSION_PARAM, maxParamLen) != 0)) {
+    if((strncmp(paramName,  WEBPA_CMC_PARAM, maxParamLen) != 0) &&
+	(strncmp(paramName, WEBPA_CID_PARAM, maxParamLen) != 0) &&
+	(strncmp(paramName, WEBPA_SYNCVERSION_PARAM, maxParamLen) != 0) &&
+	(strncmp(paramName, WEBPA_CONNECTED_CLIENT_PARAM, maxParamLen) != 0) &&
+	(strncmp(paramName, WEBPA_NOTIFY_PARAM, maxParamLen) != 0) &&
+	(strncmp(paramName, WEBPA_VERSION_PARAM, maxParamLen) != 0)
+	) {
         WalError("Unexpected parameter = %s\n", paramName); //free paramName req.?
         return RBUS_ERROR_ELEMENT_DOES_NOT_EXIST;
     }
@@ -113,21 +117,12 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 
     if(strncmp(paramName, WEBPA_CMC_PARAM, maxParamLen) == 0) {
         WalInfo("Inside CMC datamodel handler \n");
-        if(type_t == RBUS_STRING) {
-            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
-            if(data) {
-                WalInfo("Call datamodel function  with data %s \n", data);
-
-                if (CMCVal){
-                    free(CMCVal);
-                    CMCVal = NULL;
-                }
-                CMCVal = strdup(data);
-                free(data);
-		WalInfo("CMCVal after processing %s\n", CMCVal);
-            }
+        if(type_t == RBUS_UINT32) {
+            CMCVal = rbusValue_GetUInt32(paramValue_t);
+	    WalInfo("CMCVal after processing\n");
         } else {
             WalError("Unexpected value type for property %s \n", paramName);
+	    return RBUS_ERROR_INVALID_INPUT;
         }
 
     }else if(strncmp(paramName, WEBPA_CID_PARAM, maxParamLen) == 0) {
@@ -148,6 +143,7 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
             }
         } else {
             WalError("Unexpected value type for property %s\n", paramName);
+	    return RBUS_ERROR_INVALID_INPUT;
         }
     }else if(strncmp(paramName, WEBPA_SYNCVERSION_PARAM, maxParamLen) == 0) {
         WalInfo("Inside SYNC VERSION datamodel handler \n");
@@ -166,8 +162,69 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
             }
         } else {
             WalError("Unexpected value type for property %s \n", paramName);
+            return RBUS_ERROR_INVALID_INPUT;
         }
 
+    }else if(strncmp(paramName, WEBPA_CONNECTED_CLIENT_PARAM, maxParamLen) == 0) {
+        WalInfo("Inside datamodel handler for CONNECTED CLIENT \n");
+
+        if(type_t == RBUS_STRING) {
+            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
+            if(data) {
+                WalInfo("Call datamodel function  with data %s \n", data);
+
+                if(ConnClientVal) {
+                    free(ConnClientVal);
+                    ConnClientVal = NULL;
+                }
+                ConnClientVal = strdup(data);
+                free(data);
+		WalInfo("ConnClientVal after processing %s\n", ConnClientVal);
+            }
+        } else {
+            WalError("Unexpected value type for property %s\n", paramName);
+	    return RBUS_ERROR_INVALID_INPUT;
+        }
+    }else if(strncmp(paramName, WEBPA_NOTIFY_PARAM, maxParamLen) == 0) {
+        WalInfo("Inside datamodel handler for NOTIFY PARAM \n");
+
+        if(type_t == RBUS_STRING) {
+            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
+            if(data) {
+                WalInfo("Call datamodel function  with data %s \n", data);
+
+                if(notifyVal) {
+                    free(notifyVal);
+                    notifyVal = NULL;
+                }
+                notifyVal = strdup(data);
+                free(data);
+		WalInfo("notifyVal after processing %s\n", notifyVal);
+            }
+        } else {
+            WalError("Unexpected value type for property %s\n", paramName);
+	    return RBUS_ERROR_INVALID_INPUT;
+        }
+    }else if(strncmp(paramName, WEBPA_VERSION_PARAM, maxParamLen) == 0) {
+        WalInfo("Inside datamodel handler for VERSION PARAM \n");
+
+        if(type_t == RBUS_STRING) {
+            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
+            if(data) {
+                WalInfo("Call datamodel function  with data %s \n", data);
+
+                if(VersionVal) {
+                    free(VersionVal);
+                    VersionVal = NULL;
+                }
+                VersionVal = strdup(data);
+                free(data);
+		WalInfo("VersionVal after processing %s\n", VersionVal);
+            }
+        } else {
+            WalError("Unexpected value type for property %s\n", paramName);
+	    return RBUS_ERROR_INVALID_INPUT;
+        }
     }
     WalInfo("webpaDataSetHandler End\n");
     return RBUS_ERROR_SUCCESS;
@@ -195,13 +252,12 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     if(strncmp(propertyName, WEBPA_CMC_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
-        if(CMCVal)
-            rbusValue_SetString(value, CMCVal);
-        else
-            rbusValue_SetString(value, "");
+
+        rbusValue_SetUInt32(value, CMCVal);
+
         rbusProperty_SetValue(property, value);
         rbusValue_Release(value);
-	WalInfo("CMC value fetched is %s\n", value);
+	//WalInfo("CMC value fetched is %s\n", value);
 
     }else if(strncmp(propertyName, WEBPA_CID_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
@@ -224,7 +280,42 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
         rbusProperty_SetValue(property, value);
         rbusValue_Release(value);
 	WalInfo("Sync protocol version fetched is %s\n", value);
+    }else if(strncmp(propertyName, WEBPA_CONNECTED_CLIENT_PARAM, maxParamLen) == 0) {
+        rbusValue_t value;
+        rbusValue_Init(&value);
+        if(ConnClientVal)
+            rbusValue_SetString(value, ConnClientVal);
+        else
+            rbusValue_SetString(value, "");
+        rbusProperty_SetValue(property, value);
+	WalInfo("ConnClientVal value fetched is %s\n", value);
+        rbusValue_Release(value);
+
+    }else if(strncmp(propertyName, WEBPA_NOTIFY_PARAM, maxParamLen) == 0) {
+        rbusValue_t value;
+        rbusValue_Init(&value);
+        if(notifyVal)
+            rbusValue_SetString(value, notifyVal);
+        else
+            rbusValue_SetString(value, "");
+        rbusProperty_SetValue(property, value);
+	WalInfo("notifyVal value fetched is %s\n", value);
+        rbusValue_Release(value);
+
+    }else if(strncmp(propertyName, WEBPA_VERSION_PARAM, maxParamLen) == 0) {
+        rbusValue_t value;
+        rbusValue_Init(&value);
+        if(VersionVal)
+            rbusValue_SetString(value, VersionVal);
+        else
+            rbusValue_SetString(value, "");
+        rbusProperty_SetValue(property, value);
+	WalInfo("VersionVal value fetched is %s\n", value);
+        rbusValue_Release(value);
+
     }
+
+
     if(propertyName) {
         free((char*)propertyName);
         propertyName = NULL;
@@ -241,16 +332,10 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
  */
 WDMP_STATUS regWebpaDataModel()
 {
-	char deCMC[125] = { '\0' };
-	char deCID[125] = { '\0' };
-        char deSyncVersion[125] = { '\0' };
 	rbusError_t ret = RBUS_ERROR_SUCCESS;
 	WDMP_STATUS status = WDMP_SUCCESS;
 
-	snprintf(deCMC, 124 , "%s", WEBPA_CMC_PARAM);
-	snprintf(deCID, 124 , "%s", WEBPA_CID_PARAM);
-	snprintf(deSyncVersion, 124 , "%s", WEBPA_SYNCVERSION_PARAM);
-	WalInfo("Registering parameters deCMC %s, deCID %s, deSyncVersion %s\n", deCMC, deCID, deSyncVersion);
+	WalInfo("Registering parameters deCMC %s, deCID %s, deSyncVersion %s deConnClient %s,deNotify %s, deVersion %s\n", WEBPA_CMC_PARAM, WEBPA_CID_PARAM, WEBPA_SYNCVERSION_PARAM,WEBPA_CONNECTED_CLIENT_PARAM,WEBPA_NOTIFY_PARAM, WEBPA_VERSION_PARAM);
 	if(!rbus_handle)
 	{
 		WalError("regRbusWebpaDataModel Failed in getting bus handles\n");
@@ -259,19 +344,22 @@ WDMP_STATUS regWebpaDataModel()
 
 	rbusDataElement_t dataElements[NUM_WEBPA_ELEMENTS] = {
 
-		{deCMC, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}},
-		{deCID, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}},
-		{deSyncVersion, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}}
+		{WEBPA_CMC_PARAM, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}},
+		{WEBPA_CID_PARAM, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}},
+		{WEBPA_SYNCVERSION_PARAM, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}},
+		{WEBPA_CONNECTED_CLIENT_PARAM, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}},
+		{WEBPA_NOTIFY_PARAM, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}},
+		{WEBPA_VERSION_PARAM, RBUS_ELEMENT_TYPE_PROPERTY, {webpaDataGetHandler, webpaDataSetHandler, NULL, NULL, NULL, NULL}}
 
 	};
 	ret = rbus_regDataElements(rbus_handle, NUM_WEBPA_ELEMENTS, dataElements);
 	if(ret == RBUS_ERROR_SUCCESS)
 	{
-		WalInfo("Registered data element %s with rbus \n ", deCMC);
+		WalInfo("Registered data element %s with rbus \n ", WEBPA_CMC_PARAM);
 	}
 	else
 	{
-		WalError("Failed in registering data element %s \n", deCMC);
+		WalError("Failed in registering data element %s \n", WEBPA_CMC_PARAM);
 		status = WDMP_FAILURE;
 	}
 
