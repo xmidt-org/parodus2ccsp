@@ -42,11 +42,12 @@ static char* SupportedVersionVal = NULL ;
 static char* SupplementaryUrlVal = NULL ;
 
 /**
- * Data set handler for Webpa parameters
+ * Data set handler for WebConfig parameters
  */
 rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSetHandlerOptions_t* opts)
 {
 
+    rbusError_t retStatus = RBUS_ERROR_SUCCESS;
     WebcfgInfo("Inside webConfigDataSetHandler\n");
     (void) opts;
 
@@ -89,10 +90,16 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
                 RfcVal = data;
                 WebcfgInfo("RfcVal after processing %s\n", (1==RfcVal)?"true":"false");
             }
+            else
+            {
+                WebcfgError("set value type is invalid\n");
+                retStatus = RBUS_ERROR_INVALID_INPUT;
+            }
         }
         else
         {
             WebcfgError("Unexpected value type for property %s \n", paramName);
+            retStatus = RBUS_ERROR_INVALID_INPUT;
         }
 
     }
@@ -116,10 +123,16 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
                 free(data);
                 WebcfgInfo("ForceSyncVal after processing %s\n", ForceSyncVal);
             }
+            else
+            {
+                WebcfgError("set value type is invalid\n");
+                retStatus = RBUS_ERROR_INVALID_INPUT;
+            }
         }
         else
         {
             WebcfgError("Unexpected value type for property %s \n", paramName);
+            retStatus = RBUS_ERROR_INVALID_INPUT;
         }
 
     }
@@ -144,10 +157,16 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
                 free(data);
                 WebcfgInfo("URLVal after processing %s\n", URLVal);
             }
+            else
+            {
+                WebcfgError("set value type is invalid\n");
+                retStatus = RBUS_ERROR_INVALID_INPUT;
+            }
         }
         else
         {
             WebcfgError("Unexpected value type for property %s \n", paramName);
+            retStatus = RBUS_ERROR_INVALID_INPUT;
         }
 
     }
@@ -171,10 +190,16 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
                 free(data);
                 WebcfgInfo("BinDataVal after processing %s\n", BinDataVal);
             }
+            else
+            {
+                WebcfgError("set value type is invalid\n");
+                retStatus = RBUS_ERROR_INVALID_INPUT;
+            }
         }
         else
         {
             WebcfgError("Unexpected value type for property %s \n", paramName);
+            retStatus = RBUS_ERROR_INVALID_INPUT;
         }
 
     }
@@ -198,10 +223,16 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
                 free(data);
                 WebcfgInfo("SupportedDocsVal after processing %s\n", SupportedDocsVal);
             }
+            else
+            {
+                WebcfgError("set value type is invalid\n");
+                retStatus = RBUS_ERROR_INVALID_INPUT;
+            }
         }
         else
         {
             WebcfgError("Unexpected value type for property %s \n", paramName);
+            retStatus = RBUS_ERROR_INVALID_INPUT;
         }
 
     }
@@ -225,10 +256,16 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
                 free(data);
                 WebcfgInfo("SupportedVersionVal after processing %s\n", SupportedVersionVal);
             }
+            else
+            {
+                WebcfgError("set value type is invalid\n");
+                retStatus = RBUS_ERROR_INVALID_INPUT;
+            }
         }
         else
         {
             WebcfgError("Unexpected value type for property %s \n", paramName);
+            retStatus = RBUS_ERROR_INVALID_INPUT;
         }
 
     }
@@ -252,19 +289,25 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
                 free(data);
                 WebcfgInfo("SupplementaryUrlVal after processing %s\n", SupplementaryUrlVal);
             }
+            else
+            {
+                WebcfgError("set value type is invalid\n");
+                retStatus = RBUS_ERROR_INVALID_INPUT;
+            }
         }
         else
         {
             WebcfgError("Unexpected value type for property %s \n", paramName);
+            retStatus = RBUS_ERROR_INVALID_INPUT;
         }
 
     }
     WebcfgInfo("webConfigDataSetHandler End\n");
-    return RBUS_ERROR_SUCCESS;
+    return retStatus;
 }
 
 /**
- * Common data get handler for all parameters owned by Webpa
+ * Common data get handler for all parameters owned by WebConfig
  */
 rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rbusGetHandlerOptions_t* opts)
 {
