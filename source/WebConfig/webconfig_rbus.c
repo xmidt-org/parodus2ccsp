@@ -27,6 +27,7 @@
 #include "webpa_adapter.h"
 #include "webconfig_rbus.h"
 #include "webpa_rbus.h"
+#include "cosa_webconfig_internal.h"
 
 #define buffLen 1024
 #define maxParamLen 128
@@ -52,13 +53,13 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
     (void) opts;
 
     char const* paramName = rbusProperty_GetName(prop);
-    if( (strncmp(paramName, WEBCONFIG_RBUS_PARAM_RFC_ENABLE, maxParamLen) != 0) && 
-        (strncmp(paramName, WEBCONFIG_RBUS_PARAM_FORCE_SYNC, maxParamLen) != 0) &&
-        (strncmp(paramName, WEBCONFIG_RBUS_PARAM_URL, maxParamLen) != 0) &&
-        (strncmp(paramName, WEBCONFIG_RBUS_PARAM_DATA, maxParamLen) != 0) &&
-        (strncmp(paramName, WEBCONFIG_RBUS_PARAM_SUPPORTED_DOCS, maxParamLen) != 0) &&
-        (strncmp(paramName, WEBCONFIG_RBUS_PARAM_SUPPORTED_VERSION, maxParamLen) != 0) &&
-        (strncmp(paramName, WEBCONFIG_RBUS_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) != 0) )
+    if( (strncmp(paramName, WEBCONFIG_PARAM_RFC_ENABLE, maxParamLen) != 0) &&
+        (strncmp(paramName, WEBCONFIG_PARAM_FORCE_SYNC, maxParamLen) != 0) &&
+        (strncmp(paramName, WEBCONFIG_PARAM_URL, maxParamLen) != 0) &&
+        (strncmp(paramName, WEBCONFIG_PARAM_DATA, maxParamLen) != 0) &&
+        (strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) != 0) &&
+        (strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) != 0) &&
+        (strncmp(paramName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) != 0) )
     {
         WebcfgError("Unexpected parameter = %s\n", paramName);
         return RBUS_ERROR_ELEMENT_DOES_NOT_EXIST;
@@ -77,7 +78,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         return RBUS_ERROR_INVALID_INPUT;
     }
 
-    if(strncmp(paramName, WEBCONFIG_RBUS_PARAM_RFC_ENABLE, maxParamLen) == 0)
+    if(strncmp(paramName, WEBCONFIG_PARAM_RFC_ENABLE, maxParamLen) == 0)
     {
         WebcfgInfo("Inside Rfc datamodel handler \n");
 
@@ -103,7 +104,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_RBUS_PARAM_FORCE_SYNC, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_FORCE_SYNC, maxParamLen) == 0)
     {
         WebcfgInfo("Inside ForceSync datamodel handler \n");
 
@@ -136,7 +137,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_RBUS_PARAM_URL, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_URL, maxParamLen) == 0)
     {
         WebcfgInfo("Inside URL datamodel handler \n");
 	int retPsmSet = WDMP_SUCCESS;
@@ -170,7 +171,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_RBUS_PARAM_DATA, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_DATA, maxParamLen) == 0)
     {
         WebcfgInfo("Inside BinData datamodel handler \n");
 
@@ -203,7 +204,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_RBUS_PARAM_SUPPORTED_DOCS, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) == 0)
     {
         WebcfgInfo("Inside SupportedDocs datamodel handler \n");
 
@@ -236,7 +237,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_RBUS_PARAM_SUPPORTED_VERSION, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) == 0)
     {
         WebcfgInfo("Inside SupportedVersion datamodel handler \n");
 
@@ -269,7 +270,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_RBUS_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0)
     {
         WebcfgInfo("Inside SupplementaryUrl datamodel handler \n");
 
@@ -329,7 +330,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         return RBUS_ERROR_INVALID_INPUT;
     }
 
-    if(strncmp(propertyName, WEBCONFIG_RBUS_PARAM_RFC_ENABLE, maxParamLen) == 0)
+    if(strncmp(propertyName, WEBCONFIG_PARAM_RFC_ENABLE, maxParamLen) == 0)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -341,7 +342,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
 	WebcfgInfo("Rfc value fetched is %s\n", value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_RBUS_PARAM_FORCE_SYNC, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_FORCE_SYNC, maxParamLen) == 0)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -358,7 +359,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
 	WebcfgInfo("ForceSync value fetched is %s\n", value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_RBUS_PARAM_URL, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_URL, maxParamLen) == 0)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -375,7 +376,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
 	WebcfgInfo("URL value fetched is %s\n", value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_RBUS_PARAM_DATA, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_DATA, maxParamLen) == 0)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -392,7 +393,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
 	WebcfgInfo("BinData value fetched is %s\n", value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_RBUS_PARAM_SUPPORTED_DOCS, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) == 0)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -409,7 +410,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
 	WebcfgInfo("SupportedDocs value fetched is %s\n", value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_RBUS_PARAM_SUPPORTED_VERSION, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) == 0)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -426,7 +427,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
 	WebcfgInfo("SupportedVersion value fetched is %s\n", value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_RBUS_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -461,40 +462,28 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
  */
 WDMP_STATUS regWebConfigDataModel()
 {
-        char deRfc[125] = { '\0' };
-        char deForceSync[125] = { '\0' };
-        char deURL[125] = { '\0' };
-        char deBinData[125] = { '\0' };
-        char deSupportedDocs[125] = { '\0' };
-        char deSupportedVersion[125] = { '\0' };
-        char deSupplementaryURL[125] = { '\0' };
 	rbusError_t ret = RBUS_ERROR_SUCCESS;
 	WDMP_STATUS status = WDMP_SUCCESS;
 
 	rbusHandle_t webcfg_rbus_handle = get_global_rbus_handle();
-	snprintf(deRfc, 124 , "%s", WEBCONFIG_RBUS_PARAM_RFC_ENABLE);
-	snprintf(deForceSync, 124 , "%s", WEBCONFIG_RBUS_PARAM_FORCE_SYNC);
-	snprintf(deURL, 124 , "%s", WEBCONFIG_RBUS_PARAM_URL);
-	snprintf(deBinData, 124 , "%s", WEBCONFIG_RBUS_PARAM_DATA);
-	snprintf(deSupportedDocs, 124 , "%s", WEBCONFIG_RBUS_PARAM_SUPPORTED_DOCS);
-	snprintf(deSupportedVersion, 124 , "%s", WEBCONFIG_RBUS_PARAM_SUPPORTED_VERSION);
-	snprintf(deSupplementaryURL, 124 , "%s", WEBCONFIG_RBUS_PARAM_SUPPLEMENTARY_TELEMETRY);
 
-	WebcfgInfo("Registering parameters deRfc %s\n, deForceSync %s\n, deURL %s\n, deBinData %s\n, deSupportedDocs %s\n, deSupportedVersion %s\n, deSupplementaryURL %s\n", deRfc, deForceSync, deURL, deBinData, deSupportedDocs, deSupportedVersion, deSupplementaryURL);
+	WebcfgInfo("Registering parameters datamodel\n");
 
 	if(!webcfg_rbus_handle)
 	{
-		WebcfgError("regRbusWebConfigDataModel Failed in getting bus handles\n");
+		WebcfgError("regRbusWebConfigDataModel Failed in getting bus handle\n");
 		return WDMP_FAILURE;
 	}
 
 	rbusDataElement_t dataElements[NUM_WEBCONFIG_ELEMENTS] = {
 
-{deRfc, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}, 
-{deForceSync, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}, {deURL, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}, {deBinData, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}, 
-{deSupportedDocs, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}, 
-{deSupportedVersion, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}, 
-{deSupplementaryURL, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}
+{WEBCONFIG_PARAM_RFC_ENABLE, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}},
+{WEBCONFIG_PARAM_FORCE_SYNC, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}},
+{WEBCONFIG_PARAM_URL, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}},
+{WEBCONFIG_PARAM_DATA, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}},
+{WEBCONFIG_PARAM_SUPPORTED_DOCS, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}},
+{WEBCONFIG_PARAM_SUPPORTED_VERSION, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}},
+{WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, RBUS_ELEMENT_TYPE_PROPERTY, {webConfigDataGetHandler, webConfigDataSetHandler, NULL, NULL, NULL, NULL}}
 
 	};
 	ret = rbus_regDataElements(webcfg_rbus_handle, NUM_WEBCONFIG_ELEMENTS, dataElements);

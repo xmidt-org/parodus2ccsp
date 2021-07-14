@@ -74,6 +74,15 @@
 
 #include "webpa_internal.h"
 
+#define WEBCONFIG_PARAM_RFC_ENABLE               "Device.X_RDK_WebConfig.RfcEnable"
+#define WEBCONFIG_PARAM_URL                      "Device.X_RDK_WebConfig.URL"
+#define WEBCONFIG_PARAM_FORCE_SYNC   	         "Device.X_RDK_WebConfig.ForceSync"
+#define WEBCONFIG_PARAM_DATA   	    	         "Device.X_RDK_WebConfig.Data"
+#define WEBCONFIG_PARAM_SUPPORTED_DOCS	         "Device.X_RDK_WebConfig.SupportedDocs"
+#define WEBCONFIG_PARAM_SUPPORTED_VERSION        "Device.X_RDK_WebConfig.SupportedSchemaVersion"
+#define WEBCONFIG_PARAM_SUPPLEMENTARY_SERVICE    "Device.X_RDK_WebConfig.SupplementaryServiceUrls."
+#define WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY  "Device.X_RDK_WebConfig.SupplementaryServiceUrls.Telemetry"
+
 BOOL Get_RfcEnable();
 int setRfcEnable(BOOL bValue);
 BOOL CosaDmlGetRFCEnableFromDB(BOOL *pbValue);
