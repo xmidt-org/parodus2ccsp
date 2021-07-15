@@ -90,7 +90,31 @@ static void webpaRbus_Uninit( ) {
 rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSetHandlerOptions_t* opts) {
 
     WalInfo("Inside webpaDataSetHandler\n");
-    (void) opts;
+    //(void) opts;
+    //int sessionId = 0;
+    //char* pCompName = NULL ;
+
+    //rbusSetHandlerOptions_t opts;
+    //memset(&opts, 0, sizeof(opts));
+	if(opts !=NULL)
+	{
+		WalInfo("opts.sessionId is %d\n", opts->sessionId);
+		WalInfo("opts.commit is %d\n", opts->commit);
+		WalInfo("opts.requestingComponent is %s\n", opts->requestingComponent);
+	}
+	else
+	{
+		WalInfo("opts is empty\n");
+	}
+
+    /*rbusMessage_GetInt32(request, &sessionId);
+    rbusMessage_GetString(request, (char const**) &pCompName);
+    rbusMessage_GetInt32(request, &numVals);
+
+    if(numVals > 0)
+    {
+        opts.sessionId = sessionId;
+        opts.requestingComponent = pCompName;*/
 
     char const* paramName = rbusProperty_GetName(prop);
     if((strncmp(paramName,  WEBPA_CMC_PARAM, maxParamLen) != 0) &&
