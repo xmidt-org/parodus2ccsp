@@ -29,6 +29,7 @@
 #define maxParamLen 128
 
 #define NUM_WEBPA_ELEMENTS 6
+#define COMPONENT_ID_NOTIFY_COMP "writeid_notify"
 
 // Data elements provided by webpa
 

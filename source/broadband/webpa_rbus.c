@@ -35,9 +35,6 @@ static rbusHandle_t rbus_handle;
 static uint32_t  CMCVal = 0 ;
 static char* CIDVal = NULL ;
 static char* syncVersionVal = NULL ;
-static char* ConnClientVal = NULL ;
-static char* notifyVal = NULL ;
-static char* VersionVal = NULL ;
 
 static bool isRbus = false ;
 
@@ -90,31 +87,6 @@ static void webpaRbus_Uninit( ) {
 rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSetHandlerOptions_t* opts) {
 
     WalInfo("Inside webpaDataSetHandler\n");
-    //(void) opts;
-    //int sessionId = 0;
-    //char* pCompName = NULL ;
-
-    //rbusSetHandlerOptions_t opts;
-    //memset(&opts, 0, sizeof(opts));
-	if(opts !=NULL)
-	{
-		WalInfo("opts.sessionId is %d\n", opts->sessionId);
-		WalInfo("opts.commit is %d\n", opts->commit);
-		WalInfo("opts.requestingComponent is %s\n", opts->requestingComponent);
-	}
-	else
-	{
-		WalInfo("opts is empty\n");
-	}
-
-    /*rbusMessage_GetInt32(request, &sessionId);
-    rbusMessage_GetString(request, (char const**) &pCompName);
-    rbusMessage_GetInt32(request, &numVals);
-
-    if(numVals > 0)
-    {
-        opts.sessionId = sessionId;
-        opts.requestingComponent = pCompName;*/
 
     char const* paramName = rbusProperty_GetName(prop);
     if((strncmp(paramName,  WEBPA_CMC_PARAM, maxParamLen) != 0) &&
@@ -127,6 +99,21 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
         WalError("Unexpected parameter = %s\n", paramName); //free paramName req.?
         return RBUS_ERROR_ELEMENT_DOES_NOT_EXIST;
     }
+
+    #ifdef USE_NOTIFY_COMPONENT
+	char* p_write_id;
+	char* p_new_val;
+	char* p_old_val;
+	char* p_notify_param_name;
+	char* st;
+	char* p_interface_name = NULL;
+	char* p_mac_id = NULL;
+	char* p_status = NULL;
+	char* p_hostname = NULL;
+	char* p_val_type;
+	UINT value_type,write_id;
+	parameterSigStruct_t param = {0};
+   #endif
 
     WalInfo("Parameter name is %s \n", paramName);
     rbusValueType_t type_t;
@@ -191,19 +178,75 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
     }else if(strncmp(paramName, WEBPA_CONNECTED_CLIENT_PARAM, maxParamLen) == 0) {
         WalInfo("Inside datamodel handler for CONNECTED CLIENT \n");
 
-        if(type_t == RBUS_STRING) {
-            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
-            if(data) {
-                WalInfo("Call datamodel function  with data %s \n", data);
+        if(type_t == RBUS_STRING)
+	{
+		if(opts !=NULL)
+		{
+			WalInfo("opts.requestingComponent is %s\n", opts->requestingComponent);
+		}
 
-                if(ConnClientVal) {
-                    free(ConnClientVal);
-                    ConnClientVal = NULL;
-                }
-                ConnClientVal = strdup(data);
-                free(data);
-		WalInfo("ConnClientVal after processing %s\n", ConnClientVal);
-            }
+		if((opts != NULL) && (strncmp(opts->requestingComponent, COMPONENT_ID_NOTIFY_COMP, strlen(COMPONENT_ID_NOTIFY_COMP)) == 0))
+		{
+			#ifdef USE_NOTIFY_COMPONENT
+			char * ConnClientVal = NULL;
+			char* data = rbusValue_ToString(paramValue_t, NULL, 0);
+			if(data)
+			{
+				WalInfo("Call datamodel function  with data %s \n", data);
+				ConnClientVal = strdup(data);
+				free(data);
+				WalInfo("ConnClientVal is %s\n", ConnClientVal);
+			}
+			WalInfo("...Connected client notification rbus..\n");
+			WalInfo(" \n WebPA : Connected-Client Received \n");
+			p_notify_param_name = strtok_r(ConnClientVal, ",", &st);
+			WalInfo("ConnClientVal value for X_RDKCENTRAL-COM_Connected-Client:%s\n", ConnClientVal);
+
+			p_interface_name = strtok_r(NULL, ",", &st);
+			p_mac_id = strtok_r(NULL, ",", &st);
+			p_status = strtok_r(NULL, ",", &st);
+			p_hostname = strtok_r(NULL, ",", &st);
+
+			if(p_hostname !=NULL && p_notify_param_name !=NULL && p_interface_name !=NULL && p_mac_id !=NULL && p_status !=NULL)
+			{
+				if(validate_conn_client_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname) == WDMP_SUCCESS)
+				{
+					WalInfo(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
+					WalInfo(" \n Notification : Interface = %s \n", p_interface_name);
+					WalInfo(" \n Notification : MAC = %s \n", p_mac_id);
+					WalInfo(" \n Notification : Status = %s \n", p_status);
+					WalInfo(" \n Notification : HostName = %s \n", p_hostname);
+
+					notifyCbFnPtr = getNotifyCB();
+
+					if (NULL == notifyCbFnPtr)
+					{
+						WalError("Fatal: notifyCbFnPtr is NULL\n");
+						return FALSE;
+					}
+					else
+					{
+						// Data received from stack is not sent upstream to server for Connected Client
+						sendConnectedClientNotification(p_mac_id, p_status, p_interface_name, p_hostname);
+					}
+				}
+				else
+				{
+					WalError("Received incorrect data for connected client notification\n");
+				}
+			}
+			else
+			{
+				WalError("Received insufficient data to process connected client notification\n");
+			}
+
+		#endif
+		}
+		else
+		{
+			WalError("Operation not allowed\n");
+			return RBUS_ERROR_INVALID_OPERATION;
+		}
         } else {
             WalError("Unexpected value type for property %s\n", paramName);
 	    return RBUS_ERROR_INVALID_INPUT;
@@ -212,42 +255,90 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
         WalInfo("Inside datamodel handler for NOTIFY PARAM \n");
 
         if(type_t == RBUS_STRING) {
-            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
-            if(data) {
-                WalInfo("Call datamodel function  with data %s \n", data);
+		if(opts !=NULL)
+		{
+			WalInfo("opts.requestingComponent is %s\n", opts->requestingComponent);
+		}
 
-                if(notifyVal) {
-                    free(notifyVal);
-                    notifyVal = NULL;
-                }
-                notifyVal = strdup(data);
-                free(data);
-		WalInfo("notifyVal after processing %s\n", notifyVal);
-            }
+		if((opts != NULL) && (strncmp(opts->requestingComponent, COMPONENT_ID_NOTIFY_COMP, strlen(COMPONENT_ID_NOTIFY_COMP)) == 0))
+		{
+			char *notifyVal = NULL;
+			char* data = rbusValue_ToString(paramValue_t, NULL, 0);
+			if(data)
+			{
+				WalInfo("Call datamodel function  with data %s \n", data);
+				notifyVal = strdup(data);
+				WEBPA_FREE(data);
+				WalInfo("notifyVal is %s\n", notifyVal);
+			}
+
+			#ifdef USE_NOTIFY_COMPONENT
+
+		        WalInfo(" \n WebPA : Notification Received \n");
+		        char *tmpStr, *notifyStr;
+		        tmpStr = notifyStr = strdup(notifyVal);
+
+		        p_notify_param_name = strsep(&notifyStr, ",");
+		        p_write_id = strsep(&notifyStr,",");
+		        p_new_val = strsep(&notifyStr,",");
+		        p_old_val = strsep(&notifyStr,",");
+		        p_val_type = strsep(&notifyStr, ",");
+
+		        if(p_notify_param_name != NULL && p_val_type !=NULL && p_write_id !=NULL)
+		        {
+				if(validate_webpa_notification_data(p_notify_param_name, p_write_id) == WDMP_SUCCESS)
+				{
+				        value_type = atoi(p_val_type);
+				        write_id = atoi(p_write_id);
+
+				        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
+				        WalPrint(" \n Notification : Value Type = %d \n", value_type);
+				        WalPrint(" \n Notification : Component ID = %d \n", write_id);
+					#if 0 /*Removing Logging of Password due to security requirement*/
+				        WalPrint(" \n Notification : New Value = %s \n", p_new_val);
+				        WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
+					#endif
+
+					if(NULL != p_notify_param_name && (strcmp(p_notify_param_name, WiFi_FactoryResetRadioAndAp)== 0))
+					{
+						// sleep for 90s to delay the notification and give wifi time to reset and apply to driver
+						WalInfo("Delay wifi factory reset notification by 90s so that wifi is reset completely\n");
+						sleep(90);
+					}
+
+				        param.parameterName = p_notify_param_name;
+				        param.oldValue = p_old_val;
+				        param.newValue = p_new_val;
+				        param.type = value_type;
+				        param.writeID = write_id;
+
+				        ccspWebPaValueChangedCB(&param,0,NULL);
+				}
+				else
+				{
+					WalError("Received incorrect data for notification\n");
+				}
+		        }
+			else
+			{
+				WalError("Received insufficient data to process notification\n");
+			}
+			WAL_FREE(tmpStr);
+		#endif
+		}
+		else
+		{
+			WalError("Operation not allowed\n");
+			return RBUS_ERROR_INVALID_OPERATION;
+		}
+
         } else {
             WalError("Unexpected value type for property %s\n", paramName);
 	    return RBUS_ERROR_INVALID_INPUT;
         }
     }else if(strncmp(paramName, WEBPA_VERSION_PARAM, maxParamLen) == 0) {
-        WalInfo("Inside datamodel handler for VERSION PARAM \n");
-
-        if(type_t == RBUS_STRING) {
-            char* data = rbusValue_ToString(paramValue_t, NULL, 0);
-            if(data) {
-                WalInfo("Call datamodel function  with data %s \n", data);
-
-                if(VersionVal) {
-                    free(VersionVal);
-                    VersionVal = NULL;
-                }
-                VersionVal = strdup(data);
-                free(data);
-		WalInfo("VersionVal after processing %s\n", VersionVal);
-            }
-        } else {
-            WalError("Unexpected value type for property %s\n", paramName);
-	    return RBUS_ERROR_INVALID_INPUT;
-        }
+	WalError("Version param is not writable\n");
+	return RBUS_ERROR_ACCESS_NOT_ALLOWED;
     }
     WalInfo("webpaDataSetHandler End\n");
     return RBUS_ERROR_SUCCESS;
@@ -306,10 +397,7 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     }else if(strncmp(propertyName, WEBPA_CONNECTED_CLIENT_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
-        if(ConnClientVal)
-            rbusValue_SetString(value, ConnClientVal);
-        else
-            rbusValue_SetString(value, "");
+        rbusValue_SetString(value, "");
         rbusProperty_SetValue(property, value);
 	WalInfo("ConnClientVal value fetched is %s\n", value);
         rbusValue_Release(value);
@@ -317,10 +405,7 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     }else if(strncmp(propertyName, WEBPA_NOTIFY_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
-        if(notifyVal)
-            rbusValue_SetString(value, notifyVal);
-        else
-            rbusValue_SetString(value, "");
+        rbusValue_SetString(value, "");
         rbusProperty_SetValue(property, value);
 	WalInfo("notifyVal value fetched is %s\n", value);
         rbusValue_Release(value);
@@ -328,6 +413,8 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     }else if(strncmp(propertyName, WEBPA_VERSION_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
+	char VersionVal[32] ={'\0'};
+	snprintf(VersionVal, sizeof(VersionVal), "%s-%s", WEBPA_PROTOCOL, WEBPA_GIT_VERSION);
         if(VersionVal)
             rbusValue_SetString(value, VersionVal);
         else
