@@ -30,6 +30,7 @@
 
 #define NUM_WEBPA_ELEMENTS 6
 #define COMPONENT_ID_NOTIFY_COMP "writeid_notify"
+#define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
 
 // Data elements provided by webpa
 

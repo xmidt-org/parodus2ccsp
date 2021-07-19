@@ -344,7 +344,7 @@ int RegisterNotifyCB(notifyCB cb)
 
 void * getNotifyCB()
 {
-	WalPrint("Inside getNotifyCB\n");
+	WalInfo("Inside getNotifyCB\n");
 	return notifyCbFn;
 }
 
@@ -795,17 +795,17 @@ void getDeviceMac()
 static void *notifyTask(void *status)
 {
 	pthread_detach(pthread_self());
-	getDeviceMac();
+	//getDeviceMac();
 	loadCfgFile();
-	processDeviceStatusNotification(*(int *)status);
+	//processDeviceStatusNotification(*(int *)status);
 	RegisterNotifyCB(&notifyCallback);
-	sendNotificationForFactoryReset();
-	FactoryResetCloudSyncTask();
-	sendNotificationForFirmwareUpgrade();
-	setInitialNotify();
+	//sendNotificationForFactoryReset();
+	//FactoryResetCloudSyncTask();
+	//sendNotificationForFirmwareUpgrade();
+	//setInitialNotify();
 	handleNotificationEvents();
 	WAL_FREE(status);
-	WalPrint("notifyTask ended!\n");
+	WalInfo("notifyTask ended!\n");
 	return NULL;
 }
 

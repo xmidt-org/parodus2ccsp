@@ -29,6 +29,8 @@
 #include <cimplog.h>
 #include "webpa_adapter.h"
 #include "webpa_rbus.h"
+#include "webpa_internal.h"
+#include "webpa_notification.h"
 
 static rbusHandle_t rbus_handle;
 
@@ -37,6 +39,8 @@ static char* CIDVal = NULL ;
 static char* syncVersionVal = NULL ;
 
 static bool isRbus = false ;
+
+void (*rbusnotifyCbFnPtr)(NotifyData*) = NULL;
 
 bool get_global_isRbus(void)
 {
@@ -111,8 +115,8 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 	char* p_status = NULL;
 	char* p_hostname = NULL;
 	char* p_val_type;
-	UINT value_type,write_id;
-	parameterSigStruct_t param = {0};
+	unsigned int value_type,write_id;
+	//TODO:parameterSigStruct_t param = {0};
    #endif
 
     WalInfo("Parameter name is %s \n", paramName);
@@ -217,12 +221,12 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 					WalInfo(" \n Notification : Status = %s \n", p_status);
 					WalInfo(" \n Notification : HostName = %s \n", p_hostname);
 
-					notifyCbFnPtr = getNotifyCB();
+					rbusnotifyCbFnPtr = getNotifyCB();
 
-					if (NULL == notifyCbFnPtr)
+					if (NULL == rbusnotifyCbFnPtr)
 					{
-						WalError("Fatal: notifyCbFnPtr is NULL\n");
-						return FALSE;
+						WalError("Fatal: rbusnotifyCbFnPtr is NULL\n");
+						return RBUS_ERROR_BUS_ERROR;
 					}
 					else
 					{
@@ -268,7 +272,7 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 			{
 				WalInfo("Call datamodel function  with data %s \n", data);
 				notifyVal = strdup(data);
-				WEBPA_FREE(data);
+				WAL_FREE(data);
 				WalInfo("notifyVal is %s\n", notifyVal);
 			}
 
@@ -291,9 +295,9 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 				        value_type = atoi(p_val_type);
 				        write_id = atoi(p_write_id);
 
-				        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
-				        WalPrint(" \n Notification : Value Type = %d \n", value_type);
-				        WalPrint(" \n Notification : Component ID = %d \n", write_id);
+				        WalInfo(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
+				        WalInfo(" \n Notification : Value Type = %d \n", value_type);
+				        WalInfo(" \n Notification : Component ID = %d \n", write_id);
 					#if 0 /*Removing Logging of Password due to security requirement*/
 				        WalPrint(" \n Notification : New Value = %s \n", p_new_val);
 				        WalPrint(" \n Notification : Old Value = %s \n", p_old_val);
@@ -306,13 +310,13 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 						sleep(90);
 					}
 
-				        param.parameterName = p_notify_param_name;
+				       /* param.parameterName = p_notify_param_name;
 				        param.oldValue = p_old_val;
 				        param.newValue = p_new_val;
 				        param.type = value_type;
 				        param.writeID = write_id;
 
-				        ccspWebPaValueChangedCB(&param,0,NULL);
+				        ccspWebPaValueChangedCB(&param,0,NULL);*/ //TODO:implement sync notify
 				}
 				else
 				{
