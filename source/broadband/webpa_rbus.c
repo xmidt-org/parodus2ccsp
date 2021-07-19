@@ -231,7 +231,9 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 					else
 					{
 						// Data received from stack is not sent upstream to server for Connected Client
+						WalInfo("B4 sendConnectedClientNotification\n");
 						sendConnectedClientNotification(p_mac_id, p_status, p_interface_name, p_hostname);
+						WalInfo("After sendConnectedClientNotification\n");
 					}
 				}
 				else

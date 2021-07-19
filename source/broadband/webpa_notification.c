@@ -384,7 +384,7 @@ void sendConnectedClientNotification(char * macId, char *status, char *interface
 	{
 		node = (NodeData *) malloc(sizeof(NodeData) * 1);
 		memset(node, 0, sizeof(NodeData));
-		WalPrint("macId : %s status : %s interface : %s hostname :%s\n",macId,status, interface, hostname);
+		WalInfo("macId : %s status : %s interface : %s hostname :%s\n",macId,status, interface, hostname);
 		node->nodeMacId = (char *)(malloc(sizeof(char) * strlen(macId) + 1));
 		strncpy(node->nodeMacId, macId, strlen(macId) + 1);
 
@@ -397,12 +397,13 @@ void sendConnectedClientNotification(char * macId, char *status, char *interface
 		node->hostname = (char *)(malloc(sizeof(char) * strlen(hostname) + 1));
 		strncpy(node->hostname, hostname, strlen(hostname) + 1);
 		
-		WalPrint("node->nodeMacId : %s node->status: %s node->interface: %s node->hostname: %s\n",node->nodeMacId,node->status, node->interface, node->hostname);
+		WalInfo("node->nodeMacId : %s node->status: %s node->interface: %s node->hostname: %s\n",node->nodeMacId,node->status, node->interface, node->hostname);
 	}
 
 	notifyDataPtr->u.node = node;
 
 	(*notifyCbFn)(notifyDataPtr);
+	WalInfo("sendConnectedClientNotification End\n");
 }
 
 void processDeviceManageableNotification()
@@ -833,14 +834,14 @@ static void addNotifyMsgToQueue(NotifyData *notifyData)
 		message->notifyData = notifyData;
 		message->next = NULL;
 		pthread_mutex_lock (&mut);
-		WalPrint("addNotifyMsgToQueue :mutex lock in producer thread\n");
+		WalInfo("addNotifyMsgToQueue :mutex lock in producer thread\n");
 		if(notifyMsgQ == NULL)
 		{
 			notifyMsgQ = message;
-			WalPrint("addNotifyMsgToQueue : Producer added message\n");
+			WalInfo("addNotifyMsgToQueue : Producer added message\n");
 		 	pthread_cond_signal(&con);
 			pthread_mutex_unlock (&mut);
-			WalPrint("addNotifyMsgToQueue :mutex unlock in producer thread\n");
+			WalInfo("addNotifyMsgToQueue :mutex unlock in producer thread\n");
 		}
 		else
 		{
@@ -858,7 +859,7 @@ static void addNotifyMsgToQueue(NotifyData *notifyData)
 		//Memory allocation failed
 		WalError("Memory allocation is failed\n");
 	}
-	WalPrint("*****Returned from addNotifyMsgToQueue*****\n");
+	WalInfo("*****Returned from addNotifyMsgToQueue*****\n");
 }
 
 
@@ -870,23 +871,23 @@ static void handleNotificationEvents()
 	while(1)
 	{
 		pthread_mutex_lock (&mut);
-		WalPrint("handleNotificationEvents : mutex lock in consumer thread\n");
+		WalInfo("handleNotificationEvents : mutex lock in consumer thread\n");
 		if(notifyMsgQ != NULL)
 		{
 			NotifyMsg *message = notifyMsgQ;
 			notifyMsgQ = notifyMsgQ->next;
 			pthread_mutex_unlock (&mut);
-			WalPrint("handleNotificationEvents : mutex unlock in consumer thread\n");
+			WalInfo("handleNotificationEvents : mutex unlock in consumer thread\n");
 			NotifyData *notifyData = message->notifyData;
 			processNotification(notifyData);
 			WAL_FREE(message);
 		}
 		else
 		{		
-			WalPrint("handleNotificationEvents : Before pthread cond wait in consumer thread\n");   
+			WalInfo("handleNotificationEvents : Before pthread cond wait in consumer thread\n");
 			pthread_cond_wait(&con, &mut);
 			pthread_mutex_unlock (&mut);
-			WalPrint("handleNotificationEvents : mutex unlock in consumer thread after cond wait\n");
+			WalInfo("handleNotificationEvents : mutex unlock in consumer thread after cond wait\n");
 		}
 	}
 }
@@ -1076,7 +1077,7 @@ void processNotification(NotifyData *notifyData)
 	char *reason = NULL;
 
 	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
-	WalPrint("Device_id %s\n", device_id);
+	WalInfo("Device_id %s\n", device_id);
 
 	cJSON_AddStringToObject(notifyPayload, "device_id", device_id);
 
@@ -1147,10 +1148,10 @@ void processNotification(NotifyData *notifyData)
 
 	        	case CONNECTED_CLIENT_NOTIFY:
 	        	{
-	        		WalPrint("Processing connected client notification\n");
+				WalInfo("Processing connected client notification\n");
 	        		processConnectedClientNotification(notifyData->u.node, device_id,
 	        				&version, &nodeMacId, &timeStamp, &dest);
-
+				WalInfo("After processConnectedClientNotification\n");
 	        		cJSON_AddStringToObject(notifyPayload, "timestamp",
 	        				(NULL != timeStamp) ? timeStamp : "unknown");
 	        		cJSON_AddItemToObject(notifyPayload, "nodes", nodes =
@@ -1232,7 +1233,7 @@ void processNotification(NotifyData *notifyData)
 	        }
 
 	        stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
-	        WalPrint("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
+	        WalInfo("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
 
 	        if (stringifiedNotifyPayload != NULL
 	        		&& strlen(device_id) != 0)
@@ -1240,17 +1241,18 @@ void processNotification(NotifyData *notifyData)
 	        	source = (char*) malloc(sizeof(char) * sizeof(device_id));
 	        	walStrncpy(source, device_id, sizeof(device_id));
 	        	sendNotification(stringifiedNotifyPayload, source, dest);
-	        	WalPrint("After sendNotification\n");
+			WalInfo("After sendNotification\n");
 	        }
 
-	        WalPrint("Freeing notifyData ....\n");
+	        WalInfo("Freeing notifyData ....\n");
 	        freeNotifyMessage(notifyData);
-	        WalPrint("notifyData is freed.\n");
+	        WalInfo("notifyData is freed.\n");
 	    }
 
 	    free(dest);
         }
 		cJSON_Delete(notifyPayload);
+	WalInfo("End ProcessNotification\n");
 }
 
 /*
@@ -1487,19 +1489,19 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
 	{
 		if(connectedNotify->status != NULL)
 		{
-			WalPrint("Framing status\n");
+			WalInfo("Framing status\n");
 			len += strlen(connectedNotify->status);
 		}
 
 		if(connectedNotify->nodeMacId != NULL)
 		{
 			macToLower(connectedNotify->nodeMacId, nodeMAC);
-			WalPrint("nodeMAC %s, connectedNotify->nodeMacId %s\n",nodeMAC,connectedNotify->nodeMacId);
+			WalInfo("nodeMAC %s, connectedNotify->nodeMacId %s\n",nodeMAC,connectedNotify->nodeMacId);
 			len += strlen(nodeMAC);
-			WalPrint("Framing nodeMacId\n");
+			WalInfo("Framing nodeMacId\n");
 			(*nodeMacId) = malloc(sizeof(char)* (strlen(nodeMAC) + 1));
 			strncpy((*nodeMacId), nodeMAC, (strlen(nodeMAC) + 1));
-			WalPrint("(*nodeMacId) :%s\n",(*nodeMacId));
+			WalInfo("(*nodeMacId) :%s\n",(*nodeMacId));
 		}
 
 		if(len > 0)
@@ -1508,20 +1510,23 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
 			nodeData = (char *)(malloc(sizeof(char) * (len + 1)));
 			//E.g. connected/unknown/112233445566
 			snprintf(nodeData, len + 1, "%s/unknown/%s",((NULL != connectedNotify->status) ? connectedNotify->status : "unknown"), ((NULL != connectedNotify->nodeMacId) ? nodeMAC : "unknown"));
-			WalPrint("nodeData : %s\n",nodeData);
+			WalInfo("nodeData : %s\n",nodeData);
 		}
 	}
 
-	WalPrint("nodeData is : %s\n",nodeData);
+	WalInfo("nodeData is : %s\n",nodeData);
 
 	sprintf(*destination,"event:node-change/%s/%s",deviceId,((NULL != nodeData) ? nodeData : "unknown"));
 
-	WalPrint("(*destination) : %s\n",(*destination));
+	WalInfo("(*destination) : %s\n",(*destination));
 
-	*version = getParameterValue(PARAM_HOSTS_VERSION);
-	WalPrint("*version : %s\n",*version);
+	//*version = getParameterValue(PARAM_HOSTS_VERSION);
+	*version = strdup("35");
+	WalInfo("*version : %s\n",*version);
 
-	*timeStamp = getParameterValue(PARAM_SYSTEM_TIME);
+	//*timeStamp = getParameterValue(PARAM_SYSTEM_TIME);
+	*timeStamp = strdup("11122");
+	WalInfo("*timeStamp : %s\n",*timeStamp);
 	if(*timeStamp == NULL)
 	{
 		clock_gettime(CLOCK_REALTIME, &sysTime);
@@ -1533,10 +1538,10 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
 		sprintf(sbuf, "%ld.%09ld", sysTime.tv_sec, sysTime.tv_nsec);
 		*timeStamp = (char *) malloc (sizeof(char) * 64);
 		strcpy(*timeStamp, sbuf);
-		WalPrint("*timeStamp : %s\n",*timeStamp);
+		WalInfo("*timeStamp : %s\n",*timeStamp);
 	}
 	WAL_FREE(nodeData);
-	WalPrint("End of processConnectedClientNotification\n");
+	WalInfo("End of processConnectedClientNotification\n");
 
 }
 
@@ -1545,11 +1550,11 @@ static void processConnectedClientNotification(NodeData *connectedNotify, char *
  */
 static void freeNotifyMessage(NotifyData *notifyData)
 {
-	WalPrint("Inside freeNotifyMessage\n");
+	WalInfo("Inside freeNotifyMessage\n");
 
 	if(notifyData->type == PARAM_NOTIFY)
 	{
-		WalPrint("Free notifyData->u.notify\n");
+		WalInfo("Free notifyData->u.notify\n");
 		WAL_FREE(notifyData->u.notify);
 	}
 	else if(notifyData->type == TRANS_STATUS)
@@ -1557,9 +1562,9 @@ static void freeNotifyMessage(NotifyData *notifyData)
 		if(notifyData->u.status->transId !=NULL)
 		{
 			WAL_FREE(notifyData->u.status->transId);
-			WalPrint("Free notifyData->u.status->transId\n");
+			WalInfo("Free notifyData->u.status->transId\n");
 		}
-		WalPrint("Free notifyData->u.status\n");
+		WalInfo("Free notifyData->u.status\n");
 		WAL_FREE(notifyData->u.status);
 	}
 	else if(notifyData->type == CONNECTED_CLIENT_NOTIFY)
@@ -1567,24 +1572,24 @@ static void freeNotifyMessage(NotifyData *notifyData)
 		if(notifyData->u.node->nodeMacId != NULL)
 		{
 			WAL_FREE(notifyData->u.node->nodeMacId);
-			WalPrint("Free notifyData->u.node->nodeMacId\n");
+			WalInfo("Free notifyData->u.node->nodeMacId\n");
 		}
 		if(notifyData->u.node->status != NULL)
 		{
 			WAL_FREE(notifyData->u.node->status);
-			WalPrint("Free notifyData->u.node->status\n");
+			WalInfo("Free notifyData->u.node->status\n");
 		}
 		if(notifyData->u.node->interface != NULL)
 		{
 			WAL_FREE(notifyData->u.node->interface);
-			WalPrint("Free notifyData->u.node->interface\n");
+			WalInfo("Free notifyData->u.node->interface\n");
 		}
 		if(notifyData->u.node->hostname != NULL)
 		{
 			WAL_FREE(notifyData->u.node->hostname);
-			WalPrint("Free notifyData->u.node->hostname\n");
+			WalInfo("Free notifyData->u.node->hostname\n");
 		}
-		WalPrint("Free notifyData->u.node\n");
+		WalInfo("Free notifyData->u.node\n");
 		WAL_FREE(notifyData->u.node);
 	}
 	else if(notifyData->type == DEVICE_STATUS)
@@ -1593,10 +1598,10 @@ static void freeNotifyMessage(NotifyData *notifyData)
 		WAL_FREE(notifyData->u.device);
 	}
 
-	WalPrint("Free notifyData\n");
+	WalInfo("Free notifyData\n");
 	WAL_FREE(notifyData);
 
-	WalPrint("free done from freeNotifyMessage\n");
+	WalInfo("free done from freeNotifyMessage\n");
 }
 
 static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
