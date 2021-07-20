@@ -24,6 +24,7 @@
 #include <rbus/rbus_object.h>
 #include <rbus/rbus_property.h>
 #include <rbus/rbus_value.h>
+#include <rbus-core/rbus_core.h>
 #include <stdlib.h>
 #include <wdmp-c.h>
 #include <cimplog.h>
@@ -41,6 +42,15 @@ static char* syncVersionVal = NULL ;
 static bool isRbus = false ;
 
 void (*rbusnotifyCbFnPtr)(NotifyData*) = NULL;
+
+typedef struct
+{
+    char *paramName;
+    char *paramValue;
+    rbusValueType_t type;
+} rbusParamVal_t;
+
+static char *PSMPrefix  = "eRT.com.cisco.spvtg.ccsp.webpa.";
 
 bool get_global_isRbus(void)
 {
@@ -81,7 +91,8 @@ WDMP_STATUS webpaRbusInit(const char *pComponentName)
 	return WDMP_SUCCESS;
 }
 
-static void webpaRbus_Uninit( ) {
+static void webpaRbus_Uninit()
+{
     rbus_close(rbus_handle);
 }
 
@@ -119,6 +130,7 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 	//TODO:parameterSigStruct_t param = {0};
    #endif
 
+    rbusError_t retPsmSet = RBUS_ERROR_BUS_ERROR;
     WalInfo("Parameter name is %s \n", paramName);
     rbusValueType_t type_t;
     rbusValue_t paramValue_t = rbusProperty_GetValue(prop);
@@ -154,6 +166,17 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
                 CIDVal = strdup(data);
                 free(data);
 		WalInfo("CIDVal after processing %s\n", CIDVal);
+		WalInfo("CIDVal bus_StoreValueIntoDB\n");
+		retPsmSet = rbus_StoreValueIntoDB( "X_COMCAST-COM_CID", CIDVal );
+		if (retPsmSet != RBUS_ERROR_SUCCESS)
+		{
+			WalError("psm_set failed ret %d for parameter %s and value %s\n", retPsmSet, paramName, CIDVal);
+			return retPsmSet;
+		}
+		else
+		{
+			WalInfo("psm_set success ret %d for parameter %s and value %s\n", retPsmSet, paramName, CIDVal);
+		}
             }
         } else {
             WalError("Unexpected value type for property %s\n", paramName);
@@ -360,6 +383,7 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     (void) opts;
     char const* propertyName;
     char* componentName = NULL;
+    rbusError_t retPsmGet = RBUS_ERROR_BUS_ERROR;
 
     propertyName = strdup(rbusProperty_GetName(property));
     if(propertyName) {
@@ -382,10 +406,23 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     }else if(strncmp(propertyName, WEBPA_CID_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
-        if(CIDVal)
+
+        if(CIDVal){
             rbusValue_SetString(value, CIDVal);
-        else
-            rbusValue_SetString(value, "");
+	}
+        else{
+		WalInfo("B4 rbus_GetValueFromDB\n");
+		retPsmGet = rbus_GetValueFromDB( "X_COMCAST-COM_CID", &CIDVal );
+		if (retPsmGet != RBUS_ERROR_SUCCESS){
+			WalError("psm_get failed ret %d for parameter %s and value %s\n", retPsmGet, propertyName, CIDVal);
+			return retPsmGet;
+		}
+		else{
+			WalInfo("psm_get success ret %d for parameter %s and value %s\n", retPsmGet, propertyName, CIDVal);
+			rbusValue_SetString(value, CIDVal);
+			WalInfo("After CIDVal set to value\n");
+		}
+	}
         rbusProperty_SetValue(property, value);
 	WalInfo("CID value fetched is %s\n", value);
         rbusValue_Release(value);
@@ -439,6 +476,167 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
 
     WalInfo("webpaDataGetHandler End\n");
     return RBUS_ERROR_SUCCESS;
+}
+
+/**
+ * To persist TR181 parameter values in PSM DB.
+ */
+rbusError_t rbus_StoreValueIntoDB(char *paramName, char *value)
+{
+	char recordName[ 256] = {'\0'};
+	char psmName[256] = {'\0'};
+	rbusParamVal_t val[1];
+	bool commit = TRUE;
+	rbusError_t errorcode = RBUS_ERROR_INVALID_INPUT;
+	rbus_error_t err = RTMESSAGE_BUS_SUCCESS;
+
+	sprintf(recordName, "%s%s",PSMPrefix, paramName);
+	WalInfo("rbus_StoreValueIntoDB recordName is %s\n", recordName);
+
+	val[0].paramName  = recordName;
+	val[0].paramValue = value;
+	val[0].type = 0;
+
+	sprintf(psmName, "%s%s", "eRT.", DEST_COMP_ID_PSM);
+	WalInfo("rbus_StoreValueIntoDB psmName is %s\n", psmName);
+
+	rbusMessage request, response;
+
+	rbusMessage_Init(&request);
+	rbusMessage_SetInt32(request, 0); //sessionId
+	rbusMessage_SetString(request, WEBPA_COMPONENT_NAME); //component name that invokes the set
+	rbusMessage_SetInt32(request, (int32_t)1); //size of params
+
+	rbusMessage_SetString(request, val[0].paramName); //param details
+	rbusMessage_SetInt32(request, val[0].type);
+	rbusMessage_SetString(request, val[0].paramValue);
+	rbusMessage_SetString(request, commit ? "TRUE" : "FALSE");
+
+
+	if((err = rbus_invokeRemoteMethod(psmName, METHOD_SETPARAMETERVALUES, request, 6000, &response)) != RTMESSAGE_BUS_SUCCESS)
+        {
+            WalError("rbus_invokeRemoteMethod failed with err %d", err);
+            errorcode = RBUS_ERROR_BUS_ERROR;
+        }
+        else
+        {
+            int ret = -1;
+            char const* pErrorReason = NULL;
+            rbusMessage_GetInt32(response, &ret);
+
+            WalInfo("Response from the remote method is [%d]!", ret);
+            errorcode = (rbusError_t) ret;
+
+            if((errorcode == RBUS_ERROR_SUCCESS) || (errorcode == CCSP_SUCCESS)) //legacy error codes returned from component PSM.
+            {
+                errorcode = RBUS_ERROR_SUCCESS;
+                WalInfo("Successfully Set the Value");
+            }
+            else
+            {
+                rbusMessage_GetString(response, &pErrorReason);
+                WalError("Failed to Set the Value for %s", pErrorReason);
+            }
+
+            rbusMessage_Release(response);
+        }
+
+	return errorcode;
+}
+
+/**
+ * To fetch TR181 parameter values from PSM DB.
+ */
+rbusError_t rbus_GetValueFromDB( char* paramName, char** paramValue)
+{
+	char recordName[ 256] = {'\0'};
+	char psmName[256] = {'\0'};
+	//rbusParamVal_t val[1]= {NULL};
+	char * parameterNames[1] = {NULL};
+	int32_t type = 0;
+	rbusError_t errorcode = RBUS_ERROR_INVALID_INPUT;
+	rbus_error_t err = RTMESSAGE_BUS_SUCCESS;
+	*paramValue = NULL;
+
+	sprintf(recordName, "%s%s",PSMPrefix, paramName);
+	WalInfo("rbus_GetValueFromDB recordName is %s\n", recordName);
+
+	//val[0].paramName  = (char*)recordName;
+	//val[0].paramValue = NULL;
+	//val[0].type = 0; //string type
+	parameterNames[0] = (char*)recordName;
+	WalInfo("rbus_GetValueFromDB parameterNames[0] is %s\n", parameterNames[0]);
+	//WalInfo("rbus_GetValueFromDB val[0].paramName is %s\n", val[0].paramName);
+
+	sprintf(psmName, "%s%s", "eRT.", DEST_COMP_ID_PSM);
+	WalInfo("rbus_GetValueFromDB psmName is %s\n", psmName);
+
+	rbusMessage request, response;
+
+	rbusMessage_Init(&request);
+	//rbusMessage_SetInt32(request, 0); //sessionId
+	rbusMessage_SetString(request, psmName); //component name that invokes the get
+	rbusMessage_SetInt32(request, (int32_t)1); //size of params
+
+	//rbusMessage_SetString(request, val[0].paramName); //param details
+	//rbusMessage_SetInt32(request, val[0].type);
+	//rbusMessage_SetString(request, val[0].paramValue);
+	rbusMessage_SetString(request, parameterNames[0]); //param details
+	//rbusMessage_SetInt32(request, 0); //for string type
+
+	WalInfo("B4 rbus_invokeRemoteMethod..\n");
+	if((err = rbus_invokeRemoteMethod(psmName, METHOD_GETPARAMETERVALUES, request, 6000, &response)) != RTMESSAGE_BUS_SUCCESS)
+        {
+            WalError("rbus_invokeRemoteMethod GET failed with err %d\n", err);
+            errorcode = RBUS_ERROR_BUS_ERROR;
+        }
+        else
+        {
+            int valSize=0;
+	    int ret = -1;
+	    rbusMessage_GetInt32(response, &ret);
+	    WalInfo("Response from the remote method is [%d]!\n",ret);
+            errorcode = (rbusError_t) ret;
+
+	    if((errorcode == RBUS_ERROR_SUCCESS) || (errorcode == CCSP_SUCCESS)) //legacy error code from component.
+            {
+                WalInfo("Successfully Get the Value\n");
+		errorcode = RBUS_ERROR_SUCCESS;
+		WalInfo("Received valid response!\n");
+		rbusMessage_GetInt32(response, &valSize);
+		if(1/*valSize*/)
+		{
+			char const *buff = NULL;
+
+			//Param Name
+			rbusMessage_GetString(response, &buff);
+			WalInfo("Requested param buff [%s]\n", buff);
+			if(buff && (strcmp(recordName, buff) == 0))
+			{
+				rbusMessage_GetInt32(response, &type);
+				WalInfo("Requested param type [%d]\n", type);
+				buff = NULL;
+				rbusMessage_GetString(response, &buff);
+				*paramValue = strdup(buff); //free buff
+				WalInfo("Requested param DB value [%s]\n", *paramValue);
+			}
+			else
+			{
+			    WalError("Requested param: [%s], Received Param: [%s]\n", recordName, buff);
+			    errorcode = RBUS_ERROR_BUS_ERROR;
+			}
+		}
+            }
+            else
+            {
+		WalError("Response from remote Get method failed!!\n");
+		errorcode = RBUS_ERROR_BUS_ERROR;
+            }
+
+            rbusMessage_Release(response);
+        }
+	WalInfo("rbus_GetValueFromDB End\n");
+	return errorcode;
 }
 
 /**

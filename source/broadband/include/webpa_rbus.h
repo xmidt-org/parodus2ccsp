@@ -24,6 +24,7 @@
 #include "webpa_adapter.h"
 #include <wdmp-c.h>
 #include <cimplog.h>
+#include <rbus/rbus.h>
 
 #define buffLen 1024
 #define maxParamLen 128
@@ -31,6 +32,8 @@
 #define NUM_WEBPA_ELEMENTS 6
 #define COMPONENT_ID_NOTIFY_COMP "writeid_notify"
 #define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
+
+#define DEST_COMP_ID_PSM   "com.cisco.spvtg.ccsp.psm"
 
 // Data elements provided by webpa
 
@@ -40,5 +43,8 @@
 #define WEBPA_CMC_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC"
 #define WEBPA_CID_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_CID"
 #define WEBPA_SYNCVERSION_PARAM "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
+
+rbusError_t rbus_GetValueFromDB( char* paramName, char** paramValue);
+rbusError_t rbus_StoreValueIntoDB(char *paramName, char *value);
 
 #endif
