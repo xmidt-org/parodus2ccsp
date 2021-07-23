@@ -697,22 +697,22 @@ static PARAMVAL_CHANGE_SOURCE mapWriteID(unsigned int writeID)
 
 	switch(writeID)
 	{
-		case CCSP_COMPONENT_ID_ACS:
+		case DSLH_MPA_ACCESS_CONTROL_ACS:
 			source = CHANGED_BY_ACS;
 			break;
-		case CCSP_COMPONENT_ID_WebPA:
+		case DSLH_MPA_ACCESS_CONTROL_WEBPA:
 			source = CHANGED_BY_WEBPA;
 			break;
-		case CCSP_COMPONENT_ID_XPC:
+		case DSLH_MPA_ACCESS_CONTROL_XPC:
 			source = CHANGED_BY_XPC;
 			break;
 		case DSLH_MPA_ACCESS_CONTROL_CLIENTTOOL:
 			source = CHANGED_BY_CLI;
 			break;
-		case CCSP_COMPONENT_ID_SNMP:
+		case DSLH_MPA_ACCESS_CONTROL_SNMP:
 			source = CHANGED_BY_SNMP;
 			break;
-		case CCSP_COMPONENT_ID_WebUI:
+		case DSLH_MPA_ACCESS_CONTROL_WEBUI:
 			source = CHANGED_BY_WEBUI;
 			break;
 		default:
