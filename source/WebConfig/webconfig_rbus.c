@@ -40,6 +40,8 @@
 #define RBUS_PSM              "com.cisco.spvtg.ccsp.psm"
 #define RBUS_UNREFERENCED_PARAMETER(_p_)         (void)(_p_)
 
+static char *rbusParamRFCEnable = "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable";
+
 static bool  RfcVal = false ;
 static char* ForceSyncVal = NULL ;
 static char* URLVal = NULL ;
@@ -71,6 +73,25 @@ rbusError_t rbus_GetParamValues(rbusHandle_t rbus_handle, const char* dst_compon
 rbusError_t rbus_SetParamValues(rbusHandle_t rbus_handle, const char* dst_component_id, char* rbus_path, int sessionId, char* writeID_str, rbusParameterValStruct_t *val, int size, rbus_bool commit, char ** invalidParameterName);
 
 void free_rbusParameterValStruct_t(int size,rbusParameterValStruct_t **val);
+
+bool get_RfcEnable_From_DB(bool *bValue)
+{
+    rbusHandle_t rbus_handle = get_global_rbus_handle();
+    char* strValue = NULL;
+    *bValue = false;
+
+    if (RBUS_ERROR_SUCCESS == rbus_psm_get(rbus_handle,"eRT.", rbusParamRFCEnable, NULL, &strValue))
+    {
+        if(((strcmp (strValue, "true") == 0)) || (strcmp (strValue, "TRUE") == 0))
+	{
+            *bValue = true;
+        }
+        free(strValue);
+        return true;
+    }
+    WebcfgDebug("-------- %s ----- Exit-- ---\n",__FUNCTION__);
+    return false;
+}
 
 int set_Webconfig_Url_Rbus(char * url)
 {
@@ -368,10 +389,12 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         rbusValue_t value;
         rbusValue_Init(&value);
 
+	get_RfcEnable_From_DB(&RfcVal);
+
         rbusValue_SetBoolean(value, RfcVal); 
 
         rbusProperty_SetValue(property, value);
-        WebcfgInfo("Rfc value fetched is %s\n", value);
+        WebcfgInfo("Rfc value fetched is %s\n", (rbusValue_GetBoolean(value)==true)?"true":"false");
         rbusValue_Release(value);
 
     }

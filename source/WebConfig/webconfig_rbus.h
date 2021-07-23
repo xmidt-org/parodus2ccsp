@@ -36,6 +36,7 @@
 #define WEBCONFIG_RBUS_PARAM_SUPPLEMENTARY_TELEMETRY     "Device.X_RDK_WebConfig.SupplementaryServiceUrls.Telemetry"
 
 WDMP_STATUS regWebConfigDataModel();
+bool get_RfcEnable_From_DB(bool *bValue);
 int set_Webconfig_Url_Rbus(char * url);
 int get_Webconfig_Url_Rbus(char ** url);
 #endif
