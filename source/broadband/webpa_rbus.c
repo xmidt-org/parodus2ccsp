@@ -144,8 +144,22 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
     if(strncmp(paramName, WEBPA_CMC_PARAM, maxParamLen) == 0) {
         WalInfo("Inside CMC datamodel handler \n");
         if(type_t == RBUS_UINT32) {
-            CMCVal = rbusValue_GetUInt32(paramValue_t);
-	    WalInfo("CMCVal after processing\n");
+	    char tmpchar[8] = {'\0'};
+
+	    snprintf(tmpchar,sizeof(tmpchar),"%d",paramValue_t);
+	    WalInfo("tmpchar is %s\n", tmpchar);
+	    retPsmSet = rbus_StoreValueIntoDB( "X_COMCAST-COM_CMC", tmpchar );
+	    if (retPsmSet != RBUS_ERROR_SUCCESS)
+	    {
+		WalError("psm_set failed ret %d for parameter %s and value %s\n", retPsmSet, paramName, tmpchar);
+		return retPsmSet;
+	    }
+	    else
+	    {
+		WalInfo("psm_set success ret %d for parameter %s and value %s\n", retPsmSet, paramName, tmpchar);
+		CMCVal = rbusValue_GetUInt32(paramValue_t);
+	    }
+	    WalInfo("CMCVal after processing %d\n", CMCVal);
         } else {
             WalError("Unexpected value type for property %s \n", paramName);
 	    return RBUS_ERROR_INVALID_INPUT;
@@ -196,6 +210,17 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
                 syncVersionVal = strdup(data);
                 free(data);
 		WalInfo("syncVersionVal after processing %s\n", syncVersionVal);
+		WalInfo("syncVersionVal bus_StoreValueIntoDB\n");
+		retPsmSet = rbus_StoreValueIntoDB( "X_COMCAST-COM_SyncProtocolVersion", syncVersionVal );
+		if (retPsmSet != RBUS_ERROR_SUCCESS)
+		{
+			WalError("psm_set failed ret %d for parameter %s and value %s\n", retPsmSet, paramName, syncVersionVal);
+			return retPsmSet;
+		}
+		else
+		{
+			WalInfo("psm_set success ret %d for parameter %s and value %s\n", retPsmSet, paramName, syncVersionVal);
+		}
             }
         } else {
             WalError("Unexpected value type for property %s \n", paramName);
@@ -396,9 +421,24 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     if(strncmp(propertyName, WEBPA_CMC_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
+	char *tmpchar = NULL;
+	retPsmGet = rbus_GetValueFromDB( "X_COMCAST-COM_CMC", &tmpchar );
+	if (retPsmGet != RBUS_ERROR_SUCCESS){
+		WalError("psm_get failed ret %d for parameter %s and value %s\n", retPsmGet, propertyName, tmpchar);
+		return retPsmGet;
+	}
+	else{
+		WalInfo("psm_get success ret %d for parameter %s and value %s\n", retPsmGet, propertyName, tmpchar);
+		if(tmpchar != NULL)
+		{
+			WalInfo("B4 atoi\n");
+			CMCVal = atoi(tmpchar);
+		}
+		WalInfo("CMCVal fetched %d\n", CMCVal);
+	}
 
         rbusValue_SetUInt32(value, CMCVal);
-
+	WalInfo("After CMCVal set to value\n");
         rbusProperty_SetValue(property, value);
         rbusValue_Release(value);
 	//WalInfo("CMC value fetched is %s\n", value);
@@ -411,7 +451,6 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
             rbusValue_SetString(value, CIDVal);
 	}
         else{
-		WalInfo("B4 rbus_GetValueFromDB\n");
 		retPsmGet = rbus_GetValueFromDB( "X_COMCAST-COM_CID", &CIDVal );
 		if (retPsmGet != RBUS_ERROR_SUCCESS){
 			WalError("psm_get failed ret %d for parameter %s and value %s\n", retPsmGet, propertyName, CIDVal);
@@ -430,13 +469,25 @@ rbusError_t webpaDataGetHandler(rbusHandle_t handle, rbusProperty_t property, rb
     }else if(strncmp(propertyName, WEBPA_SYNCVERSION_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
+
         if(syncVersionVal)
             rbusValue_SetString(value, syncVersionVal);
-        else
-            rbusValue_SetString(value, "");
+        else{
+		retPsmGet = rbus_GetValueFromDB( "X_COMCAST-COM_SyncProtocolVersion", &syncVersionVal );
+		if (retPsmGet != RBUS_ERROR_SUCCESS){
+			WalError("psm_get failed ret %d for parameter %s and value %s\n", retPsmGet, propertyName, syncVersionVal);
+			return retPsmGet;
+		}
+		else{
+			WalInfo("psm_get success ret %d for parameter %s and value %s\n", retPsmGet, propertyName, syncVersionVal);
+			rbusValue_SetString(value, syncVersionVal);
+			WalInfo("After syncVersionVal set to value\n");
+		}
+	}
+
         rbusProperty_SetValue(property, value);
-        rbusValue_Release(value);
 	WalInfo("Sync protocol version fetched is %s\n", value);
+        rbusValue_Release(value);
     }else if(strncmp(propertyName, WEBPA_CONNECTED_CLIENT_PARAM, maxParamLen) == 0) {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -551,7 +602,6 @@ rbusError_t rbus_GetValueFromDB( char* paramName, char** paramValue)
 {
 	char recordName[ 256] = {'\0'};
 	char psmName[256] = {'\0'};
-	//rbusParamVal_t val[1]= {NULL};
 	char * parameterNames[1] = {NULL};
 	int32_t type = 0;
 	rbusError_t errorcode = RBUS_ERROR_INVALID_INPUT;
@@ -561,12 +611,7 @@ rbusError_t rbus_GetValueFromDB( char* paramName, char** paramValue)
 	sprintf(recordName, "%s%s",PSMPrefix, paramName);
 	WalInfo("rbus_GetValueFromDB recordName is %s\n", recordName);
 
-	//val[0].paramName  = (char*)recordName;
-	//val[0].paramValue = NULL;
-	//val[0].type = 0; //string type
 	parameterNames[0] = (char*)recordName;
-	WalInfo("rbus_GetValueFromDB parameterNames[0] is %s\n", parameterNames[0]);
-	//WalInfo("rbus_GetValueFromDB val[0].paramName is %s\n", val[0].paramName);
 
 	sprintf(psmName, "%s%s", "eRT.", DEST_COMP_ID_PSM);
 	WalInfo("rbus_GetValueFromDB psmName is %s\n", psmName);
@@ -574,17 +619,11 @@ rbusError_t rbus_GetValueFromDB( char* paramName, char** paramValue)
 	rbusMessage request, response;
 
 	rbusMessage_Init(&request);
-	//rbusMessage_SetInt32(request, 0); //sessionId
 	rbusMessage_SetString(request, psmName); //component name that invokes the get
 	rbusMessage_SetInt32(request, (int32_t)1); //size of params
 
-	//rbusMessage_SetString(request, val[0].paramName); //param details
-	//rbusMessage_SetInt32(request, val[0].type);
-	//rbusMessage_SetString(request, val[0].paramValue);
 	rbusMessage_SetString(request, parameterNames[0]); //param details
-	//rbusMessage_SetInt32(request, 0); //for string type
 
-	WalInfo("B4 rbus_invokeRemoteMethod..\n");
 	if((err = rbus_invokeRemoteMethod(psmName, METHOD_GETPARAMETERVALUES, request, 6000, &response)) != RTMESSAGE_BUS_SUCCESS)
         {
             WalError("rbus_invokeRemoteMethod GET failed with err %d\n", err);
@@ -602,7 +641,6 @@ rbusError_t rbus_GetValueFromDB( char* paramName, char** paramValue)
             {
                 WalInfo("Successfully Get the Value\n");
 		errorcode = RBUS_ERROR_SUCCESS;
-		WalInfo("Received valid response!\n");
 		rbusMessage_GetInt32(response, &valSize);
 		if(1/*valSize*/)
 		{
