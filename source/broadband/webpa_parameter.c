@@ -15,6 +15,7 @@
 #else
 #include "webpa_internal.h"
 #endif
+#include "dslh_definitions_database.h"
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -654,7 +655,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
         int ret=0, cnt = 0, retIndex=0;
         char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
         char objectName[MAX_PARAMETERNAME_LEN] = { 0 };
-        unsigned int writeID = CCSP_COMPONENT_ID_WebPA;
+        unsigned int writeID = DSLH_MPA_ACCESS_CONTROL_WEBPA;
 
         WalPrint("------------------ start of setParamValues ----------------\n");
         parameterValStruct_t* val = (parameterValStruct_t*) malloc(sizeof(parameterValStruct_t) * paramCount);
@@ -693,7 +694,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
                 }
         }
 
-        writeID = ((setType == WEBPA_ATOMIC_SET_XPC) || (setType == WEBPA_ATOMIC_SET_WEBCONFIG)) ? CCSP_COMPONENT_ID_XPC: CCSP_COMPONENT_ID_WebPA;
+        writeID = ((setType == WEBPA_ATOMIC_SET_XPC) || (setType == WEBPA_ATOMIC_SET_WEBCONFIG)) ? DSLH_MPA_ACCESS_CONTROL_XPC: DSLH_MPA_ACCESS_CONTROL_WEBPA;
 
         if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
@@ -820,7 +821,7 @@ static void *applyWiFiSettingsTask()
 {
 	parameterValStruct_t *RadApplyParam = NULL;
 	char* faultParam = NULL;
-	unsigned int writeID = CCSP_COMPONENT_ID_WebPA;
+	unsigned int writeID = DSLH_MPA_ACCESS_CONTROL_WEBPA;
 	struct timespec start,end,*startPtr,*endPtr;
 	startPtr = &start;
 	endPtr = &end;
