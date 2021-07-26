@@ -146,7 +146,10 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
         if(type_t == RBUS_UINT32) {
 	    char tmpchar[8] = {'\0'};
 
-	    snprintf(tmpchar,sizeof(tmpchar),"%d",paramValue_t);
+	    uint32_t paramval = rbusValue_GetUInt32(paramValue_t);
+	    WalInfo("paramval is %u\n", paramval);
+
+	    snprintf(tmpchar,sizeof(tmpchar),"%u",paramval);
 	    WalInfo("tmpchar is %s\n", tmpchar);
 	    retPsmSet = rbus_StoreValueIntoDB( "X_COMCAST-COM_CMC", tmpchar );
 	    if (retPsmSet != RBUS_ERROR_SUCCESS)
@@ -157,7 +160,7 @@ rbusError_t webpaDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rbusSe
 	    else
 	    {
 		WalInfo("psm_set success ret %d for parameter %s and value %s\n", retPsmSet, paramName, tmpchar);
-		CMCVal = rbusValue_GetUInt32(paramValue_t);
+		CMCVal = paramval;
 	    }
 	    WalInfo("CMCVal after processing %d\n", CMCVal);
         } else {
