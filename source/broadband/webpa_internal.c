@@ -236,16 +236,16 @@ int get_global_operationalStatus(void)
 #endif
 static void *WALInit(void *status)
 {
-	char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
+	/*char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
 	char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
 	int ret = 0, i = 0, size = 0, len = 0, cnt = 0, cnt1 = 0, count = 0, count1 = 0;
 	char paramName[MAX_PARAMETERNAME_LEN] = { 0 };
 	componentStruct_t ** ppComponents = NULL;
 	cachingStatus = 0;
-
+*/
 	WalPrint("------------ WALInit ----------\n");
 	pthread_detach(pthread_self());
-	waitUntilSystemReady();
+	//waitUntilSystemReady();
 	
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	//Function to start webConfig operation after system ready.
@@ -255,13 +255,16 @@ static void *WALInit(void *status)
 	memset(RfcEnable, 0, sizeof(RfcEnable));
 #ifdef RDKB_BUILD
 	char* strValue = NULL;
-	if (CCSP_SUCCESS == PSM_Get_Record_Value2(bus_handle, g_Subsystem, "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable", NULL, &strValue))
+	rbusHandle_t rbus_handle = get_global_rbus_handle();
+	if(RBUS_ERROR_SUCCESS == rbus_psm_get(rbus_handle,"eRT.",  "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable", NULL, &strValue))
+	//if (CCSP_SUCCESS == PSM_Get_Record_Value2(bus_handle, g_Subsystem, "eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable", NULL, &strValue))
 	{
 		WebcfgDebug("strValue %s \n", strValue);
 		if(strValue != NULL)
 		{
 			walStrncpy(RfcEnable, strValue, sizeof(RfcEnable));
-			((CCSP_MESSAGE_BUS_INFO *)bus_handle)->freefunc( strValue );
+			//((CCSP_MESSAGE_BUS_INFO *)bus_handle)->freefunc( strValue );
+			free(strValue);
 		}
 	}
 #endif
@@ -281,7 +284,7 @@ static void *WALInit(void *status)
 	{
 		WebcfgError("WebConfig Rfc Flag is not enabled\n");
 	}
-#endif
+#endif/*
 #if !defined(RDKB_EMU)
 	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
@@ -383,7 +386,7 @@ static void *WALInit(void *status)
 	retryFailedComponentCaching();
 	WalInfo("Component caching is completed. Hence setting cachingStatus to active\n");
 	cachingStatus = 1;
-	WalPrint("-------- End of populateComponentValArray -------\n");
+	WalPrint("-------- End of populateComponentValArray -------\n");*/
 	return NULL;
 }
 

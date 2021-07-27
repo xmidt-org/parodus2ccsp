@@ -49,7 +49,7 @@ static char* BinDataVal = NULL ;
 static char* SupportedDocsVal = NULL ;
 static char* SupportedVersionVal = NULL ;
 static char* SupplementaryUrlVal = NULL ;
-//static char* ForceSyncTransID = NULL;
+static char* ForceSyncTransID = NULL;
 
 int  timeout_seconds        = 60; //seconds
 int  timeout_getval_seconds = 120; //seconds
@@ -90,7 +90,7 @@ int set_rbus_RfcEnable(bool bValue)
 	{
 		buf = strdup("true");
 		WebcfgInfo("Received RFC enable. updating g_shutdown\n");
-		/*if(RfcVal == false)
+		if(RfcVal == false)
 		{
 			pthread_mutex_lock (get_global_sync_mutex());
 			set_global_shutdown(false);
@@ -104,20 +104,20 @@ int set_rbus_RfcEnable(bool bValue)
 	    		{
 				WebcfgInfo("Webconfig is already started, so not starting again for dynamic rfc change.\n");
 	    		}
-		}*/
+		}
 	}
 	else
 	{
 		buf = strdup("false");
 		WebcfgInfo("Received RFC disable. updating g_shutdown\n");
-		/*if(RfcVal == true)
+		if(RfcVal == true)
 		{
-			*//* sending signal to kill initWebConfigMultipartTask thread*//*
+			/* sending signal to kill initWebConfigMultipartTask thread*/
 			pthread_mutex_lock (get_global_sync_mutex());
 			set_global_shutdown(true);
 			pthread_cond_signal(get_global_sync_condition());
 			pthread_mutex_unlock(get_global_sync_mutex());
-		}*/
+		}
 	}
 #ifdef RDKB_BUILD
 	retPsmSet = rbus_psm_set(rbus_handle, "eRT.", rbusParamRFCEnable, 0, buf);
@@ -311,7 +311,7 @@ int set_Supplementary_Url_Rbus(char *name, char * url)
 
     return 1;
 }
-/*
+
 int set_rbus_ForceSync(char* pString, char *transactionId,int *pStatus)
 {
     WebcfgDebug("setForceSync\n");
@@ -335,7 +335,7 @@ int set_rbus_ForceSync(char* pString, char *transactionId,int *pStatus)
         }	
         else
         {
-            *//* sending signal to initWebConfigMultipartTask to update the sync time interval*//*
+            /* sending signal to initWebConfigMultipartTask to update the sync time interval*/
             pthread_mutex_lock (get_global_sync_mutex());
 
             //Update ForceSyncTransID to access webpa transactionId in webConfig sync.
@@ -378,7 +378,7 @@ int get_rbus_ForceSync(char** pString, char **transactionId )
 	WebcfgDebug("*transactionId is %s\n",*transactionId);
 	WebcfgDebug("-------- %s ----- Exit ------\n",__FUNCTION__);
 	return 1;
-}*/
+}
 
 /**
  * Data set handler for WebConfig parameters
@@ -638,14 +638,9 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
     {
         rbusValue_t value;
         rbusValue_Init(&value);
-        if(ForceSyncVal)
-        {
-            rbusValue_SetString(value, ForceSyncVal);
-        }
-        else
-        {
-            rbusValue_SetString(value, "");
-        }
+
+        rbusValue_SetString(value, "");
+
         rbusProperty_SetValue(property, value);
         WebcfgInfo("ForceSync value fetched is %s\n", value);
         rbusValue_Release(value);

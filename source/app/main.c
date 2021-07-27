@@ -31,7 +31,7 @@ static void sig_handler(int sig);
 
 int main()
 {
-        //int ret = -1;
+        int ret = -1;
 
 #ifdef INCLUDE_BREAKPAD
     breakpad_ExceptionHandler();
@@ -76,7 +76,7 @@ int main()
 	//CosaWebpaSyncDB();
 	WalInfo("Webpa banckend manager is in sync with DB\n");
 
-	//initComponentCaching(ret);
+	initComponentCaching(ret);
 	// Initialize Apply WiFi Settings handler
 	//initApplyWiFiSettings();
 	//initNotifyTask(ret);

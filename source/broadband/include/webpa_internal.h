@@ -10,6 +10,8 @@
 #include "ccsp_dm_api.h"
 #include <sys/time.h>
 #include "webpa_adapter.h"
+#include "webpa_rbus.h"
+#include "../../WebConfig/webconfig_rbus.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
