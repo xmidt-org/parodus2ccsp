@@ -431,14 +431,14 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
             if(strstr(parameterNamesLocal[cnt], PARAM_RADIO_OBJECT) != NULL)
             {
                 ret = CCSP_ERR_INVALID_RADIO_INDEX;
-                WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret);
-                OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", parameterNamesLocal[cnt],ret);
+                WalError("%s has invalid Radio index, Valid indexes are 10000, 10100 and 10200. ret = %d\n", parameterNamesLocal[cnt],ret);
+                OnboardLog("%s has invalid Radio index, Valid indexes are 10000, 10100 and 10200. ret = %d\n", parameterNamesLocal[cnt],ret);
             }
             else
             {
                 ret = CCSP_ERR_INVALID_WIFI_INDEX;
-                WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
-                OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",parameterNamesLocal[cnt], ret);
+                WalError("%s has invalid WiFi index, Valid range is between 10001-10008, 10101-10108 and 10201-10208. ret = %d\n",parameterNamesLocal[cnt], ret);
+                OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008, 10101-10108 and 10201-10208. ret = %d\n",parameterNamesLocal[cnt], ret);
             }
             error = 1;
             break;
@@ -671,14 +671,14 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
                         if(strstr(paramName, PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
-		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", paramName,ret);
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000, 10100 and 10200. ret = %d\n", paramName,ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000, 10100 and 10200. ret = %d\n", paramName,ret);
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
-		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
-		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",paramName, ret);
+		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008, 10101-10108 and 10201-10208. ret = %d\n",paramName, ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008, 10101-10108 and 10201-10208. ret = %d\n",paramName, ret);
 		 	}
 			free_set_param_values_memory(val,paramCount,faultParam);
                         return ret;
