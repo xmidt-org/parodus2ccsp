@@ -389,6 +389,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
     rbusError_t retStatus = RBUS_ERROR_SUCCESS;
     WebcfgInfo("Inside webConfigDataSetHandler\n");
     (void) opts;
+    bool RFC_ENABLE;
 
     char const* paramName = rbusProperty_GetName(prop);
     if( (strncmp(paramName, WEBCONFIG_PARAM_RFC_ENABLE, maxParamLen) != 0) &&
@@ -416,7 +417,9 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         return RBUS_ERROR_INVALID_INPUT;
     }
 
-    if(strncmp(paramName, WEBCONFIG_PARAM_RFC_ENABLE, maxParamLen) == 0)
+    RFC_ENABLE = get_rbus_RfcEnable();
+
+    if(strncmp(paramName, WEBCONFIG_PARAM_RFC_ENABLE, maxParamLen) == 0 )
     {
         WebcfgInfo("Inside Rfc datamodel handler \n");
         int retPsmSet = 0; 
@@ -453,7 +456,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_PARAM_FORCE_SYNC, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_FORCE_SYNC, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         WebcfgInfo("Inside ForceSync datamodel handler \n");
 
@@ -486,7 +489,7 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_PARAM_URL, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_URL, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         WebcfgInfo("Inside URL datamodel handler \n");
 	int retPsmSet = 0;
@@ -532,23 +535,23 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
         }
 
     }
-    else if(strncmp(paramName, WEBCONFIG_PARAM_DATA, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_DATA, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         WebcfgError("Data Set is not allowed\n");
         retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
 
     }
-    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         WebcfgError("SupportedDocs Set is not allowed\n");
         retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
     }
-    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         WebcfgError("SupportedSchemaVersion Set is not allowed\n");
         retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
     }
-    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0)
+    else if(strncmp(paramName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         WebcfgInfo("Inside SupplementaryUrl datamodel handler \n");
         int retPsmSet = 0;
@@ -592,6 +595,12 @@ rbusError_t webConfigDataSetHandler(rbusHandle_t handle, rbusProperty_t prop, rb
             retStatus = RBUS_ERROR_INVALID_INPUT;
         }
     }
+    else if(!RFC_ENABLE)
+    {
+        WebcfgError("RFC disabled. Hence not proceeding with SET\n");
+        retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
+    }
+
     WebcfgInfo("webConfigDataSetHandler End\n");
     return retStatus;
 }
@@ -607,6 +616,8 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
     (void) opts;
     char const* propertyName;
     char* componentName = NULL;
+    bool RFC_ENABLE;
+    rbusError_t retStatus = RBUS_ERROR_SUCCESS;
 
     propertyName = strdup(rbusProperty_GetName(property));
     if(propertyName)
@@ -618,6 +629,8 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         WebcfgError("Unable to handle get request for property \n");
         return RBUS_ERROR_INVALID_INPUT;
     }
+
+    RFC_ENABLE = get_rbus_RfcEnable();
 
     if(strncmp(propertyName, WEBCONFIG_PARAM_RFC_ENABLE, maxParamLen) == 0)
     {
@@ -634,7 +647,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         rbusValue_Release(value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_PARAM_FORCE_SYNC, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_FORCE_SYNC, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -646,7 +659,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         rbusValue_Release(value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_PARAM_URL, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_URL, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -670,7 +683,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         rbusValue_Release(value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_PARAM_DATA, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_DATA, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -690,7 +703,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         rbusValue_Release(value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPORTED_DOCS, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -710,7 +723,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         rbusValue_Release(value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPORTED_VERSION, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -730,7 +743,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         rbusValue_Release(value);
 
     }
-    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0)
+    else if(strncmp(propertyName, WEBCONFIG_PARAM_SUPPLEMENTARY_TELEMETRY, maxParamLen) == 0 && RFC_ENABLE == true)
     {
         rbusValue_t value;
         rbusValue_Init(&value);
@@ -754,6 +767,11 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
         WebcfgInfo("SupplementaryUrl value fetched is %s\n", rbusValue_GetString(value, NULL));
         rbusValue_Release(value);
     }
+    else if(!RFC_ENABLE)
+    {
+        WebcfgError("RFC disabled. Hence not proceeding with GET\n");
+        retStatus = RBUS_ERROR_ACCESS_NOT_ALLOWED;
+    }
 
     if(propertyName) {
         free((char*)propertyName);
@@ -761,7 +779,7 @@ rbusError_t webConfigDataGetHandler(rbusHandle_t handle, rbusProperty_t property
     }
 
     WebcfgInfo("webConfigDataGetHandler End\n");
-    return RBUS_ERROR_SUCCESS;
+    return retStatus;
 }
 
 /**

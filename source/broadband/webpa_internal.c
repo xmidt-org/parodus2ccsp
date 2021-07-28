@@ -801,8 +801,10 @@ char * getParameterValue(char *paramName)
 	char *paramValue = (char *) malloc(sizeof(char)*64);
 	paramCount = sizeof(getParamList)/sizeof(getParamList[0]);
 	param_t **parametervalArr = (param_t **) malloc(sizeof(param_t *) * paramCount);
-	
+
+	WalInfo("B4 getValues\n");
 	getValues(getParamList, paramCount, 0, NULL,&parametervalArr, &count, &ret);
+	WalInfo("After getValues\n");
 	
 	if (ret == WDMP_SUCCESS )
 	{
