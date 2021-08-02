@@ -29,6 +29,7 @@
 BOOL bRadioRestartEn = FALSE;
 BOOL bRestartRadio1 = FALSE;
 BOOL bRestartRadio2 = FALSE;
+BOOL bRestartRadio3 = FALSE;
 pthread_mutex_t applySetting_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t applySetting_cond = PTHREAD_COND_INITIALIZER;
 static char current_transaction_id[MAX_PARAMETERVALUE_LEN] = {'\0'};
@@ -43,7 +44,7 @@ static void free_paramVal_memory(param_t ** val, int paramCount);
 static int prepare_parameterValueStruct(parameterValStruct_t* val, param_t *paramVal, char *paramName);
 static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int paramCount,const WEBPA_SET_TYPE setType, char *transactionId);
 static void *applyWiFiSettingsTask();
-static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2); 
+static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3); 
 BOOL applySettingsFlag;
 
 /*----------------------------------------------------------------------------*/
@@ -697,7 +698,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
 
         if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
-                identifyRadioIndexToReset(paramCount,val,&bRestartRadio1,&bRestartRadio2);
+                identifyRadioIndexToReset(paramCount,val,&bRestartRadio1,&bRestartRadio2,&bRestartRadio3);
                 bRadioRestartEn = TRUE;
         }
 
@@ -758,8 +759,9 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
  * @param[in] paramVal parameter value Array
  * @param[out] bRestartRadio1
  * @param[out] bRestartRadio2
+ * @param[out] bRestartRadio3
  */
-static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2) 
+static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3) 
 {
 	int x =0 ,index =0, SSID =0,apply_rf =0;
 	for (x = 0; x < paramCount; x++)
@@ -773,6 +775,10 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 		{
 			*bRestartRadio2 = TRUE;
 		}
+		else if (!strncmp(val[x].parameterName, "Device.WiFi.Radio.3.", 20))
+                {       
+                        *bRestartRadio3 = TRUE;
+                }
 		else
 		{
 			if ((!strncmp(val[x].parameterName, "Device.WiFi.SSID.", 17)))
@@ -783,7 +789,11 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 				apply_rf = (2 - ((index) % 2));
 				WalPrint("apply_rf = %d\n", apply_rf);
 
-				if (apply_rf == 1)
+				if((index >= 17) && (index <= 24))
+				{
+					*bRestartRadio3 = TRUE;
+				} 
+				else if (apply_rf == 1)
 				{
 					*bRestartRadio1 = TRUE;
 				}
@@ -800,7 +810,11 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 				apply_rf = (2 - ((index) % 2));
 				WalPrint("apply_rf = %d\n", apply_rf);
 
-				if (apply_rf == 1)
+				if((index >= 17) && (index <= 24))
+                                {
+                                        *bRestartRadio3 = TRUE;
+                                }
+				else if (apply_rf == 1)
 				{
 					*bRestartRadio1 = TRUE;
 				}
@@ -829,9 +843,13 @@ static void *applyWiFiSettingsTask()
 	
     pthread_detach(pthread_self());
         
-	parameterValStruct_t val_set[2] = { 
+	parameterValStruct_t val_set[3] = { 
 					{"Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting", "true", ccsp_boolean},
-					{"Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting", "true", ccsp_boolean} };
+					{"Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting", "true", ccsp_boolean},
+					{"Device.WiFi.Radio.3.X_CISCO_COM_ApplySetting", "true", ccsp_boolean} };
+	parameterValStruct_t val_set_1and3[2] = {
+                                        {"Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting", "true", ccsp_boolean},
+                                        {"Device.WiFi.Radio.3.X_CISCO_COM_ApplySetting", "true", ccsp_boolean} };
 	
 	//Identify the radio and apply settings
 	while(1)
@@ -843,31 +861,56 @@ static void *applyWiFiSettingsTask()
 		if(bRadioRestartEn)
 		{
 			bRadioRestartEn = FALSE;
-		
-			if((bRestartRadio1 == TRUE) && (bRestartRadio2 == TRUE)) 
+	
+			if((bRestartRadio1 == TRUE) && (bRestartRadio2 == TRUE) && (bRestartRadio3 == TRUE))
+                        {
+                                WalInfo("Need to restart all the 3 Radios\n");
+                                RadApplyParam = val_set;
+                                nreq = 3;
+                        }	
+			else if((bRestartRadio1 == TRUE) && (bRestartRadio2 == TRUE)) 
 			{
-				WalPrint("Need to restart both the Radios\n");
+				WalInfo("Need to restart Radios 1 and 2\n");
 				RadApplyParam = val_set;
 				nreq = 2;
 			}
+			else if((bRestartRadio1 == TRUE) && (bRestartRadio3 == TRUE))
+                        {
+                                WalInfo("Need to restart Radios 1 and 3\n");
+                                RadApplyParam = val_set_1and3;
+                                nreq = 2;
+                        }
+			else if((bRestartRadio2 == TRUE) && (bRestartRadio3 == TRUE))
+                        {
+                                WalInfo("Need to restart Radios 2 and 3\n");
+                                RadApplyParam = &val_set[1];
+                                nreq = 2;
+                        }
 
 			else if(bRestartRadio1) 
 			{
-				WalPrint("Need to restart Radio 1\n");
+				WalInfo("Need to restart Radio 1\n");
 				RadApplyParam = val_set;
 				nreq = 1;
 			}
 			else if(bRestartRadio2) 
 			{
-				WalPrint("Need to restart Radio 2\n");
+				WalInfo("Need to restart Radio 2\n");
 				RadApplyParam = &val_set[1];
 				nreq = 1;
 			}
+			else if(bRestartRadio3)
+                        {
+                                WalInfo("Need to restart Radio 3\n");
+                                RadApplyParam = &val_set[2];
+                                nreq = 1;
+                        }
 		
 			// Reset radio flags
 			bRestartRadio1 = FALSE;
 			bRestartRadio2 = FALSE;
-		
+			bRestartRadio3 = FALSE;	
+	
 			WalPrint("nreq : %d writeID : %d\n",nreq,writeID);
 			if(nreq > 0)
 			{
