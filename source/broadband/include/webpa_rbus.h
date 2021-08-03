@@ -36,6 +36,10 @@
 #define maxParamLen 128
 
 #define NUM_WEBPA_ELEMENTS 6
+#define COMPONENT_ID_NOTIFY_COMP "writeid_notify"
+#define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
+
+#define DEST_COMP_ID_PSM   "com.cisco.spvtg.ccsp.psm"
 
 // Data elements provided by webpa
 
@@ -51,5 +55,8 @@ bool isRbusEnabled();
 WDMP_STATUS webpaRbusInit(const char *pComponentName);
 
 rbusHandle_t get_global_rbus_handle(void);
+
+rbusError_t rbus_GetValueFromDB( char* paramName, char** paramValue);
+rbusError_t rbus_StoreValueIntoDB(char *paramName, char *value);
 
 #endif

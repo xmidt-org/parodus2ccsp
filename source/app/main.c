@@ -79,7 +79,7 @@ int main()
 	initComponentCaching(ret);
 	// Initialize Apply WiFi Settings handler
 	//initApplyWiFiSettings();
-	//initNotifyTask(ret);
+	initNotifyTask(ret);
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 #endif

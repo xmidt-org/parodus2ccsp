@@ -76,6 +76,7 @@
 #define RDKB_ETHAGENT_COMPONENT_NAME                  "com.cisco.spvtg.ccsp.ethagent"
 #define RDKB_ETHAGENT_DBUS_PATH                       "/com/cisco/spvtg/ccsp/ethagent"
 
+
 /* RDKB Logger defines */
 #define LOG_FATAL       0
 #define LOG_ERROR       1
