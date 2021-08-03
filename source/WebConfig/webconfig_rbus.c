@@ -86,7 +86,7 @@ int set_rbus_RfcEnable(bool bValue)
 	int retPsmSet = RBUS_ERROR_SUCCESS;
         rbusHandle_t rbus_handle = get_global_rbus_handle();
 
-	if(bValue == true)
+	/*if(bValue == true)
 	{
 		buf = strdup("true");
 		WebcfgInfo("Received RFC enable. updating g_shutdown\n");
@@ -112,13 +112,13 @@ int set_rbus_RfcEnable(bool bValue)
 		WebcfgInfo("Received RFC disable. updating g_shutdown\n");
 		if(RfcVal == true)
 		{
-			/* sending signal to kill initWebConfigMultipartTask thread*/
+			*//* sending signal to kill initWebConfigMultipartTask thread*//*
 			pthread_mutex_lock (get_global_sync_mutex());
 			set_global_shutdown(true);
 			pthread_cond_signal(get_global_sync_condition());
 			pthread_mutex_unlock(get_global_sync_mutex());
 		}
-	}
+	}*/
 #ifdef RDKB_BUILD
 	retPsmSet = rbus_psm_set(rbus_handle, "eRT.", rbusParamRFCEnable, 0, buf);
         if (retPsmSet != RBUS_ERROR_SUCCESS)
