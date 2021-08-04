@@ -196,7 +196,7 @@ int get_Webconfig_Url_Rbus(char ** url)
     if(URLVal != NULL && strlen(URLVal) > 0)
     {
         *url = malloc(strlen(URLVal)+1);
-        strcpy(*url, URLVal);
+        strncpy(*url, URLVal, strlen(URLVal)+1);
         WebcfgInfo("urlvalue is %s\n", *url);
     }
     else
@@ -211,7 +211,7 @@ int get_Webconfig_Url_Rbus(char ** url)
             if(tempUrl != NULL && strlen(tempUrl) > 0)
             {
 	        *url = malloc(strlen(tempUrl)+1);
-	        strcpy(*url, tempUrl);
+	        strncpy(*url, tempUrl, strlen(tempUrl)+1);
 	        WebcfgInfo("url %s\n",*url);
             }
             else
@@ -244,7 +244,7 @@ int get_Supplementary_Url_Rbus(char* name, char ** url)
     if(SupplementaryUrlVal != NULL && strlen(SupplementaryUrlVal) > 0 && ((name != NULL) && strncmp(name, "Telemetry",strlen(name)+1)) == 0)
     {
         *url = malloc(strlen(SupplementaryUrlVal)+1);
-        strcpy(*url, SupplementaryUrlVal);
+        strncpy(*url, SupplementaryUrlVal, strlen(SupplementaryUrlVal)+1);
         WebcfgInfo("urlvalue is %s\n", *url);
     }
     else
@@ -259,7 +259,7 @@ int get_Supplementary_Url_Rbus(char* name, char ** url)
             if(tempUrl != NULL && strlen(tempUrl) > 0)
             {
 	        *url = malloc(strlen(tempUrl)+1);
-	        strcpy(*url, tempUrl);
+	        strncpy(*url, tempUrl, strlen(tempUrl)+1);
 	        WebcfgInfo("url %s\n",*url);
             }
             else
@@ -841,11 +841,11 @@ rbusError_t rbus_psm_get(rbusHandle_t rbus_handle, char const * const pSubSystem
 
 	if ( pSubSystemPrefix && pSubSystemPrefix[0] != 0 )
 	{
-		sprintf(psmName, "%s%s", pSubSystemPrefix, RBUS_PSM);
+		snprintf(psmName, 256,"%s%s", pSubSystemPrefix, RBUS_PSM);
 	}
 	else
 	{
-		strcpy(psmName, RBUS_PSM);
+		strncpy(psmName, RBUS_PSM, strlen(RBUS_PSM));
 	}
 
 	parameterNames[0] = (char *)pRecordName;
@@ -865,7 +865,7 @@ rbusError_t rbus_psm_get(rbusHandle_t rbus_handle, char const * const pSubSystem
 			}*/
 
 			*pVal = (char *)malloc(strlen(val[0]->parameterValue)+1);
-			strcpy(*pVal,  val[0]->parameterValue);
+			strncpy(*pVal,  val[0]->parameterValue, strlen(val[0]->parameterValue)+1);
 		}
 		else
 		{
@@ -891,11 +891,11 @@ rbusError_t rbus_psm_set(rbusHandle_t rbus_handle, char const * const pSubSystem
 
 	if ( pSubSystemPrefix && pSubSystemPrefix[0] != 0 )
 	{
-		sprintf(psmName, "%s%s", pSubSystemPrefix, RBUS_PSM);
+		snprintf(psmName, 256, "%s%s", pSubSystemPrefix, RBUS_PSM);
 	}
 	else
 	{
-		strcpy(psmName, RBUS_PSM);
+		strncpy(psmName, RBUS_PSM, strlen(RBUS_PSM));
 	}
 
 	val[0].parameterValue = (char *)pVal;
@@ -983,7 +983,7 @@ rbusError_t rbus_GetParamValues(rbusHandle_t rbus_handle, const char* dst_compon
 				tmpbuf = NULL;
 				rbusMessage_GetString(response, &tmpbuf);
 				val[i]->parameterName = malloc(strlen(tmpbuf)+1);
-				strcpy(val[i]->parameterName, tmpbuf);
+				strncpy(val[i]->parameterName, tmpbuf, strlen(tmpbuf)+1);
 
 				/* Get Type */
 				rbusMessage_GetInt32(response, &type);
@@ -995,7 +995,7 @@ rbusError_t rbus_GetParamValues(rbusHandle_t rbus_handle, const char* dst_compon
 				tmpbuf = NULL;
 				rbusMessage_GetString(response, &tmpbuf);
 				val[i]->parameterValue = malloc(strlen(tmpbuf)+1);
-				strcpy(val[i]->parameterValue, tmpbuf);
+				strncpy(val[i]->parameterValue, tmpbuf, strlen(tmpbuf)+1);
 
 				WebcfgInfo("Param [%d] Name = %s, Type = %d, Value = %s\n", i,val[i]->parameterName, val[i]->type, val[i]->parameterValue);
 			}
@@ -1068,7 +1068,7 @@ rbusError_t rbus_SetParamValues(rbusHandle_t rbus_handle, const char* dst_compon
 		if(str)
 		{
 			*invalidParameterName = malloc(strlen(str)+1);
-			strcpy(*invalidParameterName, str);
+			strncpy(*invalidParameterName, str, strlen(str)+1);
 		}
 		else
 		{
