@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Add webpa index support for wifi 6GHz radio
 - Update to use msgpack version 3.1.0 to eliminate compiler warnings/errors
 - Added fix to incorrect boot uptime value in BootTime.log
 - print_uptime library is linked and replaced print_uptime system call with function call
