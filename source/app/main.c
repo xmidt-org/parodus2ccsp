@@ -59,7 +59,7 @@ int main()
 	libpd_client_mgr();
 	WalInfo("Syncing backend manager with DB....\n");
 	CosaWebpaSyncDB();
-	WalInfo("Webpa banckend manager is in sync with DB\n");
+	WalInfo("Webpa backend manager is in sync with DB\n");
 
 	initComponentCaching(ret);
 	// Initialize Apply WiFi Settings handler
