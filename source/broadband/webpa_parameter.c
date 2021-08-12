@@ -804,23 +804,26 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 			}
 			else if (!strncmp(val[x].parameterName, "Device.WiFi.AccessPoint.",24))
 			{
-				sscanf(val[x].parameterName, "Device.WiFi.AccessPoint.%d", &index);
-				WalPrint("AccessPoint index = %d\n", index);
-				SSID = (1 << ((index) - 1));
-				apply_rf = (2 - ((index) % 2));
-				WalPrint("apply_rf = %d\n", apply_rf);
+				if (!(strstr(val[x].parameterName, ".WPS.X_CISCO_COM_ActivatePushButton")))
+				{
+					sscanf(val[x].parameterName, "Device.WiFi.AccessPoint.%d", &index);
+					WalPrint("AccessPoint index = %d\n", index);
+					SSID = (1 << ((index) - 1));
+					apply_rf = (2 - ((index) % 2));
+					WalPrint("apply_rf = %d\n", apply_rf);
 
-				if((index >= 17) && (index <= 24))
-                                {
-                                        *bRestartRadio3 = TRUE;
-                                }
-				else if (apply_rf == 1)
-				{
-					*bRestartRadio1 = TRUE;
-				}
-				else if (apply_rf == 2)
-				{
-					*bRestartRadio2 = TRUE;
+					if((index >= 17) && (index <= 24))
+					{
+						*bRestartRadio3 = TRUE;
+					}
+					else if (apply_rf == 1)
+					{
+						*bRestartRadio1 = TRUE;
+					}
+					else if (apply_rf == 2)
+					{
+						*bRestartRadio2 = TRUE;
+					}
 				}
 			}
 		}
