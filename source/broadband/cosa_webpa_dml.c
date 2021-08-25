@@ -4,7 +4,6 @@
 #include "ccsp_trace.h"
 #include "cosa_webpa_internal.h"
 #include "ccsp_base_api.h"
-#include "dslh_definitions_database.h"
 #include "plugin_main_apis.h"
 #include "webpa_internal.h"
 #include "webpa_notification.h"
@@ -14,7 +13,7 @@
 #define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
 
 #ifndef RDKB_BUILD
-#define DSLH_MPA_ACCESS_CONTROL_NOTIFY_COMP	     1
+#define CCSP_COMPONENT_ID_NOTIFY_COMP       1
 #endif
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
@@ -52,7 +51,7 @@ Webpa_SetParamStringValue
 	
         if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_WebPA_Notification", TRUE))
         {
-		if( GET_CURRENT_WRITE_ENTITY() == DSLH_MPA_ACCESS_CONTROL_NOTIFY_COMP )
+		if( GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_NOTIFY_COMP )
 		{
 		#ifdef USE_NOTIFY_COMPONENT
 
@@ -119,7 +118,7 @@ Webpa_SetParamStringValue
 
         if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Connected-Client", TRUE))
         	{
-		   if( GET_CURRENT_WRITE_ENTITY() == DSLH_MPA_ACCESS_CONTROL_NOTIFY_COMP )
+		   if( GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_NOTIFY_COMP )
 		   {
         	#ifdef USE_NOTIFY_COMPONENT
         		WalInfo("...Connected client notification..\n");

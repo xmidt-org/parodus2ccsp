@@ -7,7 +7,6 @@
  */
 
 #include "webpa_internal.h"
-#include "dslh_definitions_database.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -193,7 +192,7 @@ int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath)
     int i=0, ret = -1,numParam =0, val_size = 0, retGet = -1;
     char **parameterNamesLocal = NULL; 
     char *faultParam = NULL;
-    unsigned int writeID = DSLH_MPA_ACCESS_CONTROL_WEBPA;
+    unsigned int writeID = CCSP_COMPONENT_ID_WebPA;
     parameterValStruct_t *val= NULL;
     parameterValStruct_t **parameterval = NULL;
 
