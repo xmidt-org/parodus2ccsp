@@ -401,7 +401,7 @@ void err_get_attr_with_invalid_wifi_index()
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
     assert_non_null(response);
-    assert_string_equal("Invalid WiFi index, valid range is between 10001-10008 and 10101-10108",cJSON_GetObjectItem(response, "message")->valuestring );
+    assert_string_equal("Invalid WiFi index, valid range is between 10001-10008, 10101-10108 and 10201-10208",cJSON_GetObjectItem(response, "message")->valuestring );
     assert_int_equal(520, cJSON_GetObjectItem(response, "statusCode")->valueint);
     cJSON_Delete(response);
 }
@@ -431,7 +431,7 @@ void err_get_attr_with_invalid_radio_index()
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
     assert_non_null(response);
-    assert_string_equal("Invalid Radio index, valid idexes are 10000 and 10100",cJSON_GetObjectItem(response, "message")->valuestring );
+    assert_string_equal("Invalid Radio index, valid indexes are 10000, 10100 and 10200",cJSON_GetObjectItem(response, "message")->valuestring );
     assert_int_equal(520, cJSON_GetObjectItem(response, "statusCode")->valueint);
     cJSON_Delete(response);
 }

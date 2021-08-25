@@ -15,7 +15,7 @@
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
 
-#define WIFI_INDEX_MAP_SIZE                     18
+#define WIFI_INDEX_MAP_SIZE                     27
 #define WIFI_PARAM_MAP_SIZE			3
 #define WIFI_MAX_STRING_LEN			4096
 #define MAX_PARAMETERNAME_LEN			4096

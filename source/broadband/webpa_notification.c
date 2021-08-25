@@ -20,7 +20,7 @@
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
 /* Notify Macros */
-#define WEBPA_SET_INITIAL_NOTIFY_RETRY_COUNT            5
+#define WEBPA_SET_INITIAL_NOTIFY_RETRY_COUNT            7
 #define WEBPA_SET_INITIAL_NOTIFY_RETRY_SEC              15
 #define WEBPA_NOTIFY_EVENT_HANDLE_INTERVAL_MSEC         250
 #define BACKOFF_MAX_RETRY_SEC							512
@@ -591,7 +591,7 @@ static void setInitialNotify()
 	int notifyListSize = 0;
 
 	int backoffRetryTime = 0;
-	int backoff_max_time = 7;
+	int backoff_max_time = 10;
         int max_retry_sleep;
 	//Retry Backoff count will start at c=2 & calculate 2^c - 1.
 	int c = 2;
@@ -666,11 +666,16 @@ static void setInitialNotify()
 			sleep(backoffRetryTime);
 			c++;
 			
-			if(backoffRetryTime == max_retry_sleep)
+			if(backoffRetryTime == 127) // after 127s backoff delay, next delay will be 2^10 - 1 = 1023s i.e. > 15mins
+                        {
+                                c = 10; // skip c = 8,9
+                                WalInfo("setInitialNotify backoffRetryTime reached 127s, wait for more than 15mins for next retry\n");
+                        }
+			else if(backoffRetryTime == max_retry_sleep)
                         {
                         	c = 2;
                         	backoffRetryTime = 0;
-                        	WalPrint("setInitialNotify backoffRetryTime reached max value, reseting to initial value\n");
+                        	WalInfo("setInitialNotify backoffRetryTime reached max value, reseting to initial value\n");
                         }
 
 		} while (retry++ < WEBPA_SET_INITIAL_NOTIFY_RETRY_COUNT);

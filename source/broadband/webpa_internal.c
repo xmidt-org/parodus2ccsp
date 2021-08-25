@@ -105,6 +105,7 @@ char *CcspDmlName[WIFI_PARAM_MAP_SIZE] = {"Device.WiFi.Radio", "Device.WiFi.SSID
 CpeWebpaIndexMap IndexMap[WIFI_INDEX_MAP_SIZE] = {
 {10000, 1},
 {10100, 2},
+{10200, 3},
 {10001, 1},
 {10002, 3},
 {10003, 5},
@@ -120,7 +121,15 @@ CpeWebpaIndexMap IndexMap[WIFI_INDEX_MAP_SIZE] = {
 {10105, 10},
 {10106, 12},
 {10107, 14},
-{10108, 16}
+{10108, 16},
+{10201, 17},
+{10202, 18},
+{10203, 19},
+{10204, 20},
+{10205, 21},
+{10206, 22},
+{10207, 23},
+{10208, 24}
 };
 BOOL eth_wan_status = FALSE;
 
@@ -436,14 +445,14 @@ int getComponentDetails(char *parameterName,char ***compName,char ***dbusPath, i
 			if(strstr(tempParamName, PARAM_RADIO_OBJECT) != NULL)
 		 	{
 		 	       ret = CCSP_ERR_INVALID_RADIO_INDEX;
-		 	       WalError("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret);
-		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000 and 10100. ret = %d\n", tempParamName,ret);
+		 	       WalError("%s has invalid Radio index, Valid indexes are 10000, 10100 and 10200. ret = %d\n", tempParamName,ret);
+		 	       OnboardLog("%s has invalid Radio index, Valid indexes are 10000, 10100 and 10200. ret = %d\n", tempParamName,ret);
 		 	}
 		 	else
 		 	{
 		         	ret = CCSP_ERR_INVALID_WIFI_INDEX;
-		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",tempParamName, ret);
-		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008 and 10101-10108. ret = %d\n",tempParamName, ret);
+		         	WalError("%s has invalid WiFi index, Valid range is between 10001-10008, 10101-10108 and 10201-10208. ret = %d\n",tempParamName, ret);
+		         	OnboardLog("%s has invalid WiFi index, Valid range is between 10001-10008, 10101-10108 and 10201-10208. ret = %d\n",tempParamName, ret);
 		 	}					
             		*error = 1;
 			return ret;
@@ -694,12 +703,12 @@ int IndexMpa_WEBPAtoCPE(char *pParameterName)
 				{
 					// For Device.WiFI.Radio.
 					j = 0;
-					len=2;
+					len=3;
 				}
 				else
 				{
 					// For other than Device.WiFI.Radio.
-					j = 2;
+					j = 3;
 					len =WIFI_INDEX_MAP_SIZE;
 				}
 				for (; j < len; j++)
@@ -758,7 +767,7 @@ void IndexMpa_CPEtoWEBPA(char **ppParameterName)
 					j = 0;
 				} else {
 					// For other than Device.WiFI.Radio.
-					j = 2;
+					j = 3;
 				}
 				for (j; j < WIFI_INDEX_MAP_SIZE; j++)
 				{
