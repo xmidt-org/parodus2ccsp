@@ -13,7 +13,7 @@
 #define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
 
 #ifndef RDKB_BUILD
-#define CCSP_COMPONENT_ID_NOTIFY_COMP	     1
+#define CCSP_COMPONENT_ID_NOTIFY_COMP       1
 #endif
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
