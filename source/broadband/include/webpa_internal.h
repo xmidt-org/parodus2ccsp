@@ -255,6 +255,15 @@ int get_global_operationalStatus(void);
 void set_global_operationalStatus(int status);
 
 #endif
+#ifdef WEBCONFIG_BIN_SUPPORT
+/**
+* @brief Create force sync JSON and send to webconfig during SET so that same input transaction id can be used in webconfig sync notification to cloud.
+ * @param[in] value. input force sync string.
+ * @param[in] transactionId. input webpa request transactionId.
+ * @param[out] stringifiedJson. JSON schema with force sync value and transaction id.
+ */
+WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** stringifiedJson);
+#endif
 BOOL get_eth_wan_status();
 
 WDMP_STATUS check_ethernet_wan_status();
