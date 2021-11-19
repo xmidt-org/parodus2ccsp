@@ -27,6 +27,21 @@
                 </parameter>
             </parameters>
         </object>
+	<object>
+            <name>X_RDK_Webpa</name>
+            <objectType>object</objectType>
+            <functions>
+                <func_SetParamStringValue>Webpa_SetParamStringValue</func_SetParamStringValue>
+            </functions>
+            <parameters>
+                <parameter>
+                    <name>ConnectedClientNotify</name>
+                    <type>string</type>
+                    <syntax>string</syntax>
+                    <writable>true</writable>
+                </parameter>
+            </parameters>
+        </object> 
         <object>
             <name>X_RDKCENTRAL-COM_Webpa</name>
             <objectType>object</objectType>

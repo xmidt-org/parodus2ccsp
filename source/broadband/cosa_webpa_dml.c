@@ -11,9 +11,11 @@
 #define WEBPA_PARAM_VERSION                 "Device.X_RDKCENTRAL-COM_Webpa.Version"
 #define WEBPA_PARAM_PROTOCOL_VERSION        "Device.DeviceInfo.Webpa.X_COMCAST-COM_SyncProtocolVersion"
 #define WiFi_FactoryResetRadioAndAp	    "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp"
+#define CONN_CLIENT_PARAM		    "Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client"
 
 #ifndef RDKB_BUILD
 #define CCSP_COMPONENT_ID_NOTIFY_COMP       1
+#define CCSP_COMPONENT_ID_WEBCONFIG         1
 #endif
 extern PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
 
@@ -174,6 +176,69 @@ Webpa_SetParamStringValue
 			return FALSE;
 		   }
         	}
+
+	if( AnscEqualString(ParamName, "ConnectedClientNotify", TRUE))
+        {
+		if( GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_WEBCONFIG )
+		{
+	  	char notif[20] = "";
+		WDMP_STATUS ret = WDMP_FAILURE;
+		param_t *attArr = NULL;
+
+		if(pString != NULL)
+		{
+			if(strcmp(pString, "enabled")==0)
+			{
+				snprintf(notif, sizeof(notif), "%d", 0);
+			}
+			else if(strcmp(pString, "disabled")==0)
+			{
+				snprintf(notif, sizeof(notif), "%d", 1);
+			}
+			else
+			{
+				WalError("Invalid apply status in ACK event\n");
+				return FALSE;
+			}
+					
+			if(CONN_CLIENT_PARAM == NULL)
+			{
+				WalError("Failed to get connected client paramName\n");
+				return FALSE;
+			}
+			attArr = (param_t *) malloc(sizeof(param_t));
+			if(attArr !=NULL)
+			{
+				memset(attArr,0,sizeof(param_t));
+				attArr[0].value = (char *) malloc(sizeof(char) * 20);
+				snprintf(attArr[0].value, 20, "%s", notif);
+				attArr[0].name = CONN_CLIENT_PARAM;
+				attArr[0].type = WDMP_INT;
+				setAttributes(attArr, 1, NULL, &ret);
+				if (ret != WDMP_SUCCESS)
+				{
+					WalError("setAttributes failed for parameter : %s notif:%s ret: %d\n", CONN_CLIENT_PARAM, notif, ret);
+				}
+				else
+				{
+					WalInfo("setAttributes success for parameter : %s notif:%s ret: %d\n",CONN_CLIENT_PARAM, notif, ret);
+				}
+				WAL_FREE(attArr[0].value);
+				WAL_FREE(attArr);
+			}
+		}
+        	return TRUE;
+		}
+		else
+		{
+			WalInfo("Write ID is %ld\n", GET_CURRENT_WRITE_ENTITY());
+			WalError("Operation not allowed\n");
+			return FALSE;
+		}
+		
+	}
+		   
+
 
 
 	/* Required for xPC sync */
