@@ -60,6 +60,9 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_GetParamStringValue", Webpa_GetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_GetParamUlongValue",  Webpa_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Webpa_SetParamUlongValue",  Webpa_SetParamUlongValue);
+#ifdef WEBCONFIG_BIN_SUPPORT
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_Webpa_SetParamStringValue", X_RDK_Webpa_SetParamStringValue);
+#endif
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_GetParamBoolValue",  X_RDK_WebConfig_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDK_WebConfig_SetParamBoolValue",  X_RDK_WebConfig_SetParamBoolValue);
