@@ -23,6 +23,9 @@
 #define MAX_TELEMETRY_PARAMETERVALUE_LEN	204800
 #define MAX_DBUS_INTERFACE_LEN			32
 #define MAX_PATHNAME_CR_LEN			64
+#ifdef WEBCONFIG_BIN_SUPPORT
+#define CCSP_COMPONENT_ID_WEBCONFIG             0x00000100
+#endif
 #define CCSP_COMPONENT_ID_NOTIFY_COMP           0x0000000C
 #define CCSP_COMPONENT_ID_WebPA                 0x0000000A
 #define CCSP_COMPONENT_ID_XPC                   0x0000000B
@@ -254,6 +257,15 @@ int get_global_operationalStatus(void);
 
 void set_global_operationalStatus(int status);
 
+#endif
+#ifdef WEBCONFIG_BIN_SUPPORT
+/**
+* @brief Create force sync JSON and send to webconfig during SET so that same input transaction id can be used in webconfig sync notification to cloud.
+ * @param[in] value. input force sync string.
+ * @param[in] transactionId. input webpa request transactionId.
+ * @param[out] stringifiedJson. JSON schema with force sync value and transaction id.
+ */
+WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** stringifiedJson);
 #endif
 BOOL get_eth_wan_status();
 

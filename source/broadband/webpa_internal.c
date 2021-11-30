@@ -14,6 +14,8 @@
 #include <webcfg_log.h>
 #include <webcfg.h>
 #endif
+
+#include <cJSON.h>
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -1420,3 +1422,36 @@ WDMP_STATUS check_ethernet_wan_status()
     }
     return WDMP_FAILURE;
 }
+
+#ifdef WEBCONFIG_BIN_SUPPORT
+WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** stringifiedJson)
+{
+	if( value ==NULL || transactionId == NULL)
+	{
+		WalError("createForceSyncJsonSchema input values are empty\n");
+		return WDMP_FAILURE;
+	}
+
+	char forcesyncVal[32] = { '\0' };
+	char forcesynctransID[32] = { '\0' };
+	cJSON *jsonresponse = NULL;
+
+	walStrncpy(forcesyncVal , value, sizeof(forcesyncVal));
+	walStrncpy(forcesynctransID , transactionId, sizeof(forcesynctransID));
+
+	WalPrint("forcesyncVal %s forcesynctransID %s\n", forcesyncVal, forcesynctransID);
+	jsonresponse = cJSON_CreateObject();
+
+	if (jsonresponse !=NULL)
+	{
+		cJSON_AddStringToObject(jsonresponse,"value", forcesyncVal);
+		cJSON_AddStringToObject(jsonresponse,"transaction_id", forcesynctransID);
+
+		*stringifiedJson = cJSON_PrintUnformatted(jsonresponse);
+		WalPrint("*stringifiedJson is %s\n", *stringifiedJson);
+		cJSON_Delete(jsonresponse);
+		return WDMP_SUCCESS;
+	}
+	return WDMP_FAILURE;
+}
+#endif
