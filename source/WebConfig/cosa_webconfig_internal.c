@@ -666,7 +666,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 	int i=0;
 	char *subStr = NULL;
 	BOOL RFC_ENABLE;
-	int session_status = 0;
+	static int session_status;
 	int ret = 0;
 	WebcfgDebug("*********** %s ***************\n",__FUNCTION__);
 
@@ -718,8 +718,10 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				WebcfgInfo("SYNC_CRASH: session_status outside if else case is %d\n", session_status);
 				if(session_status)
 				{
+					session_status = 0;  //To reset the static variable
 					return CCSP_CR_ERR_SESSION_IN_PROGRESS;
 				}
+				session_status = 0;          //To reset the static variable
 				if(!ret)
 				{
 					WebcfgError("setForceSync failed\n");
