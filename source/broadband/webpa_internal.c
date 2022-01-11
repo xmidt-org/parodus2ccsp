@@ -73,7 +73,6 @@ char *objectList[] ={
 "Device.LogBackup.",
 "Device.IoT.",
 "Device.NotifyComponent.",
-"Device.LogAgent.",
 "Device.X_RDKCENTRAL-COM_Webpa.",
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
 "Device.X_RDK_WebConfig.",
