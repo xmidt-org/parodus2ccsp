@@ -124,7 +124,9 @@ const char * notifyparameters[]={
 "Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.MoCA.Interface.1.Enable",
+#endif
 "Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
 "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
 "Device.WiFi.SSID.10003.SSID",
@@ -163,6 +165,12 @@ const char * notifyparameters[]={
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.LocalInterfaces",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.VLANID",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.LocalInterfaces",
+#ifdef _HUB4_PRODUCT_REQ_
+"Device.NAT.X_CISCO_COM_PortTriggers.Enable",
+"Device.UPnP.Device.UPnPIGD",
+"Device.UserInterface.X_CISCO_COM_RemoteAccess.HttpEnable",
+"Device.UserInterface.X_CISCO_COM_RemoteAccess.HttpsEnable",
+#endif
 /* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"
