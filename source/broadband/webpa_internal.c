@@ -34,7 +34,9 @@ char *objectList[] ={
 "Device.UserInterface.",
 "Device.InterfaceStack.",
 "Device.Ethernet.",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.MoCA.",
+#endif
 "Device.PPP.",
 "Device.IP.",
 "Device.Routing.",
@@ -53,10 +55,12 @@ char *objectList[] ={
 "Device.NeighborDiscovery.",
 "Device.IPv6rd.",
 "Device.X_CISCO_COM_MLD.",
+#ifndef _HUB4_PRODUCT_REQ_
 #if defined(_COSA_BCM_MIPS_)
 "Device.DPoE.",
 #else
 "Device.X_CISCO_COM_CableModem.",
+#endif
 #endif
 "Device.X_Comcast_com_ParentalControl.",
 "Device.X_CISCO_COM_Diagnostics.",
@@ -66,7 +70,9 @@ char *objectList[] ={
 "Device.Hosts.",
 "Device.ManagementServer.",
 "Device.XHosts.",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.X_CISCO_COM_MTA.",
+#endif
 "Device.X_RDKCENTRAL-COM_XDNS.",
 "Device.X_RDKCENTRAL-COM_Report.",
 "Device.SelfHeal.",
@@ -83,7 +89,9 @@ char *objectList[] ={
 char *subObjectList[] = 
 {
 "Device.DeviceInfo.NetworkProperties.",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.MoCA.Interface.",
+#endif
 "Device.IP.Diagnostics.",
 "Device.IP.Interface.",
 "Device.DNS.Diagnostics.",
@@ -186,10 +194,12 @@ int waitForOperationalReadyCondition()
 #elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU)
     if(check_ethernet_wan_status() != WDMP_SUCCESS)
 	{
+#if !defined(_SKY_HUB_COMMON_PRODUCT_REQ_)
 	    if(waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH) != CCSP_SUCCESS)
 	    {
 		    return CM_FAILED;
 	    }
+#endif // _SKY_HUB_COMMON_PRODUCT_REQ_
 	}
 #endif
 	if(waitForComponentReady(CCSP_DBUS_PSM,CCSP_DBUS_PATH_PSM) != CCSP_SUCCESS)
