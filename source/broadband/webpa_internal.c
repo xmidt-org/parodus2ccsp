@@ -77,7 +77,6 @@ char *objectList[] ={
 "Device.X_RDKCENTRAL-COM_Report.",
 "Device.SelfHeal.",
 "Device.LogBackup.",
-"Device.IoT.",
 "Device.NotifyComponent.",
 "Device.X_RDKCENTRAL-COM_Webpa.",
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
