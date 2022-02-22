@@ -92,6 +92,7 @@ X_RDK_WebConfig_SetParamStringValue
 	}
 	if( AnscEqualString(ParamName, "ForceSync", TRUE))
 	{
+		int session_status = 0;
 		if(AnscEqualString(strValue, "telemetry", TRUE))
         	{
 			char telemetryUrl[256] = {0};
@@ -103,7 +104,7 @@ X_RDK_WebConfig_SetParamStringValue
 			}		
 		}	
 		/* save update to backup */
-		if(setForceSync(strValue, "", 0) == 1)
+		if(setForceSync(strValue, "", &session_status) == 1)
 		{
 			return TRUE;
 		}
