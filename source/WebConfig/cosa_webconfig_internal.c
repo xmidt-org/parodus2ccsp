@@ -288,7 +288,6 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 {
 	PCOSA_DATAMODEL_WEBCONFIG            pMyObject           = (PCOSA_DATAMODEL_WEBCONFIG)g_pCosaBEManager->hWebConfig;
 	WebcfgDebug("setForceSync\n");
-	WebcfgInfo("SYNC_CRASH: pStatus value is %d\n", pStatus);
 	memset( pMyObject->ForceSync, 0, sizeof( pMyObject->ForceSync ));
 	AnscCopyString( pMyObject->ForceSync, pString );
 	WebcfgDebug("pMyObject->ForceSync is %s\n", pMyObject->ForceSync);
@@ -298,9 +297,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 		if(get_bootSync())
 		{
 			WebcfgInfo("Bootup sync is already in progress, Ignoring this request.\n");
-			WebcfgInfo("SYNC_CRASH: pStatus value before assigned in bootsync is %d\n", pStatus);
 			*pStatus = 1;
-			WebcfgInfo("SYNC_CRASH: pStatus value after assigned in bootsync is %d\n", pStatus);
 			return 0;
 		}
 		else if(get_maintenanceSync())
@@ -312,9 +309,7 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 		else if(strlen(pMyObject->ForceSyncTransID)>0)
 		{
 			WebcfgInfo("Force sync is already in progress, Ignoring this request.\n");
-			WebcfgInfo("SYNC_CRASH: pStatus value before assigned in ForceSync is %d\n", pStatus);
 			*pStatus = 1;
-			WebcfgInfo("SYNC_CRASH: pStatus value after assigned in ForceSync is %d\n", pStatus);
 			return 0;
 		}	
 		else
@@ -680,7 +675,6 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 	RFC_ENABLE = Get_RfcEnable();
 
 	WebcfgDebug("paramCount = %d\n",paramCount);
-	WebcfgInfo("SYNC_CRASH: session_status before set is %d\n", session_status);
 	for(i=0; i<paramCount; i++)
 	{
 		if(strstr(val[i].parameterName, webConfigObject) != NULL)
@@ -712,22 +706,17 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 						}
 					}
 					ret = setForceSync(val[i].parameterValue, transactionId, &session_status);
-					WebcfgInfo("SYNC_CRASH: session_status after set is %d\n", session_status);
 					WebcfgDebug("After setForceSync ret %d\n", ret);
 				}
 				else //pass empty transaction id when Force sync is with empty doc
 				{
 					WebcfgDebug("setWebConfigParameterValues empty setForceSync\n");
 					ret = setForceSync(val[i].parameterValue, "", 0);
-					WebcfgInfo("SYNC_CRASH: session_status after set in else case is %d\n", session_status);
 				}
-				WebcfgInfo("SYNC_CRASH: session_status outside if else case is %d\n", session_status);
 				if(session_status)
 				{
-					//session_status = 0;  //To reset the static variable
 					return CCSP_CR_ERR_SESSION_IN_PROGRESS;
 				}
-				//session_status = 0;          //To reset the static variable
 				if(!ret)
 				{
 					WebcfgError("setForceSync failed\n");
