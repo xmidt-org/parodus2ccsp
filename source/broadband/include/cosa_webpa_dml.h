@@ -14,6 +14,16 @@ Webpa_SetParamStringValue
 	char*                       pString
     );
 
+#ifdef WEBCONFIG_BIN_SUPPORT
+BOOL
+X_RDK_Webpa_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+	char*                       pString
+    );
+#endif
+
 ULONG
 Webpa_GetParamStringValue
     (

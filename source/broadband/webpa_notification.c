@@ -124,7 +124,9 @@ const char * notifyparameters[]={
 "Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.MoCA.Interface.1.Enable",
+#endif
 "Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
 "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
 "Device.WiFi.SSID.10003.SSID",
@@ -163,6 +165,43 @@ const char * notifyparameters[]={
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.LocalInterfaces",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.VLANID",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.LocalInterfaces",
+#ifdef _HUB4_PRODUCT_REQ_
+"Device.NAT.X_CISCO_COM_PortTriggers.Enable",
+"Device.UPnP.Device.UPnPIGD",
+"Device.UserInterface.X_CISCO_COM_RemoteAccess.HttpEnable",
+"Device.UserInterface.X_CISCO_COM_RemoteAccess.HttpsEnable",
+#endif
+#ifdef FEATURE_SUPPORT_6G_RADIO
+"Device.WiFi.AccessPoint.10201.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10201.Security.X_COMCAST-COM_KeyPassphrase",
+"Device.WiFi.AccessPoint.10201.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10201.X_CISCO_COM_MACFilter.Enable",
+"Device.WiFi.AccessPoint.10201.X_CISCO_COM_MACFilter.FilterAsBlackList",
+"Device.WiFi.AccessPoint.10202.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10202.Security.X_COMCAST-COM_KeyPassphrase",
+"Device.WiFi.AccessPoint.10202.Security.KeyPassphrase",
+"Device.WiFi.AccessPoint.10202.Security.PreSharedKey",
+"Device.WiFi.Radio.10200.Enable",
+"Device.WiFi.SSID.10201.Enable",
+"Device.WiFi.SSID.10201.SSID",
+"Device.WiFi.SSID.10202.Enable",
+"Device.WiFi.SSID.10202.SSID",
+"Device.WiFi.SSID.10203.SSID",
+"Device.WiFi.SSID.10205.SSID",
+"Device.WiFi.SSID.10205.Status",
+"Device.WiFi.SSID.10203.Status",
+"Device.WiFi.AccessPoint.10203.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10205.SSIDAdvertisementEnabled",
+"Device.WiFi.AccessPoint.10203.Security.RadiusServerIPAddr",
+"Device.WiFi.AccessPoint.10205.Security.RadiusServerIPAddr",
+"Device.WiFi.SSID.10203.BSSID",
+"Device.WiFi.SSID.10205.BSSID",
+"Device.WiFi.AccessPoint.10203.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10205.Security.ModeEnabled",
+"Device.WiFi.Radio.10200.Channel",
+"Device.WiFi.Radio.10200.OperatingFrequencyBand",
+"Device.WiFi.Radio.10200.OperatingChannelBandwidth",
+#endif
 /* Always keep AdvancedSecurity parameters as the last parameters in notify list as these have to be removed if cujo/fp is not enabled. */
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable"

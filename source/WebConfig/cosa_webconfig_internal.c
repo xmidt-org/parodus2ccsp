@@ -303,6 +303,12 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 			WebcfgInfo("SYNC_CRASH: pStatus value after assigned in bootsync is %d\n", pStatus);
 			return 0;
 		}
+		else if(get_maintenanceSync())
+		{
+			WebcfgInfo("Maintenance window sync is in progress, Ignoring this request.\n");
+			*pStatus = 1;
+			return 0;
+		}
 		else if(strlen(pMyObject->ForceSyncTransID)>0)
 		{
 			WebcfgInfo("Force sync is already in progress, Ignoring this request.\n");

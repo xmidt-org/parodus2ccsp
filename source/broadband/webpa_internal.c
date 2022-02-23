@@ -14,6 +14,8 @@
 #include <webcfg_log.h>
 #include <webcfg.h>
 #endif
+
+#include <cJSON.h>
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -32,7 +34,9 @@ char *objectList[] ={
 "Device.UserInterface.",
 "Device.InterfaceStack.",
 "Device.Ethernet.",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.MoCA.",
+#endif
 "Device.PPP.",
 "Device.IP.",
 "Device.Routing.",
@@ -51,10 +55,12 @@ char *objectList[] ={
 "Device.NeighborDiscovery.",
 "Device.IPv6rd.",
 "Device.X_CISCO_COM_MLD.",
+#ifndef _HUB4_PRODUCT_REQ_
 #if defined(_COSA_BCM_MIPS_)
 "Device.DPoE.",
 #else
 "Device.X_CISCO_COM_CableModem.",
+#endif
 #endif
 "Device.X_Comcast_com_ParentalControl.",
 "Device.X_CISCO_COM_Diagnostics.",
@@ -64,14 +70,14 @@ char *objectList[] ={
 "Device.Hosts.",
 "Device.ManagementServer.",
 "Device.XHosts.",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.X_CISCO_COM_MTA.",
+#endif
 "Device.X_RDKCENTRAL-COM_XDNS.",
 "Device.X_RDKCENTRAL-COM_Report.",
 "Device.SelfHeal.",
 "Device.LogBackup.",
-"Device.IoT.",
 "Device.NotifyComponent.",
-"Device.LogAgent.",
 "Device.X_RDKCENTRAL-COM_Webpa.",
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
 "Device.X_RDK_WebConfig.",
@@ -82,7 +88,9 @@ char *objectList[] ={
 char *subObjectList[] = 
 {
 "Device.DeviceInfo.NetworkProperties.",
+#ifndef _HUB4_PRODUCT_REQ_
 "Device.MoCA.Interface.",
+#endif
 "Device.IP.Diagnostics.",
 "Device.IP.Interface.",
 "Device.DNS.Diagnostics.",
@@ -185,10 +193,12 @@ int waitForOperationalReadyCondition()
 #elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU)
     if(check_ethernet_wan_status() != WDMP_SUCCESS)
 	{
+#if !defined(_SKY_HUB_COMMON_PRODUCT_REQ_)
 	    if(waitForComponentReady(RDKB_CM_COMPONENT_NAME,RDKB_CM_DBUS_PATH) != CCSP_SUCCESS)
 	    {
 		    return CM_FAILED;
 	    }
+#endif // _SKY_HUB_COMMON_PRODUCT_REQ_
 	}
 #endif
 	if(waitForComponentReady(CCSP_DBUS_PSM,CCSP_DBUS_PATH_PSM) != CCSP_SUCCESS)
@@ -637,6 +647,8 @@ WDMP_STATUS mapStatus(int ret)
 			return WDMP_ERR_NOT_WRITABLE;
 		case CCSP_ERR_SETATTRIBUTE_REJECTED:
 			return WDMP_ERR_SETATTRIBUTE_REJECTED;
+		case CCSP_ERR_REQUEST_REJECTED:
+                        return WDMP_ERR_REQUEST_REJECTED;
 		case CCSP_CR_ERR_NAMESPACE_OVERLAP:
 			return WDMP_ERR_NAMESPACE_OVERLAP;
 		case CCSP_CR_ERR_UNKNOWN_COMPONENT:
@@ -1420,3 +1432,36 @@ WDMP_STATUS check_ethernet_wan_status()
     }
     return WDMP_FAILURE;
 }
+
+#ifdef WEBCONFIG_BIN_SUPPORT
+WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** stringifiedJson)
+{
+	if( value ==NULL || transactionId == NULL)
+	{
+		WalError("createForceSyncJsonSchema input values are empty\n");
+		return WDMP_FAILURE;
+	}
+
+	char forcesyncVal[32] = { '\0' };
+	char forcesynctransID[32] = { '\0' };
+	cJSON *jsonresponse = NULL;
+
+	walStrncpy(forcesyncVal , value, sizeof(forcesyncVal));
+	walStrncpy(forcesynctransID , transactionId, sizeof(forcesynctransID));
+
+	WalPrint("forcesyncVal %s forcesynctransID %s\n", forcesyncVal, forcesynctransID);
+	jsonresponse = cJSON_CreateObject();
+
+	if (jsonresponse !=NULL)
+	{
+		cJSON_AddStringToObject(jsonresponse,"value", forcesyncVal);
+		cJSON_AddStringToObject(jsonresponse,"transaction_id", forcesynctransID);
+
+		*stringifiedJson = cJSON_PrintUnformatted(jsonresponse);
+		WalPrint("*stringifiedJson is %s\n", *stringifiedJson);
+		cJSON_Delete(jsonresponse);
+		return WDMP_SUCCESS;
+	}
+	return WDMP_FAILURE;
+}
+#endif

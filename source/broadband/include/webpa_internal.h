@@ -23,6 +23,9 @@
 #define MAX_TELEMETRY_PARAMETERVALUE_LEN	204800
 #define MAX_DBUS_INTERFACE_LEN			32
 #define MAX_PATHNAME_CR_LEN			64
+#ifdef WEBCONFIG_BIN_SUPPORT
+#define CCSP_COMPONENT_ID_WEBCONFIG             0x00000100
+#endif
 #define CCSP_COMPONENT_ID_NOTIFY_COMP           0x0000000C
 #define CCSP_COMPONENT_ID_WebPA                 0x0000000A
 #define CCSP_COMPONENT_ID_XPC                   0x0000000B
@@ -31,10 +34,10 @@
 #define CCSP_COMPONENT_ID_WebUI                 0x00000001
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
 #define RDKB_PARAM_WEBCONFIG	"Device.X_RDK_WebConfig."
-#define RDKB_TR181_OBJECT_LEVEL1_COUNT	        46
+#define RDKB_TR181_OBJECT_LEVEL1_COUNT	        44
 #define RDKB_TR181_OBJECT_LEVEL2_COUNT	        19
 #else
-#define RDKB_TR181_OBJECT_LEVEL1_COUNT	        45
+#define RDKB_TR181_OBJECT_LEVEL1_COUNT	        43
 #define RDKB_TR181_OBJECT_LEVEL2_COUNT	        18
 #endif
 #define WAL_COMPONENT_INIT_RETRY_COUNT          4
@@ -62,6 +65,8 @@
 #elif defined(PLATFORM_RASPBERRYPI)
 #define DEVICE_MAC                   "Device.Ethernet.Interface.5.MACAddress"
 #elif defined(RDKB_EMU)
+#define DEVICE_MAC                   "Device.DeviceInfo.X_COMCAST-COM_WAN_MAC"
+#elif defined(_HUB4_PRODUCT_REQ_)
 #define DEVICE_MAC                   "Device.DeviceInfo.X_COMCAST-COM_WAN_MAC"
 #else
 #define DEVICE_MAC                   "Device.X_CISCO_COM_CableModem.MACAddress"
@@ -254,6 +259,15 @@ int get_global_operationalStatus(void);
 
 void set_global_operationalStatus(int status);
 
+#endif
+#ifdef WEBCONFIG_BIN_SUPPORT
+/**
+* @brief Create force sync JSON and send to webconfig during SET so that same input transaction id can be used in webconfig sync notification to cloud.
+ * @param[in] value. input force sync string.
+ * @param[in] transactionId. input webpa request transactionId.
+ * @param[out] stringifiedJson. JSON schema with force sync value and transaction id.
+ */
+WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** stringifiedJson);
 #endif
 BOOL get_eth_wan_status();
 

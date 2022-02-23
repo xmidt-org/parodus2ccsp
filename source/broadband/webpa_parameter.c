@@ -46,7 +46,10 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
 static void *applyWiFiSettingsTask();
 static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3); 
 BOOL applySettingsFlag;
-
+#ifdef WEBCONFIG_BIN_SUPPORT
+#define WEBCFG_FORCE_SYNC_PARAM "Device.X_RDK_WebConfig.ForceSync"
+static int prepare_forceSyncValueStruct(parameterValStruct_t* val, param_t *paramVal, char *paramName, char *jsonval);
+#endif
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -717,6 +720,59 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
         }
         else
         {
+#ifdef WEBCONFIG_BIN_SUPPORT
+		if(!strcmp(val[0].parameterName,WEBCFG_FORCE_SYNC_PARAM))
+		{
+			WDMP_STATUS jsonstatus = WDMP_FAILURE;
+			char *jsonValue = NULL;
+			jsonstatus = createForceSyncJsonSchema(val[0].parameterValue, transactionId, &jsonValue);
+			if(jsonstatus == WDMP_SUCCESS)
+			{
+				WalInfo("stringified force sync jsonValue is %s\n", jsonValue);
+
+				if(jsonValue !=NULL)
+				{
+					parameterValStruct_t* val_fs = (parameterValStruct_t*) malloc(sizeof(parameterValStruct_t) * paramCount);
+					if(val_fs !=NULL)
+					{
+						memset(val_fs,0,(sizeof(parameterValStruct_t) * paramCount));
+						char *faultParam_fs =NULL;
+						ret = prepare_forceSyncValueStruct(&val_fs[0], &paramVal[0], paramName, jsonValue);
+						if(!ret)
+						{
+							WalPrint("New val_fs[0].parameterName is %s\n", val_fs[0].parameterName);
+							WalPrint("New val_fs[0].parameterValue is %s\n", val_fs[0].parameterValue);
+							WalPrint("New val_fs[0].type is %d\n", val_fs[0].type);
+							ret = CcspBaseIf_setParameterValues(bus_handle, CompName, dbusPath, 0, writeID, val_fs, paramCount, TRUE, &faultParam_fs);
+							WalPrint("Force sync ccsp set . ret is %d\n", ret);
+							free_set_param_values_memory(val_fs,paramCount,faultParam_fs);
+							WAL_FREE(jsonValue);
+							free_set_param_values_memory(val,paramCount,faultParam);
+							return ret;
+						}
+						else
+						{
+								WalError("Force sync parameter value struct failed \n");
+								free_set_param_values_memory(val_fs,paramCount,faultParam_fs);
+						}
+					}
+					else
+					{
+						WalError("Force sync val_fs memory allocation failed\n");
+					}
+					WAL_FREE(jsonValue);
+				}
+				else
+				{
+					WalError("Force sync jsonValue NULL\n");
+				}
+			}
+			else
+			{
+				WalError("Failed to create force sync JSON\n");
+			}
+		}
+#endif
             ret = CcspBaseIf_setParameterValues(bus_handle, CompName, dbusPath, 0, writeID, val, paramCount, TRUE, &faultParam);
         }
 
@@ -804,23 +860,26 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 			}
 			else if (!strncmp(val[x].parameterName, "Device.WiFi.AccessPoint.",24))
 			{
-				sscanf(val[x].parameterName, "Device.WiFi.AccessPoint.%d", &index);
-				WalPrint("AccessPoint index = %d\n", index);
-				SSID = (1 << ((index) - 1));
-				apply_rf = (2 - ((index) % 2));
-				WalPrint("apply_rf = %d\n", apply_rf);
+				if (!(strstr(val[x].parameterName, ".WPS.X_CISCO_COM_ActivatePushButton")))
+				{
+					sscanf(val[x].parameterName, "Device.WiFi.AccessPoint.%d", &index);
+					WalPrint("AccessPoint index = %d\n", index);
+					SSID = (1 << ((index) - 1));
+					apply_rf = (2 - ((index) % 2));
+					WalPrint("apply_rf = %d\n", apply_rf);
 
-				if((index >= 17) && (index <= 24))
-                                {
-                                        *bRestartRadio3 = TRUE;
-                                }
-				else if (apply_rf == 1)
-				{
-					*bRestartRadio1 = TRUE;
-				}
-				else if (apply_rf == 2)
-				{
-					*bRestartRadio2 = TRUE;
+					if((index >= 17) && (index <= 24))
+					{
+						*bRestartRadio3 = TRUE;
+					}
+					else if (apply_rf == 1)
+					{
+						*bRestartRadio1 = TRUE;
+					}
+					else if (apply_rf == 2)
+					{
+						*bRestartRadio2 = TRUE;
+					}
 				}
 			}
 		}
@@ -946,5 +1005,66 @@ static void *applyWiFiSettingsTask()
 	WalPrint("============ End =============\n");
         return NULL;
 }
+#ifdef WEBCONFIG_BIN_SUPPORT
+/**
+ * @brief prepare_forceSyncValueStruct returns parameter values
+ *
+ * @param[out] val parameter value Array
+ * @param[in] paramVal parameter value Array
+ * @param[in] paramName parameter name
+ */
 
+static int prepare_forceSyncValueStruct(parameterValStruct_t* val, param_t *paramVal, char *paramName, char *jsonval)
+{
+	val->parameterName = malloc( sizeof(char) * MAX_PARAMETERNAME_LEN);
 
+	if(val->parameterName == NULL)
+	{
+		return WDMP_FAILURE;
+	}
+	walStrncpy(val->parameterName,paramName, MAX_PARAMETERNAME_LEN);
+
+	val->parameterValue = jsonval;
+
+	switch(paramVal->type)
+	{
+		case 0:
+				val->type = ccsp_string;
+				break;
+		case 1:
+				val->type = ccsp_int;
+				break;
+		case 2:
+				val->type = ccsp_unsignedInt;
+				break;
+		case 3:
+				val->type = ccsp_boolean;
+				break;
+		case 4:
+				val->type = ccsp_dateTime;
+				break;
+		case 5:
+				val->type = ccsp_base64;
+				break;
+		case 6:
+				val->type = ccsp_long;
+				break;
+		case 7:
+				val->type = ccsp_unsignedLong;
+				break;
+		case 8:
+				val->type = ccsp_float;
+				break;
+		case 9:
+				val->type = ccsp_double;
+				break;
+		case 10:
+				val->type = ccsp_byte;
+				break;
+		default:
+				val->type = ccsp_none;
+				break;
+	}
+	return WDMP_SUCCESS;
+}
+#endif
