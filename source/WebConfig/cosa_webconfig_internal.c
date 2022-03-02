@@ -711,7 +711,7 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 				else //pass empty transaction id when Force sync is with empty doc
 				{
 					WebcfgDebug("setWebConfigParameterValues empty setForceSync\n");
-					ret = setForceSync(val[i].parameterValue, "", 0);
+					ret = setForceSync(val[i].parameterValue, "", &session_status);
 				}
 				if(session_status)
 				{
