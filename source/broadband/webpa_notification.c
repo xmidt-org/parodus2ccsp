@@ -1388,14 +1388,15 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 	WalPrint("Inside processFactoryResetNotification ..\n");
 	dbCID = getParameterValue(PARAM_CID);
 	WalPrint("dbCID value is %s\n", dbCID);
-
+	strCMC = getParameterValue(PARAM_CMC);
+	
 	reboot_reason = getParameterValue(PARAM_REBOOT_REASON);
 	WalInfo("Received reboot_reason as:%s\n", reboot_reason ? reboot_reason : "reboot_reason is NULL");
 
-	if( ((NULL != reboot_reason) && (strcmp(reboot_reason,"factory-reset")==0)) || ((NULL != dbCID) && (strcmp(dbCID, "0") ==0)) )
+	// Actual FR case
+	if( (NULL != reboot_reason) && (strcmp(reboot_reason,"factory-reset")==0) )
 	{
 		WalInfo("Send factory reset notification to server, reboot reason is %s\n", reboot_reason);
-		strCMC = getParameterValue(PARAM_CMC);
 		if (strCMC != NULL)
 		{
 			oldCMC = atoi(strCMC);
@@ -1446,6 +1447,32 @@ static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, uns
 		{
 			WalError("Failed to Get CMC Value, hence ignoring the Set for new CMC value for Factory reset notification\n");
 		}
+	}
+	// Set CMC, CID to 512, 61f4db9 when they are reset to 0 without factory-reset i.e. PSM DB corruption or reset
+	// Returning status failure as its false FR case 
+	else if( ((NULL != dbCID) && (strcmp(dbCID, "0") ==0)) && ((NULL != strCMC) && (strcmp(strCMC, "0") ==0)) )
+	{
+		snprintf(strnewCMC, sizeof(strnewCMC), "%d", CHANGED_BY_XPC);
+		status = setParameterValue(PARAM_CMC,strnewCMC, WDMP_UINT);
+		if(status == WDMP_SUCCESS)
+			WalInfo("Successfully reset CMC to %s to avoid false FR notification\n", strnewCMC);
+		else
+			WalError("Error status %d while re-setting CMC value to avoid false FR notification\n", status);
+
+
+		status = setParameterValue(PARAM_CID,XPC_CID, WDMP_STRING);
+                if(status == WDMP_SUCCESS)
+                        WalInfo("Successfully reset CID to %s to avoid false FR notification\n", XPC_CID);
+		else    
+                        WalError("Error status %d while re-setting CID value to avoid false FR notification\n", status);
+		
+		// Set status to failure as this is not actual FR case
+		status = WDMP_FAILURE; 
+
+	}
+
+	if (NULL != strCMC) {
+		WAL_FREE(strCMC);
 	}
 
 	if (NULL != dbCID) {
