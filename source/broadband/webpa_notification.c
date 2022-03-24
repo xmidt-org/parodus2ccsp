@@ -480,6 +480,10 @@ void loadCfgFile()
 	int flag = 0;
 	size_t sz;
 	fp = fopen(WEBPA_CFG_FILE, "r");
+        if (chmod(WEBPA_CFG_FILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) < 0)
+	{
+                WalError("Could not set mode 0666 on %s\n",WEBPA_CFG_FILE);
+        }
 	if (fp == NULL)
 	{
 		WalError("Failed to open cfg file in read mode creating new file %s\n", WEBPA_CFG_FILE);
