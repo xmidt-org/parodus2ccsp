@@ -294,7 +294,13 @@ int setForceSync(char* pString, char *transactionId,int *pStatus)
 
 	if(((pMyObject->ForceSync)[0] !='\0') && (strlen(pMyObject->ForceSync)>0))
 	{
-		if(get_bootSync())
+		if(!get_webcfgReady())
+		{
+			WebcfgInfo("Webconfig is not ready to process requests, Ignoring this request.\n");
+			*pStatus = 2;
+			return 0;
+		}
+		else if(get_bootSync())
 		{
 			WebcfgInfo("Bootup sync is already in progress, Ignoring this request.\n");
 			*pStatus = 1;
@@ -713,7 +719,12 @@ int setWebConfigParameterValues(parameterValStruct_t *val, int paramCount, char 
 					WebcfgDebug("setWebConfigParameterValues empty setForceSync\n");
 					ret = setForceSync(val[i].parameterValue, "", &session_status);
 				}
-				if(session_status)
+				if(session_status == 2)
+				{
+					WebcfgError("session_status is 2, return ccsp failure\n");
+					return CCSP_FAILURE;
+				}
+				else if(session_status == 1)
 				{
 					return CCSP_CR_ERR_SESSION_IN_PROGRESS;
 				}
