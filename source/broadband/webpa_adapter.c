@@ -89,6 +89,13 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 {
                                         WalPrint("Request:> paramNames[%d] = %s\n",i,reqObj->u.getReq->paramNames[i]);
                                         param = reqObj->u.getReq->paramNames[i];
+					if(param == NULL)
+					{
+						WalError("Request:> Parameter value is null..\n");
+						*resObj->retStatus = WDMP_ERR_VALUE_IS_NULL;
+                                                error = 1;
+						break;
+					}
                                         if(strlen(param) >= MAX_PARAMETERNAME_LEN)
                                         {
                                                 *resObj->retStatus = WDMP_ERR_INVALID_PARAM;
