@@ -123,8 +123,10 @@ const char * notifyparameters[]={
 "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PrivacyProtection.Enable",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_CloudUIEnable",
+#ifndef _CBR_PRODUCT_REQ_
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
-#ifndef _HUB4_PRODUCT_REQ_
+#endif
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_)
 "Device.MoCA.Interface.1.Enable",
 #endif
 "Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
