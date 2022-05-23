@@ -34,7 +34,7 @@ char *objectList[] ={
 "Device.UserInterface.",
 "Device.InterfaceStack.",
 "Device.Ethernet.",
-#ifndef _HUB4_PRODUCT_REQ_
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_)
 "Device.MoCA.",
 #endif
 "Device.PPP.",
@@ -88,7 +88,7 @@ char *objectList[] ={
 char *subObjectList[] = 
 {
 "Device.DeviceInfo.NetworkProperties.",
-#ifndef _HUB4_PRODUCT_REQ_
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_)
 "Device.MoCA.Interface.",
 #endif
 "Device.IP.Diagnostics.",
