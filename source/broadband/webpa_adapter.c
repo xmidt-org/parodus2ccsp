@@ -57,7 +57,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
 	char *dbCMC = NULL;
 	char newCMC[32]={'\0'};
 	
-        WalPrint("************** processRequest *****************\n");
+        WalInfo("************** processRequest *****************\n");
         
         wdmp_parse_request(reqPayload,&reqObj);
         WalInfo("transactionId in request: %s\n",transactionId);
@@ -65,7 +65,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         
         if(reqObj != NULL)
         {
-                WalPrint("Request:> Type : %d\n",reqObj->reqType);
+                WalInfo("Request:> Type : %d\n",reqObj->reqType);
                 
                 resObj = (res_struct *) malloc(sizeof(res_struct));
                 memset(resObj, 0, sizeof(res_struct));
@@ -384,16 +384,16 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                         
                         case REPLACE_ROWS:
                         {
-                                WalPrint("Request:> ParamCount = %zu\n",reqObj->u.tableReq->rowCnt);
+                                WalInfo("Request:> ParamCount = %zu\n",reqObj->u.tableReq->rowCnt);
                                 resObj->paramCnt = reqObj->u.tableReq->rowCnt;
-                                WalPrint("Response:> paramCnt = %zu\n", resObj->paramCnt);
+                                WalInfo("Response:> paramCnt = %zu\n", resObj->paramCnt);
 				if(resObj->paramCnt == 0)
 					resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*1);
 				else
                                 	resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS)*resObj->paramCnt);
 
                                 resObj->timeSpan = NULL;
-                                WalPrint("Request:> Object Name = %s\n",reqObj->u.tableReq->objectName);
+                                WalInfo("Request:> Object Name = %s\n",reqObj->u.tableReq->objectName);
 
                                 ret = validate_table_object(reqObj->u.tableReq);
                                 if(ret == WDMP_SUCCESS)
@@ -404,9 +404,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 {
                                         WalError("Table object validations failed\n");
                                 }
-                                WalPrint("Response:> ret = %d\n",ret);
+                                WalInfo("Response:> ret = %d\n",ret);
                                 *resObj->retStatus = ret;
-                                WalPrint("Response:> retStatus = %d\n", *resObj->retStatus);
+                                WalInfo("Response:> retStatus = %d\n", *resObj->retStatus);
                         }
                         break;
                         
@@ -661,7 +661,7 @@ WDMP_STATUS validate_parameter(param_t *param, int paramCount, REQ_TYPE type)
 static WDMP_STATUS validate_table_object(table_req_t *tableObj)
 {
         int i = 0, j = 0;
-        WalPrint("------------ validate_table_object ----------\n");
+        WalInfo("------------ validate_table_object ----------\n");
         if(strlen(tableObj->objectName) >= MAX_PARAMETERNAME_LEN)
         {
                 return WDMP_ERR_INVALID_PARAM;

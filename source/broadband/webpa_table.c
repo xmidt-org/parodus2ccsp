@@ -196,9 +196,9 @@ int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath)
     parameterValStruct_t *val= NULL;
     parameterValStruct_t **parameterval = NULL;
 
-    WalPrint("<==========Start of updateRow ========>\n ");
+    WalInfo("<==========Start of updateRow ========>\n ");
     numParam = list->paramCnt;
-    WalPrint("numParam : %d\n",numParam);
+    WalInfo("numParam : %d\n",numParam);
     parameterNamesLocal = (char **) malloc(sizeof(char *) * numParam);
     memset(parameterNamesLocal,0,(sizeof(char *) * numParam));        
     val = (parameterValStruct_t*) malloc(sizeof(parameterValStruct_t) * numParam);
@@ -215,10 +215,10 @@ int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath)
 
     // To get dataType of parameter do bulk GET for all the input parameters in the requests
     retGet = CcspBaseIf_getParameterValues(bus_handle, compName, dbusPath, parameterNamesLocal, numParam, &val_size, &parameterval);
-    WalPrint("After GPV ret: %d, val_size: %d\n",retGet,val_size);
+    WalInfo("After GPV ret: %d, val_size: %d\n",retGet,val_size);
     if(retGet == CCSP_SUCCESS && val_size > 0)
     {
-        WalPrint("val_size : %d, numParam %d\n",val_size, numParam);
+        WalInfo("val_size : %d, numParam %d\n",val_size, numParam);
         for(i =0; i<numParam; i++)
         {
             WalPrint("parameterval[i]->parameterName %s, parameterval[i]->parameterValue %s, parameterval[i]->type %d\n",parameterval[i]->parameterName, parameterval[i]->parameterValue, parameterval[i]->type);
@@ -230,7 +230,7 @@ int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath)
         free_parameterValStruct_t (bus_handle, val_size, parameterval);
 
         ret = CcspBaseIf_setParameterValues(bus_handle, compName, dbusPath, 0, writeID, val, numParam, TRUE, &faultParam);
-        WalPrint("ret : %d\n",ret);
+        WalInfo("After SPV ret : %d\n",ret);
         if((ret != CCSP_SUCCESS) && (faultParam != NULL))
         {
             WAL_FREE(faultParam);
@@ -252,7 +252,7 @@ int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath)
     }
     WAL_FREE(parameterNamesLocal);
     WAL_FREE(val);
-    WalPrint("<==========End of updateRow ========>\n ");
+    WalInfo("<==========End of updateRow ========>\n ");
     return ret;
 }
 
