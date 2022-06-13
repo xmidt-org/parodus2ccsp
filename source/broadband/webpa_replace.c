@@ -63,32 +63,30 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
     }
     else
     {
-        WalInfo("paramName after mapping : %s\n",paramName);
+        WalPrint("paramName after mapping : %s\n",paramName);
         ret = cacheTableData(paramName,paramcount,&deleteList,&rowCount,&numParams,&addList);
-        WalInfo("ret : %d rowCount %d numParams: %d\n",ret,rowCount,numParams);
+        WalPrint("ret : %d rowCount %d numParams: %d\n",ret,rowCount,numParams);
 	if(ret == CCSP_SUCCESS && numParams > 0)
         {
             WalInfo("Table (%s) has %d rows",paramName,rowCount);
             if(rowCount > 0)
             {
-                WalInfo("-------- Printing table data ----------\n");
+                WalPrint("-------- Printing table data ----------\n");
                 for(cnt =0; cnt < rowCount; cnt++)
                 {	
-                    WalInfo("deleteList[%d] : %s\n",cnt,deleteList[cnt]);
+                    WalPrint("deleteList[%d] : %s\n",cnt,deleteList[cnt]);
                     if(paramcount != 0)
                     {
-                        WalInfo("addList[%d].paramCnt : %d\n",cnt,addList[cnt].paramCnt);
+                        WalPrint("addList[%d].paramCnt : %d\n",cnt,addList[cnt].paramCnt);
                         for (cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
                         {
-                            WalInfo("addList[%d].names[%d] : %s,addList[%d].values[%d] : %s\n ",cnt,cnt1,addList[cnt].names[cnt1],cnt,cnt1,addList[cnt].values[cnt1]);
+                            WalPrint("addList[%d].names[%d] : %s,addList[%d].values[%d] : %s\n ",cnt,cnt1,addList[cnt].names[cnt1],cnt,cnt1,addList[cnt].values[cnt1]);
                         }
                     }
                 }
-                WalInfo("-------- Printed %d rows----------\n",rowCount);
-            }
-	    WalInfo("B4 deleteAllTableData. rowCount %d\n", rowCount);
+                WalPrint("-------- Printed %d rows----------\n",rowCount);
+            }	
             deleteAllTableData(deleteList,rowCount);
-	    WalInfo("After deleteAllTableData. paramcount %d\n", paramcount);
             if(paramcount != 0)
             {
                 addRet = addNewData(objectName,list,paramcount);
@@ -140,8 +138,8 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
     {
         *retStatus = mapStatus(ret);
     }
-    WalInfo("Finally ----> ret: %d retStatus : %d\n",ret,*retStatus);
-    WalInfo("<==========End of replaceTable ========>\n ");
+    WalPrint("Finally ----> ret: %d retStatus : %d\n",ret,*retStatus);
+    WalPrint("<==========End of replaceTable ========>\n ");
 }
 
 /*----------------------------------------------------------------------------*/
@@ -177,19 +175,19 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
     parameterValStruct_t **parameterval = NULL;
     WalPrint("<================ Start of cacheTableData =============>\n ");
     ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,dst_pathname_cr, objectName, l_Subsystem, &ppComponents, &size);
-    WalInfo("size : %d, ret : %d\n",size,ret);
+    WalPrint("size : %d, ret : %d\n",size,ret);
     if (ret == CCSP_SUCCESS && size == 1)
     {
         WalInfo("parameterName: %s, CompName : %s, dbusPath : %s\n", objectName, ppComponents[0]->componentName, ppComponents[0]->dbusPath);
         walStrncpy(paramName, objectName, sizeof(paramName));
         parameterNames[0] = p;
         ret = CcspBaseIf_getParameterValues(bus_handle,	ppComponents[0]->componentName, ppComponents[0]->dbusPath,  parameterNames,	1, &val_size, &parameterval);
-        WalInfo("ret = %d val_size = %d\n",ret,val_size);
+        WalPrint("ret = %d val_size = %d\n",ret,val_size);
         if(ret == CCSP_SUCCESS && val_size > 0)
         {
             for (cnt = 0; cnt < val_size; cnt++)
             {
-                WalInfo("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt,parameterval[cnt]->parameterName,cnt,parameterval[cnt]->parameterValue);    
+                WalPrint("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt,parameterval[cnt]->parameterName,cnt,parameterval[cnt]->parameterValue);    
             }
             getTableRows(objectName,parameterval,val_size,&rowCount,&rows);
             WalInfo("rowCount : %d\n",rowCount);
@@ -197,7 +195,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
             *numRows = rowCount;
             for(cnt = 0; cnt < rowCount; cnt++)
             {
-                WalInfo("(*rowList)[%d] %s\n",cnt,(*rowList)[cnt]);
+                WalPrint("(*rowList)[%d] %s\n",cnt,(*rowList)[cnt]);
             }
             if(rowCount > 0 && paramcount > 0)
             {
@@ -207,10 +205,10 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
                     *list = getList;
                     for(cnt =0; cnt < rowCount; cnt++)
                     {	
-                        WalInfo("(*list)[%d].paramCnt : %d\n",cnt,(*list)[cnt].paramCnt);
+                        WalPrint("(*list)[%d].paramCnt : %d\n",cnt,(*list)[cnt].paramCnt);
                         for (cnt1 = 0; cnt1 < (*list)[cnt].paramCnt; cnt1++)
                         {
-                            WalInfo("(*list)[%d].names[%d] : %s,(*list)[%d].values[%d] : %s\n ",cnt,cnt1,(*list)[cnt].names[cnt1],cnt,cnt1,(*list)[cnt].values[cnt1]);
+                            WalPrint("(*list)[%d].names[%d] : %s,(*list)[%d].values[%d] : %s\n ",cnt,cnt1,(*list)[cnt].names[cnt1],cnt,cnt1,(*list)[cnt].values[cnt1]);
                         }
                     }
                 }
@@ -246,7 +244,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
         free_componentStruct_t(bus_handle, size, ppComponents);
         return ret;
     }
-    WalInfo("<================ End of cacheTableData =============>\n ");
+    WalPrint("<================ End of cacheTableData =============>\n ");
     return ret;
 }
 
@@ -259,11 +257,11 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
 static void deleteAllTableData(char **deleteList,int rowCount)
 {
     int cnt =0, delRet = 0; 
-    WalInfo("---------- Start of deleteAllTableData -----------\n");
+    WalPrint("---------- Start of deleteAllTableData -----------\n");
     for(cnt =0; cnt < rowCount; cnt++)
     {	
         delRet = deleteRow(deleteList[cnt]);
-        WalInfo("delRet: %d\n",delRet);
+        WalPrint("delRet: %d\n",delRet);
         if(delRet != CCSP_SUCCESS)
         {
             WalError("deleteList[%d] :%s failed to delete\n",cnt,deleteList[cnt]);
@@ -271,7 +269,7 @@ static void deleteAllTableData(char **deleteList,int rowCount)
         WAL_FREE(deleteList[cnt]);
     }
     WAL_FREE(deleteList); 
-    WalInfo("---------- End of deleteAllTableData -----------\n");
+    WalPrint("---------- End of deleteAllTableData -----------\n");
 }
 
 /**
@@ -423,7 +421,7 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
 {
     int writableParamCount = 0, cnt = 0, cnt1 = 0, i = 0, ret = -1;
     char **writableList = NULL;
-    WalInfo("---------- Start of contructRollbackTableData -----------\n");
+    WalPrint("---------- Start of contructRollbackTableData -----------\n");
     ret = getWritableParams((*rowList[0]), &writableList, &writableParamCount);
     if(ret == CCSP_SUCCESS && writableParamCount > 0)
     {
@@ -442,13 +440,13 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
                 if(strstr(parameterval[cnt1]->parameterName,(*rowList)[cnt]) != NULL && (writableList[i] != NULL &&
                 strstr(parameterval[cnt1]->parameterName,writableList[i]) != NULL))
                 {
-                    WalInfo("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt1,parameterval[cnt1]->parameterName,cnt1,parameterval[cnt1]->parameterValue);
+                    WalPrint("parameterval[%d]->parameterName : %s,parameterval[%d]->parameterValue : %s\n ",cnt1,parameterval[cnt1]->parameterName,cnt1,parameterval[cnt1]->parameterValue);
                     (*getList)[cnt].names[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
                     (*getList)[cnt].values[i] = (char *)malloc(sizeof(char) * MAX_PARAMETERNAME_LEN);
                     strcpy((*getList)[cnt].names[i],writableList[i]);
-                    WalInfo("(*getList)[%d].names[%d] : %s\n",cnt, i, (*getList)[cnt].names[i]);
+                    WalPrint("(*getList)[%d].names[%d] : %s\n",cnt, i, (*getList)[cnt].names[i]);
                     strcpy((*getList)[cnt].values[i],parameterval[cnt1]->parameterValue);
-                    WalInfo("(*getList)[%d].values[%d] : %s\n",cnt, i, (*getList)[cnt].values[i]);
+                    WalPrint("(*getList)[%d].values[%d] : %s\n",cnt, i, (*getList)[cnt].values[i]);
                     i++;
 		    if( i == writableParamCount)
 		    {
@@ -472,7 +470,7 @@ static int contructRollbackTableData(parameterValStruct_t **parameterval,int par
 		}
         WalError("Failed in get of writable parameters. ret = %d\n",ret);
     }
-    WalInfo("---------- End of contructRollbackTableData -----------\n");
+    WalPrint("---------- End of contructRollbackTableData -----------\n");
     return ret;
 }
 
@@ -490,6 +488,8 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
     char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
     componentStruct_t ** ppComponents = NULL;
     char *tempStr = NULL;
+    char *isRbus = NULL;
+    int rbusMode = 0;
     char temp[MAX_PARAMETERNAME_LEN] = { 0 };
     //TODO: Coverity Requirement stack space exceeds 10000 bytes use 2048bytes forMAX_PARAMETERNAME_LEN.
     char *paramList[MAX_PARAMETERNAME_LEN] = { 0 };
@@ -497,26 +497,39 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
     strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
     parameterInfoStruct_t **parameterInfo = NULL;
-    WalInfo("==================== Start of getWritableParams ==================\n");
+    isRbus = getParameterValue(RBUS_ENABLE);
+    if(isRbus != NULL)
+    {
+	WalInfo("Rbus = %s\n", isRbus);
+	rbusMode = (strncmp(isRbus, "true", strlen("true")) == 0) ? 1 : 0;
+    }
+    else
+    {
+	WalError("isRbus is NULL\n");
+    }
+    WalPrint("==================== Start of getWritableParams ==================\n");
     snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);
     ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,dst_pathname_cr, paramName, l_Subsystem, &ppComponents, &size);
-    WalInfo("size : %d, ret : %d\n",size,ret);
+    WalPrint("size : %d, ret : %d\n",size,ret);
     if (ret == CCSP_SUCCESS && size == 1)
     {
         WalInfo("parameterName: %s, CompName : %s, dbusPath : %s\n", paramName, ppComponents[0]->componentName, ppComponents[0]->dbusPath);
         ret = CcspBaseIf_getParameterNames(bus_handle,ppComponents[0]->componentName, ppComponents[0]->dbusPath, paramName,1,&val_size,&parameterInfo);
-        WalInfo("val_size : %d, ret : %d\n",val_size,ret);
+        WalPrint("val_size : %d, ret : %d\n",val_size,ret);
+		
         if(ret == CCSP_SUCCESS && val_size > 0)
-        {
+        {  
             cnt1 = 0;
             for(cnt = 0; cnt < val_size; cnt++)
             {
                 len = strlen(paramName);
-                if(parameterInfo[cnt]->writable == 1)
+		// writable count is 1 for dbus mode and 2 for rbus mode.
+                if((rbusMode && parameterInfo[cnt]->writable == 2) || 
+                   (!rbusMode && parameterInfo[cnt]->writable == 1))
                 {
                     walStrncpy(temp, parameterInfo[cnt]->parameterName,sizeof(temp));
                     tempStr =temp + len;
-                    WalInfo("tempStr : %s\n",tempStr);
+                    WalPrint("tempStr : %s\n",tempStr);
                     if(strcmp(tempStr ,ALIAS_PARAM) == 0)
                     {
                         WalInfo("Skipping Alias parameter \n");
@@ -534,7 +547,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
             for(cnt = 0; cnt < writableCount; cnt++)
             {
                 (*writableParams)[cnt] = strdup(paramList[cnt]);
-                WalInfo("(*writableParams)[%d] = %s\n",cnt, (*writableParams)[cnt]);
+                WalPrint("(*writableParams)[%d] = %s\n",cnt, (*writableParams)[cnt]);
                 WAL_FREE(paramList[cnt]);
             }
         }
@@ -546,11 +559,9 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
                 *paramCount = 0;
                 writableParams = NULL;
             }
-        }
-	WalInfo("Free comp struct\n");
+        }	
         free_componentStruct_t(bus_handle, size, ppComponents);
-        free_parameterInfoStruct_t (bus_handle, val_size, parameterInfo);
-	WalInfo("After comp struct free\n");
+        free_parameterInfoStruct_t (bus_handle, val_size, parameterInfo);	
     }
     else
     {
@@ -558,7 +569,7 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
         OnboardLog("Parameter name %s is not supported. ret = %d\n", paramName, ret);
         free_componentStruct_t(bus_handle, size, ppComponents);
     }
-    WalInfo("==================== End of getWritableParams ==================\n");
+    WalPrint("==================== End of getWritableParams ==================\n");
     return ret;
 }
 

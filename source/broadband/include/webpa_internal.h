@@ -82,6 +82,7 @@
 #define ETH_WAN_STATUS_PARAM "Device.Ethernet.X_RDKCENTRAL-COM_WAN.Enabled"
 #define RDKB_ETHAGENT_COMPONENT_NAME                  "com.cisco.spvtg.ccsp.ethagent"
 #define RDKB_ETHAGENT_DBUS_PATH                       "/com/cisco/spvtg/ccsp/ethagent"
+#define RBUS_ENABLE                  "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable"
 
 /* RDKB Logger defines */
 #define LOG_FATAL       0
