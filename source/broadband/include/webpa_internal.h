@@ -35,10 +35,10 @@
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
 #define RDKB_PARAM_WEBCONFIG	"Device.X_RDK_WebConfig."
 #define RDKB_TR181_OBJECT_LEVEL1_COUNT	        44
-#define RDKB_TR181_OBJECT_LEVEL2_COUNT	        19
+#define RDKB_TR181_OBJECT_LEVEL2_COUNT	        22
 #else
 #define RDKB_TR181_OBJECT_LEVEL1_COUNT	        43
-#define RDKB_TR181_OBJECT_LEVEL2_COUNT	        18
+#define RDKB_TR181_OBJECT_LEVEL2_COUNT	        21
 #endif
 #define WAL_COMPONENT_INIT_RETRY_COUNT          4
 #define WAL_COMPONENT_INIT_RETRY_INTERVAL       10
@@ -60,6 +60,9 @@
 #define RDKB_LM_DBUS_PATH                   "/com/cisco/spvtg/ccsp/lmlite"
 #define PARAM_CID                      "Device.DeviceInfo.Webpa.X_COMCAST-COM_CID"
 #define PARAM_CMC                      "Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC"
+#define WEBPA_SERVER_URL             "Device.X_RDKCENTRAL-COM_Webpa.Server.URL"
+#define TOKEN_SERVER_URL             "Device.X_RDKCENTRAL-COM_Webpa.TokenServer.URL"
+#define DNS_TEXT_URL                 "Device.X_RDKCENTRAL-COM_Webpa.DNSText.URL"
 #if defined(_COSA_BCM_MIPS_)
 #define DEVICE_MAC                   "Device.DPoE.Mac_address"
 #elif defined(PLATFORM_RASPBERRYPI)
@@ -240,7 +243,7 @@ void macToLower(char macValue[],char macConverted[]);
 
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val);
 int setWebpaParameterValues(parameterValStruct_t *val, int paramCount, char **faultParam );
-
+ 
 /**
  * @brief validate_parameter validates parameter values
  *
