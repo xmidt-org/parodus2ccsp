@@ -264,6 +264,8 @@ int deleteRow(char *object)
     char dst_pathname_cr[MAX_PATHNAME_CR_LEN] = { 0 };
     char l_Subsystem[MAX_DBUS_INTERFACE_LEN] = { 0 };
     componentStruct_t ** ppComponents = NULL;
+    parameterValStruct_t val;
+    memset(&val, 0, sizeof(val));
 #if !defined(RDKB_EMU)
     strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
 #endif
@@ -294,6 +296,15 @@ int deleteRow(char *object)
     {
         WalPrint("Execution succeed.\n");
         WalInfo("%s is deleted.\n", object);
+        if(!strcmp(compName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        {
+           val.parameterName=(char *) malloc(sizeof(char ) * MAX_PARAMETERNAME_LEN);
+           snprintf(val.parameterName,MAX_PARAMETERNAME_LEN,"%s",object);
+           val.parameterName[MAX_PARAMETERNAME_LEN-1] = '\0';
+           identifyRadioIndexToReset(1,&val,&bRestartRadio1,&bRestartRadio2);
+           pthread_cond_signal(&applySetting_cond);
+           WAL_FREE(val.parameterName);
+        }
     }
     else
     {
