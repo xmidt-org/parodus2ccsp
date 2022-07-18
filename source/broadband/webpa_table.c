@@ -21,6 +21,13 @@
 /*----------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------------------*/
+/*                            Extern Scoped Variables                         */
+/*----------------------------------------------------------------------------*/
+extern pthread_cond_t applySetting_cond;
+extern BOOL bRestartRadio1;
+extern BOOL bRestartRadio2;
+
+/*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
 
@@ -234,6 +241,11 @@ int updateRow(char *objectName,TableData *list,char *compName,char *dbusPath)
         if((ret != CCSP_SUCCESS) && (faultParam != NULL))
         {
             WAL_FREE(faultParam);
+        }
+        if(!strcmp(compName,RDKB_WIFI_FULL_COMPONENT_NAME))
+        {
+            identifyRadioIndexToReset(numParam,val,&bRestartRadio1,&bRestartRadio2);
+            pthread_cond_signal(&applySetting_cond);
         }
     }
     else

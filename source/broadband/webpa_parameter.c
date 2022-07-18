@@ -44,7 +44,7 @@ static void free_paramVal_memory(param_t ** val, int paramCount);
 static int prepare_parameterValueStruct(parameterValStruct_t* val, param_t *paramVal, char *paramName);
 static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int paramCount,const WEBPA_SET_TYPE setType, char *transactionId);
 static void *applyWiFiSettingsTask();
-static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3); 
+void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3); 
 BOOL applySettingsFlag;
 #ifdef WEBCONFIG_BIN_SUPPORT
 #define WEBCFG_FORCE_SYNC_PARAM "Device.X_RDK_WebConfig.ForceSync"
@@ -702,7 +702,6 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
         if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
                 identifyRadioIndexToReset(paramCount,val,&bRestartRadio1,&bRestartRadio2,&bRestartRadio3);
-                bRadioRestartEn = TRUE;
         }
 
         if(strcmp(CompName, RDKB_WEBPA_FULL_COMPONENT_NAME) == 0)
@@ -817,7 +816,7 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
  * @param[out] bRestartRadio2
  * @param[out] bRestartRadio3
  */
-static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3) 
+void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3) 
 {
 	int x =0 ,index =0, SSID =0,apply_rf =0;
 	for (x = 0; x < paramCount; x++)
@@ -884,6 +883,7 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 			}
 		}
 	}
+    bRadioRestartEn = TRUE;
 }
 
 /**
