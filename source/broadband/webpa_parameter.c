@@ -27,9 +27,14 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
 BOOL bRadioRestartEn = FALSE;
+#ifdef FEATURE_SUPPORT_ONEWIFI
+BOOL bRestartRadio = FALSE;
+BOOL bRestartAccessPoint = FALSE;
+#else
 BOOL bRestartRadio1 = FALSE;
 BOOL bRestartRadio2 = FALSE;
 BOOL bRestartRadio3 = FALSE;
+#endif
 pthread_mutex_t applySetting_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t applySetting_cond = PTHREAD_COND_INITIALIZER;
 static char current_transaction_id[MAX_PARAMETERVALUE_LEN] = {'\0'};
@@ -44,7 +49,11 @@ static void free_paramVal_memory(param_t ** val, int paramCount);
 static int prepare_parameterValueStruct(parameterValStruct_t* val, param_t *paramVal, char *paramName);
 static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int paramCount,const WEBPA_SET_TYPE setType, char *transactionId);
 static void *applyWiFiSettingsTask();
-static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3); 
+#ifdef FEATURE_SUPPORT_ONEWIFI
+static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio,BOOL *bRestartAccessPoint);
+#else
+static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio1,BOOL *bRestartRadio2,BOOL *bRestartRadio3);
+#endif
 BOOL applySettingsFlag;
 #ifdef WEBCONFIG_BIN_SUPPORT
 #define WEBCFG_FORCE_SYNC_PARAM "Device.X_RDK_WebConfig.ForceSync"
@@ -701,7 +710,11 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
 
         if(!strcmp(CompName,RDKB_WIFI_FULL_COMPONENT_NAME) && setType != WEBPA_ATOMIC_SET_WEBCONFIG)
         {
+#ifdef FEATURE_SUPPORT_ONEWIFI
+		identifyRadioIndexToReset(paramCount,val,&bRestartRadio,&bRestartAccessPoint);
+#else
                 identifyRadioIndexToReset(paramCount,val,&bRestartRadio1,&bRestartRadio2,&bRestartRadio3);
+#endif
                 bRadioRestartEn = TRUE;
         }
 
@@ -808,6 +821,32 @@ static int setParamValues(param_t *paramVal, char *CompName, char *dbusPath, int
         return ret;
 }
 
+#ifdef FEATURE_SUPPORT_ONEWIFI
+/**
+ * @brief identifyRadioIndexToReset identifies which radio to restart
+ *
+ * @param[in] paramCount count of parameters
+ * @param[in] paramVal parameter value Array
+ * @param[out] bRestartRadio
+ * @param[out] bRestartAccessPoint
+ */
+static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,BOOL *bRestartRadio,BOOL *bRestartAccessPoint)
+{
+        int x =0;
+        for (x = 0; x < paramCount; x++)
+        {
+                WalPrint("val[%d].parameterName : %s\n",x,val[x].parameterName);
+		if (!strncmp(val[x].parameterName, "Device.WiFi.Radio.", 18))
+                {
+                        *bRestartRadio = TRUE;
+                }
+                else if ((!strncmp(val[x].parameterName, "Device.WiFi.SSID.", 17)) || (!strncmp(val[x].parameterName, "Device.WiFi.AccessPoint.",24)))
+                {
+                        *bRestartAccessPoint = TRUE;
+                }
+        }
+}
+#else
 /**
  * @brief identifyRadioIndexToReset identifies which radio to restart 
  *
@@ -885,6 +924,7 @@ static void identifyRadioIndexToReset(int paramCount, parameterValStruct_t* val,
 		}
 	}
 }
+#endif
 
 /**
  * @brief applyWiFiSettingsTask applys settings on WiFi component
@@ -901,7 +941,11 @@ static void *applyWiFiSettingsTask()
 	WalPrint("================= applyWiFiSettings ==========\n");
 	
     pthread_detach(pthread_self());
-        
+#ifdef FEATURE_SUPPORT_ONEWIFI
+        parameterValStruct_t val_set[2] = {
+                                        {"Device.WiFi.ApplyRadioSettings", "true", ccsp_boolean},
+                                        {"Device.WiFi.ApplyAccessPointSettings", "true", ccsp_boolean} };
+#else
 	parameterValStruct_t val_set[3] = { 
 					{"Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting", "true", ccsp_boolean},
 					{"Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting", "true", ccsp_boolean},
@@ -909,7 +953,7 @@ static void *applyWiFiSettingsTask()
 	parameterValStruct_t val_set_1and3[2] = {
                                         {"Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting", "true", ccsp_boolean},
                                         {"Device.WiFi.Radio.3.X_CISCO_COM_ApplySetting", "true", ccsp_boolean} };
-	
+#endif
 	//Identify the radio and apply settings
 	while(1)
 	{
@@ -920,7 +964,23 @@ static void *applyWiFiSettingsTask()
 		if(bRadioRestartEn)
 		{
 			bRadioRestartEn = FALSE;
-	
+#ifdef FEATURE_SUPPORT_ONEWIFI
+                        if(bRestartRadio == TRUE)
+                        {
+                                WalInfo("Need to restart Radio\n");
+                                RadApplyParam = val_set;
+                                nreq = 1;
+                        }
+                        else if(bRestartAccessPoint == TRUE)
+                        {
+                                WalInfo("Need to restart Accesspoint\n");
+                                RadApplyParam = &val_set[1];
+                                nreq = 1;
+                        }
+                        // Reset radio flags
+                        bRestartRadio = FALSE;
+                        bRestartAccessPoint = FALSE;
+#else
 			if((bRestartRadio1 == TRUE) && (bRestartRadio2 == TRUE) && (bRestartRadio3 == TRUE))
                         {
                                 WalInfo("Need to restart all the 3 Radios\n");
@@ -969,7 +1029,7 @@ static void *applyWiFiSettingsTask()
 			bRestartRadio1 = FALSE;
 			bRestartRadio2 = FALSE;
 			bRestartRadio3 = FALSE;	
-	
+#endif
 			WalPrint("nreq : %d writeID : %d\n",nreq,writeID);
 			if(nreq > 0)
 			{
