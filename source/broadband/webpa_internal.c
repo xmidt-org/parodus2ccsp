@@ -106,7 +106,10 @@ char *subObjectList[] =
 "Device.X_RDKCENTRAL-COM_Report.RadioInterfaceStatistics.",
 "Device.X_RDKCENTRAL-COM_Report.NeighboringAP.",
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesStatus.",
-"Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic."
+"Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic.",
+"Device.X_RDKCENTRAL-COM_Webpa.Server.",
+"Device.X_RDKCENTRAL-COM_Webpa.TokenServer.",
+"Device.X_RDKCENTRAL-COM_Webpa.DNSText."
 }; 
 
 char *CcspDmlName[WIFI_PARAM_MAP_SIZE] = {"Device.WiFi.Radio", "Device.WiFi.SSID", "Device.WiFi.AccessPoint"};

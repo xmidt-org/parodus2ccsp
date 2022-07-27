@@ -11,6 +11,7 @@
 #include "ccsp_base_api.h"
 #include "webpa_adapter.h"
 #include "ccsp_psm_helper.h"
+#include "webpa_internal.h"
 
 /* 
  * To enable when all webpa params getting from syscfg.db file otherwise keep 
@@ -98,22 +99,11 @@ CosaDmlWEBPA_GetValueFromDB( char* ParamName, char* pString )
 	
 	AnscCopyString( pString, tmpbuf );
 #else
-        char *tempDBBuffer = NULL;
         CHAR  tmpbuf[ 256 ] = { 0 };
-        int   retPsmGet    = CCSP_SUCCESS;
-
+        	
 	sprintf(tmpbuf, "%s%s",PSMPrefixString,ParamName );
-	retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, tmpbuf, NULL, &tempDBBuffer);
-	if (retPsmGet == CCSP_SUCCESS) 
-	{
-		sprintf(pString,"%s",tempDBBuffer);
-		((CCSP_MESSAGE_BUS_INFO *)bus_handle)->freefunc(tempDBBuffer);
-	}
-	else
-	{
-		WalError("psm_get failed ret %d for parameter %s\n", retPsmGet, ParamName);
-		return FALSE;
-	}
+	
+        return CosaDml_GetValueFromPSMDB( tmpbuf, pString );
 #endif /* WEBPA_PARAMS_VIA_SYSCFG */
 	return TRUE;
 }
@@ -154,3 +144,24 @@ CosaDmlWEBPA_StoreValueIntoDB( char*  	ParamName,
 
 	return TRUE;
 }
+
+BOOL
+CosaDml_GetValueFromPSMDB ( char* ParamName, char* pString )
+{
+	char *tempDBBuffer = NULL;
+        int   retPsmGet    = CCSP_SUCCESS;
+        retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, ParamName, NULL, &tempDBBuffer);
+        if (retPsmGet == CCSP_SUCCESS)
+        {
+                snprintf(pString,64,"%s",tempDBBuffer);
+                ((CCSP_MESSAGE_BUS_INFO *)bus_handle)->freefunc(tempDBBuffer);
+        }
+        else
+        {
+                WalError("psm_get failed ret %d for parameter %s\n", retPsmGet, ParamName);
+                return FALSE;
+        }
+        return TRUE;
+}	
+
+

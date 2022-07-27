@@ -39,8 +39,55 @@
                     <type>string</type>
                     <syntax>string</syntax>
                     <writable>false</writable>
-                </parameter>
+	        </parameter>	    
             </parameters>
+            <objects>
+		<object>
+		    <name>Server</name>
+	            <objectType>object</objectType>
+	            <functions>
+			<func_GetParamStringValue>WebpaServer_GetParamStringValue</func_GetParamStringValue>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>URL</name>
+                            <type>string</type>
+                            <syntax>string</syntax>
+                            <writable>false</writable>
+                        </parameter>
+                    </parameters>
+                </object>
+                <object>
+                    <name>TokenServer</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamStringValue>WebpaTokenServer_GetParamStringValue</func_GetParamStringValue>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>URL</name>
+                            <type>string</type>
+                            <syntax>string</syntax>
+                            <writable>false</writable>
+                        </parameter>
+                    </parameters>
+                </object>
+                <object>
+                    <name>DNSText</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamStringValue>WebpaDNSText_GetParamStringValue</func_GetParamStringValue>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>URL</name>
+                            <type>string</type>
+                            <syntax>string</syntax>
+                            <writable>false</writable>
+                        </parameter>
+                    </parameters>
+                </object>	    
+            </objects>    
         </object>
         <object>
             <name>DeviceInfo</name>
@@ -79,6 +126,6 @@
                     </parameters>
                 </object>
             </objects>
-        </object>
+        </object>	    
     </objects>
 </dataModelInfo>
