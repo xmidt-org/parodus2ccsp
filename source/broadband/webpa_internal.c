@@ -8,6 +8,10 @@
 
 #include <pthread.h>
 
+#ifdef _WNXL11BWL_PRODUCT_REQ_
+#include <unistd.h>
+#endif
+
 #include "webpa_internal.h"
 
 #if defined(FEATURE_SUPPORT_WEBCONFIG)
@@ -208,10 +212,17 @@ int waitForOperationalReadyCondition()
 	{
 		return PSM_FAILED;
 	}
-	if(waitForComponentReady(RDKB_WIFI_COMPONENT_NAME,RDKB_WIFI_DBUS_PATH) != CCSP_SUCCESS)
+#ifdef _WNXL11BWL_PRODUCT_REQ_
+	if (access("/tmp/webpa_skip_wifi_component", F_OK) != 0)
 	{
-		return WIFI_FAILED;
+#endif
+		if(waitForComponentReady(RDKB_WIFI_COMPONENT_NAME,RDKB_WIFI_DBUS_PATH) != CCSP_SUCCESS)
+		{
+		    return WIFI_FAILED;
+		}
+#ifdef _WNXL11BWL_PRODUCT_REQ_
 	}
+#endif
 	return 0;
 }
 
