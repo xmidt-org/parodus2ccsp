@@ -802,7 +802,7 @@ void getDeviceMac()
             {
                 char eth0Mac[18] = {0};
 
-            	fread(ethMac, 1, sizeof(eth0Mac) - 1, pFile);
+            	fread(eth0Mac, 1, sizeof(eth0Mac) - 1, pFile);
             	fclose(pFile);
 
             	pthread_mutex_lock(&device_mac_mutex);
