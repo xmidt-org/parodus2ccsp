@@ -797,16 +797,16 @@ void getDeviceMac()
             backoffRetryTime = (int) pow(2, c) -1;
 #ifdef RDKB_BUILD
 #ifdef _WNXL11BWL_PRODUCT_REQ_
-            FILE *pFile = popen("deviceinfo.sh -cmac", "r");
+            FILE *pFile = fopen("/sys/class/net/eth0/address", "r");
             if (pFile)
             {
-                char deviceInfoMac[18] = {0};
+                char eth0Mac[18] = {0};
 
-            	fread(deviceInfoMac, 1, sizeof(deviceInfoMac) - 1, pFile);
+            	fread(eth0Mac, 1, sizeof(eth0Mac) - 1, pFile);
             	fclose(pFile);
 
             	pthread_mutex_lock(&device_mac_mutex);
-                macToLower(deviceInfoMac, deviceMAC);
+                macToLower(eth0Mac, deviceMAC);
                 WalInfo("XLE deviceMAC is %s\n", deviceMAC);
             }
 #else
