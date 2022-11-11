@@ -796,20 +796,6 @@ void getDeviceMac()
         {	    
             backoffRetryTime = (int) pow(2, c) -1;
 #ifdef RDKB_BUILD
-#ifdef _WNXL11BWL_PRODUCT_REQ_
-            FILE *pFile = fopen("/sys/class/net/eth0/address", "r");
-            if (pFile)
-            {
-                char eth0Mac[18] = {0};
-
-            	fread(ethMac, 1, sizeof(eth0Mac) - 1, pFile);
-            	fclose(pFile);
-
-            	pthread_mutex_lock(&device_mac_mutex);
-                macToLower(eth0Mac, deviceMAC);
-                WalInfo("XLE deviceMAC is %s\n", deviceMAC);
-            }
-#else
             token_t  token;
             int fd = s_sysevent_connect(&token);
             if(WDMP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
@@ -819,7 +805,6 @@ void getDeviceMac()
                 WalInfo("deviceMAC is %s\n", deviceMAC);
             }
             else
-#endif
 #endif
             {
 		pthread_mutex_lock(&device_mac_mutex);
