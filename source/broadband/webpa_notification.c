@@ -797,13 +797,13 @@ void getDeviceMac()
             backoffRetryTime = (int) pow(2, c) -1;
 #ifdef RDKB_BUILD
 #ifdef _WNXL11BWL_PRODUCT_REQ_
-            FILE *pPipe = popen("deviceinfo.sh -cmac", "r");
-            if (pPipe)
+            FILE *pFile = popen("deviceinfo.sh -cmac", "r");
+            if (pFile)
             {
                 char deviceInfoMac[18] = {0};
 
-            	fread(deviceInfoMac, 1, sizeof(deviceInfoMac) - 1, pPipe);
-            	pclose(pPipe);
+            	fread(deviceInfoMac, 1, sizeof(deviceInfoMac) - 1, pFile);
+            	fclose(pFile);
 
             	pthread_mutex_lock(&device_mac_mutex);
                 macToLower(deviceInfoMac, deviceMAC);
