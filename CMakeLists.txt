@@ -46,6 +46,8 @@ include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/cimplog
                     ${LIBRARY_DIR}/dbus-1.0/include
                     ${INCLUDE_DIR}/dbus-1.0
+		    ${INCLUDE_DIR}/rbus
+		    ${INCLUDE_DIR}/rtmessage
                     ${INCLUDE_DIR}/ccsp
                     ${INCLUDE_DIR}/ccsp/linux
 		   )

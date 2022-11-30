@@ -8,6 +8,7 @@
 
 #include "webpa_notification.h"
 #include "webpa_internal.h"
+#include "webpa_rbus.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include <webcfg_generic.h>
 #endif
@@ -39,7 +40,7 @@ extern ANSC_HANDLE bus_handle;
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
 
-void processRequest(char *reqPayload,char *transactionId, char **resPayload)
+void processRequest(char *reqPayload,char *transactionId, char **resPayload,  headers_t *req_headers, headers_t *res_headers)
 {
         req_struct *reqObj = NULL;
         res_struct *resObj = NULL;
@@ -60,8 +61,8 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
         WalPrint("************** processRequest *****************\n");
         
         wdmp_parse_request(reqPayload,&reqObj);
-        WalInfo("transactionId in request: %s\n",transactionId);
-        OnboardLog("%s\n",transactionId);
+	(req_headers != NULL && req_headers->headers[0] != NULL && req_headers->headers[1] != NULL) ? WalInfo("transactionId : %s, traceParent : %s, traceState : %s in request\n", transactionId, req_headers->headers[0], req_headers->headers[1]) : WalInfo("transactionId in request: %s\n", transactionId);
+	OnboardLog("%s\n",transactionId);
         
         if(reqObj != NULL)
         {
@@ -114,6 +115,12 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                 nonWildcardParamCount++;
                                         }
                                 }
+
+                                WalPrint("Before setTraceContext in WEBPA GET request\n");
+				if(req_headers != NULL && req_headers->headers[0] != NULL && req_headers->headers[1] != NULL) {
+                                        setTraceContext(req_headers->headers);
+				}	
+                                WalPrint("After setTraceContext in WEBPA GET request\n");				
                                 
                                 if(error != 1)
                                 {
@@ -166,6 +173,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                 }
                                         }
                                 }
+                                WalPrint("Before getTraceContext in WEBPA GET request\n");
+                                getTraceContext(res_headers->headers);
+                                WalPrint("After getTraceContext in WEBPA GET request\n");				
                         }
                         break;
                         
@@ -195,6 +205,12 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                 break;
                                         }
                                 }
+
+                                WalPrint("Before setTraceContext in WEBPA GET_ATTRIBUTES request\n");
+                                if(req_headers != NULL && req_headers->headers[0] != NULL && req_headers->headers[1] != NULL) {
+                                        setTraceContext(req_headers->headers);
+                                }
+                                WalPrint("After setTraceContext in WEBPA GET_ATTRIBUTES request\n");				
                                 
                                 if(error != 1)
                                 {
@@ -217,6 +233,10 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                                 WalPrint("Response:> retStatus[%d] = %d\n",i,resObj->retStatus[i]);
                                         }
                                 }
+
+                                WalPrint("Before getTraceContext in WEBPA GET_ATTRIBUTES request\n");
+                                getTraceContext(res_headers->headers);
+                                WalPrint("After getTraceContext in WEBPA GET_ATTRIBUTES request\n");				
                         }
                         break;
                         
@@ -231,6 +251,12 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 paramCount = (int)reqObj->u.setReq->paramCnt;
                                 resObj->u.paramRes = (param_res_t *) malloc(sizeof(param_res_t));
                                 memset(resObj->u.paramRes, 0, sizeof(param_res_t));
+
+                                WalPrint("Before setTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");
+                                if(req_headers != NULL && req_headers->headers[0] != NULL && req_headers->headers[1] != NULL) {
+                                        setTraceContext(req_headers->headers);
+                                }
+                                WalPrint("After setTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");				
                                 
                                 for (i = 0; i < paramCount; i++) 
                                 {
@@ -279,6 +305,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                         WalPrint("Response:> resObj->retStatus[0] = %d\n",resObj->retStatus[0]);
                                 }
                                 
+                                WalPrint("Before getTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");
+                                getTraceContext(res_headers->headers);
+                                WalPrint("After getTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");				
                         }
                         break;
                         
@@ -304,6 +333,12 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
 				WalInfo("dbCID : %s\n",(NULL != dbCID) ? dbCID : "NULL" );
                                 snprintf(newCMC, sizeof(newCMC),"%d", CHANGED_BY_XPC);
                                 WalInfo("newCMC : %s\n",newCMC);
+
+				WalPrint("Before setTraceContext in WEBPA TEST_AND_SET request\n");
+                                if(req_headers != NULL && req_headers->headers[0] != NULL && req_headers->headers[1] != NULL) {
+                                        setTraceContext(req_headers->headers);
+                                }
+                                WalPrint("After setTraceContext in WEBPA TEST_AND_SET request\n");
                                 
                                 for (i = 0; i < paramCount; i++) 
                                 {
@@ -379,6 +414,10 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload)
                                 WalPrint("Response:> retStatus = %d\n",resObj->retStatus[0]);
                                 WAL_FREE(dbCMC);
                                 WAL_FREE(dbCID);
+
+				WalPrint("Before getTraceContext in WEBPA TEST_AND_SET request\n");
+                                getTraceContext(res_headers->headers);
+                                WalPrint("After getTraceContext in WEBPA TEST_AND_SET request\n");
                         }
                         break;
                         
@@ -722,3 +761,4 @@ static void setRebootReason(param_t param, WEBPA_SET_TYPE setType)
 	}
 	
 }
+

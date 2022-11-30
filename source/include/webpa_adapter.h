@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <wdmp-c.h>
 #include <cimplog.h>
+#include <libparodus.h>
 
 #define WAL_FREE(__x__) if(__x__ != NULL) { free((void*)(__x__)); __x__ = NULL;} else {printf("Trying to free null pointer\n");}
 
@@ -103,7 +104,7 @@ long timeValDiff(struct timespec *starttime, struct timespec *finishtime);
  * @param[in] reqPayload input request to process
  * @param[in] resPayload retuns response payload
  */
-void processRequest(char *reqPayload, char *transactionId, char **resPayload);
+void processRequest(char *reqPayload, char *transactionId, char **resPayload, headers_t *req_headers, headers_t *res_headers);
 
 /**
  * @brief getValues Returns the parameter values from stack for GET request
