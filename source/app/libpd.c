@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include "libpd.h"
 #include "webpa_adapter.h"
+#include "webpa_rbus.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include <webcfg_generic.h>
 #endif
@@ -173,8 +174,27 @@ static void parodus_receive()
                     {
 						memset(res_wrp_msg, 0, sizeof(wrp_msg_t));
                         getCurrentTime(startPtr);
-                        processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))));
-
+			headers_t *res_headers = NULL;
+                        res_headers = (headers_t *)malloc(sizeof(headers_t));
+			if(res_headers != NULL) {
+                        	processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))), wrp_msg->u.req.headers, res_headers);
+				if(res_headers != NULL && res_headers->headers[0] != NULL && res_headers->headers[1] != NULL) {
+                                	if(strlen(res_headers->headers[0]) > 0 && strlen(res_headers->headers[1]) > 0) {
+                                          	res_headers->count = wrp_msg->u.req.headers->count;
+                                          	res_wrp_msg->u.req.headers = res_headers;
+					  	clearTraceContext();
+					  	WalInfo("The response wrp_msg header fields\n");
+                                          	WalInfo("res header count in res_wrp_msg - %d\n", res_wrp_msg->u.req.headers->count);
+						for(int i=0; i < res_wrp_msg->u.req.headers->count; i++) {
+                                                        WalInfo("res header %d in res_wrp_msg - %s\n", i, res_wrp_msg->u.req.headers->headers[i]);
+						}
+                                	}
+                        	}
+		        }
+			else {
+				WalError("Memory not allocated for response headers\n");
+				return;
+			}
                         
                         if(res_wrp_msg->u.req.payload !=NULL)
                         {   
