@@ -175,27 +175,35 @@ static void parodus_receive()
 						memset(res_wrp_msg, 0, sizeof(wrp_msg_t));
                         getCurrentTime(startPtr);
 			headers_t *res_headers = NULL;
-                        res_headers = (headers_t *)malloc(sizeof(headers_t));
-			if(res_headers != NULL) {
-                        	processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))), wrp_msg->u.req.headers, res_headers);
-				if(res_headers != NULL && res_headers->headers[0] != NULL && res_headers->headers[1] != NULL) {
-                                	if(strlen(res_headers->headers[0]) > 0 && strlen(res_headers->headers[1]) > 0) {
-                                          	res_headers->count = wrp_msg->u.req.headers->count;
-                                          	res_wrp_msg->u.req.headers = res_headers;
-					  	clearTraceContext();
-					  	WalInfo("The response wrp_msg header fields\n");
-                                          	WalInfo("res header count in res_wrp_msg - %d\n", res_wrp_msg->u.req.headers->count);
-						for(int i=0; i < res_wrp_msg->u.req.headers->count; i++) {
-                                                        WalInfo("res header %d in res_wrp_msg - %s\n", i, res_wrp_msg->u.req.headers->headers[i]);
-						}
-                                	}
-                        	}
-		        }
-			else {
-				WalError("Memory not allocated for response headers\n");
-				return;
+			if(wrp_msg->u.req.headers != NULL) {
+				WalPrint("Allocating memory for response headers\n");
+                        	res_headers = (headers_t *)malloc(sizeof(headers_t) + sizeof( char * ) * (wrp_msg->u.req.headers->count));
+				if(res_headers != NULL) {
+					WalPrint("Memory allocated successfully for response headers\n");
+					memset(res_headers, 0, sizeof(headers_t));
+				}
+				else {
+					WalError("Memory not allocated for response headers\n");
+					return;
+				}	
 			}
-                        
+			else {
+                                WalPrint("Request headers field is empty so, Memory not allocated for response headers\n");
+                        }
+			processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))), wrp_msg->u.req.headers, res_headers);
+			if(res_headers != NULL && res_headers->headers[0] != NULL && res_headers->headers[1] != NULL) {
+                                if(strlen(res_headers->headers[0]) > 0 && strlen(res_headers->headers[1]) > 0) {
+                                          res_headers->count = wrp_msg->u.req.headers->count;
+                                          res_wrp_msg->u.req.headers = res_headers;
+					  clearTraceContext();
+					  WalInfo("The response wrp_msg header fields\n");
+                                          WalInfo("res header count in res_wrp_msg - %d\n", res_wrp_msg->u.req.headers->count);
+					for(int i=0; i < res_wrp_msg->u.req.headers->count; i++) {
+                                                  WalInfo("res header %d in res_wrp_msg - %s\n", i, res_wrp_msg->u.req.headers->headers[i]);
+					}
+                               	}
+                         }
+		
                         if(res_wrp_msg->u.req.payload !=NULL)
                         {   
                                 WalPrint("Response payload is %s\n",(char *)(res_wrp_msg->u.req.payload));
@@ -232,10 +240,10 @@ static void parodus_receive()
                         }
                         getCurrentTime(endPtr);
                         WalInfo("Elapsed time : %ld ms\n", timeValDiff(startPtr, endPtr));
-                        wrp_free_struct (res_wrp_msg);
+			wrp_free_struct (res_wrp_msg);
                     }
 		    wrp_free_struct (wrp_msg);
-            }
+	    }
 
             //handle cloud-status retrieve response received from parodus
             else if (wrp_msg->msg_type == WRP_MSG_TYPE__RETREIVE)
