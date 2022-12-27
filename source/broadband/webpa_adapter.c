@@ -174,7 +174,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                         }
                                 }
 				WalPrint("Before getTraceContext in WEBPA GET request\n");
-                                getTraceContext(res_headers->headers);
+				if(res_headers != NULL) {
+                                	getTraceContext(res_headers->headers);
+				}	
                                 WalPrint("After getTraceContext in WEBPA GET request\n");
                         }
                         break;
@@ -235,7 +237,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                 }
 				
 				WalPrint("Before getTraceContext in WEBPA GET_ATTRIBUTES request\n");
-                                getTraceContext(res_headers->headers);
+				if(res_headers != NULL) {
+                                	getTraceContext(res_headers->headers);
+				}	
                                 WalPrint("After getTraceContext in WEBPA GET_ATTRIBUTES request\n");
                         }
                         break;
@@ -306,7 +310,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                 }
                                 
 				WalPrint("Before getTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");
-                                getTraceContext(res_headers->headers);
+				if(res_headers != NULL) {
+                                	getTraceContext(res_headers->headers);
+				}	
                                 WalPrint("After getTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");
                         }
                         break;
@@ -416,7 +422,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                 WAL_FREE(dbCID);
 				
 				WalPrint("Before getTraceContext in WEBPA TEST_AND_SET request\n");
-                                getTraceContext(res_headers->headers);
+				if(res_headers != NULL) {
+                                	getTraceContext(res_headers->headers);
+				}	
                                 WalPrint("After getTraceContext in WEBPA TEST_AND_SET request\n");
                         }
                         break;
