@@ -687,6 +687,8 @@ WDMP_STATUS mapStatus(int ret)
 		    return WDMP_ERR_METHOD_NOT_SUPPORTED;
 		case CCSP_CR_ERR_SESSION_IN_PROGRESS:
 		    return WDMP_ERR_SESSION_IN_PROGRESS;
+		case CCSP_Message_Bus_OOM:
+		    return WDMP_ERR_MAX_REQUEST;
 		default:
 			return WDMP_FAILURE;
 	}
