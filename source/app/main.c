@@ -9,7 +9,6 @@
 #include "signal.h"
 #include "webpa_adapter.h"
 #include "libpd.h"
-#include "webpa_rbus.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include <curl/curl.h>
 #endif
@@ -56,10 +55,6 @@ int main()
 	WalInfo("B4 msgBusInit\n");
 	msgBusInit(pComponentName);
 	WalInfo("After msgBusInit\n");
-	if(isRbusEnabled())
-	{
-	        webpaRbusInit(pComponentName);
-        }
 	ret = waitForOperationalReadyCondition();
 	libpd_client_mgr();
 	WalInfo("Syncing backend manager with DB....\n");

@@ -46,8 +46,6 @@ include_directories(${INCLUDE_DIR}
                     ${INCLUDE_DIR}/cimplog
                     ${LIBRARY_DIR}/dbus-1.0/include
                     ${INCLUDE_DIR}/dbus-1.0
-		    ${INCLUDE_DIR}/rbus
-		    ${INCLUDE_DIR}/rtmessage
                     ${INCLUDE_DIR}/ccsp
                     ${INCLUDE_DIR}/ccsp/linux
 		   )
@@ -138,24 +136,6 @@ ExternalProject_Add(wdmp-c
 )
 add_library(libwdmp-c STATIC SHARED IMPORTED)
 add_dependencies(libwdmp-c wdmp-c)
-
-# rbus external dependency
-#-------------------------------------------------------------------------------
-ExternalProject_Add(rbus
-     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_prefix/rbus
-     GIT_REPOSITORY https://github.com/rdkcentral/rbus.git
-     GIT_TAG main
-     CMAKE_ARGS += -DBUILD_FOR_DESKTOP=ON -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DBUILD_TESTING=OFF
-)
-
-add_library(librbuscore STATIC SHARED IMPORTED)
-add_dependencies(librbuscore rbuscore)
-
-add_library(librtMessage STATIC SHARED IMPORTED)
-add_dependencies(librtMessage rtMessage)
-
-add_library(librbus STATIC SHARED IMPORTED)
-add_dependencies(librbus rbus)
 
 if (FEATURE_SUPPORT_WEBCONFIG)
 # curl external dependency
