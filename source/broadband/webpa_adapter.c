@@ -148,7 +148,12 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                         }
 					if(ret != WDMP_SUCCESS)
                                         {
-                                            WalPrint("Non-wildcard get failed. Hence returning...\n");
+					    WalPrint("Before getTraceContext in WEBPA GET request\n");
+					    if(res_headers != NULL) {
+						  getTraceContext(res_headers->headers);
+					    }	
+					    WalPrint("After getTraceContext in WEBPA GET request\n");						
+                                            WalPrint("Non-wildcard get failed. Hence returning...\n");						
                                             break;
                                         }
                                      } else {
