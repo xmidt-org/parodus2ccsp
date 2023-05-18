@@ -105,6 +105,12 @@ const char * notifyparameters[]={
 "Device.X_CISCO_COM_Security.Firewall.FilterMulticast",
 "Device.X_CISCO_COM_Security.Firewall.FilterP2P",
 "Device.X_CISCO_COM_Security.Firewall.FirewallLevel",
+"Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequestsV6",
+"Device.X_CISCO_COM_Security.Firewall.FilterHTTPV6",
+"Device.X_CISCO_COM_Security.Firewall.FilterIdentV6",
+"Device.X_CISCO_COM_Security.Firewall.FilterMulticastV6",
+"Device.X_CISCO_COM_Security.Firewall.FilterP2PV6",
+"Device.X_CISCO_COM_Security.Firewall.FirewallLevelV6",
 // Commenting this parameter to avoid PSM crash
 //"Device.DHCPv4.Server.Enable",
 "Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanIPAddress",
