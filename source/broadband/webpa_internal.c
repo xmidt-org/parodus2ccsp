@@ -212,6 +212,8 @@ int waitForOperationalReadyCondition()
 	{
 		return PSM_FAILED;
 	}
+
+#ifndef NO_WIFI_FEATURE_SUPPORT //Disable Wifi check for XD4
 #ifdef _WNXL11BWL_PRODUCT_REQ_
 	if (access("/tmp/webpa_skip_wifi_component", F_OK) != 0)
 	{
@@ -223,6 +225,8 @@ int waitForOperationalReadyCondition()
 #ifdef _WNXL11BWL_PRODUCT_REQ_
 	}
 #endif
+#endif //NO_WIFI_FEATURE_SUPPORT
+
 	return 0;
 }
 
