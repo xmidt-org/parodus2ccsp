@@ -188,7 +188,8 @@ const char * notifyparameters[]={
 "Device.WiFi.SSID.10201.SSID",
 "Device.WiFi.SSID.10202.Enable",
 "Device.WiFi.SSID.10202.SSID",
-"Device.WiFi.SSID.10203.SSID",
+//Turning off the notification support for below 6G hotspot as part of TCXB8-2770 Ticket
+/*"Device.WiFi.SSID.10203.SSID",
 "Device.WiFi.SSID.10205.SSID",
 "Device.WiFi.SSID.10205.Status",
 "Device.WiFi.SSID.10203.Status",
@@ -199,7 +200,7 @@ const char * notifyparameters[]={
 "Device.WiFi.SSID.10203.BSSID",
 "Device.WiFi.SSID.10205.BSSID",
 "Device.WiFi.AccessPoint.10203.Security.ModeEnabled",
-"Device.WiFi.AccessPoint.10205.Security.ModeEnabled",
+"Device.WiFi.AccessPoint.10205.Security.ModeEnabled",*/
 "Device.WiFi.Radio.10200.Channel",
 "Device.WiFi.Radio.10200.OperatingFrequencyBand",
 "Device.WiFi.Radio.10200.OperatingChannelBandwidth",
