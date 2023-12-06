@@ -98,7 +98,7 @@ if (NOT BUILD_YOCTO)
 ExternalProject_Add(cJSON
     PREFIX ${PREFIX_DIR}/cJSON
     GIT_REPOSITORY https://github.com/DaveGamble/cJSON.git
-    GIT_TAG "aafb64a1c549b7b927e339df6d35b1d5059dc235"
+    GIT_TAG v1.7.13
     CMAKE_ARGS += -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 )
 add_library(libcJSON STATIC IMPORTED)
@@ -139,6 +139,7 @@ ExternalProject_Add(wdmp-c
 add_library(libwdmp-c STATIC SHARED IMPORTED)
 add_dependencies(libwdmp-c wdmp-c)
 
+if (NOT BUILD_GIT)
 # rbus external dependency
 #-------------------------------------------------------------------------------
 ExternalProject_Add(rbus
@@ -156,6 +157,7 @@ add_dependencies(librtMessage rtMessage)
 
 add_library(librbus STATIC SHARED IMPORTED)
 add_dependencies(librbus rbus)
+endif ()
 
 if (FEATURE_SUPPORT_WEBCONFIG)
 # curl external dependency

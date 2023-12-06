@@ -38,6 +38,11 @@ int numLoops=1;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
+void clearTraceContext()
+{
+
+}
+
 void getCurrentTime(struct timespec *timer)
 {
     clock_gettime(CLOCK_REALTIME, timer); 
@@ -51,11 +56,13 @@ long timeValDiff(struct timespec *starttime, struct timespec *finishtime)
     return msec;
 }
 
-void processRequest(char *reqPayload, char *transactionId, char **resPayload)
+void processRequest(char *reqPayload, char *transactionId, char **resPayload, headers_t *req_headers, headers_t *res_headers)
 {
     UNUSED(reqPayload);
     UNUSED(transactionId);
     UNUSED(resPayload);
+    UNUSED(req_headers);
+    UNUSED(res_headers);    
 }
 
 int libparodus_init (libpd_instance_t *instance, libpd_cfg_t *libpd_cfg)

@@ -8,13 +8,13 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
   schedule:
     - cron: '12 9 * * 3'
 
 jobs:
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -25,7 +25,7 @@ jobs:
         sudo apt-get -y install valgrind libcunit1 libcunit1-doc libcunit1-dev libcurl4-openssl-dev openssl libexpat1-dev gcovr
  
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: cpp
         queries: security-extended
@@ -33,7 +33,7 @@ jobs:
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+      #uses: github/codeql-action/autobuild@v1
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -45,6 +45,21 @@ jobs:
     #- run: |
     #   make bootstrap
     #   make release
+      run: |
+        mkdir build
+        cd build      
+        ../.github/scripts/rtrouted.sh  
+        ps aux 
+        export RBUS_ROOT=${HOME}/rbus
+        export RBUS_INSTALL_DIR=${RBUS_ROOT}/install && \
+        export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}            
+        export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include                   
+        mkdir _install
+        mkdir _install/lib
+        cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib                   
+        cmake .. -DBUILD_TESTING:BOOL=true -DBUILD_GIT:BOOL=true
+        make
+        killall -9 rtrouted        
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include <libparodus.h>
 #include <string.h>
 #include <fcntl.h>

@@ -21,7 +21,7 @@ on:
 jobs:
   test:
     name: Unit Tests
-    runs-on: [ ubuntu-latest ]
+    runs-on: [ ubuntu-20.04 ]
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
@@ -39,18 +39,31 @@ jobs:
         run: mkdir build
 
       - name: Get Sonarcloud Binaries
+        uses: xmidt-org/sonarcloud-installer-action@v1
+        with:
+          working-directory: build
+
+      - name: Get rtrouted  Binary
         working-directory: build
         run: |
-          ../.github/scripts/get_sonarcloud.sh
+          ../.github/scripts/rtrouted.sh          
 
       - name: CMake
         working-directory: build
         run: |
-          cmake .. -DBUILD_TESTING:BOOL=true
+          cmake .. -DBUILD_TESTING:BOOL=true -DBUILD_GIT:BOOL=true
 
       - name: Build
         working-directory: build
         run: |
+          ps aux 
+          export RBUS_ROOT=${HOME}/rbus
+          export RBUS_INSTALL_DIR=${RBUS_ROOT}/install && \
+          export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}            
+          export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include                   
+          mkdir _install
+          mkdir _install/lib
+          cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib        
           build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make all
 
       - name: Test
@@ -64,11 +77,11 @@ jobs:
         run: |
           gcovr --sonarqube coverage.xml -r ..
 
-      - name: Upload SonarCloud
-        run: |
-          build/sonar-scanner/bin/sonar-scanner -Dsonar.host.url=https://sonarcloud.io -Dproject.settings=.sonar-project.properties -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload SonarCloud
+      #   run: |
+      #     build/sonar-scanner/bin/sonar-scanner -Dsonar.host.url=https://sonarcloud.io -Dproject.settings=.sonar-project.properties -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Codecov.io
         uses: codecov/codecov-action@v1
