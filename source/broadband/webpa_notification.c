@@ -7,7 +7,7 @@
  */
 
 #include <pthread.h>
-
+#include <math.h>
 #include "webpa_notification.h"
 #include "webpa_internal.h"
 #ifdef RDKB_BUILD
