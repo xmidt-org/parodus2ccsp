@@ -22,7 +22,11 @@
 #endif
 
 #define CONTENT_TYPE_JSON       "application/json"
-#define DEVICE_PROPS_FILE   "/etc/device.properties"
+#ifdef BUILD_YOCTO
+#define DEVICE_PROPS_FILE       "/etc/device.properties"
+#else
+#define DEVICE_PROPS_FILE       "/tmp/device.properties"
+#endif
 #define MAX_PARALLEL_THREADS    1
 #define PARODUS_URL_DEFAULT      "tcp://127.0.0.1:6666"
 #define CLIENT_URL_DEFAULT       "tcp://127.0.0.1:6667"
@@ -654,4 +658,3 @@ const char *rdk_logger_module_fetch(void)
 {
     return "LOG.RDK.WEBPA";
 }
-
