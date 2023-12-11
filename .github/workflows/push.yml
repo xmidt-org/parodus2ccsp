@@ -64,13 +64,11 @@ jobs:
           mkdir _install
           mkdir _install/lib
           cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib        
-          build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make all
+          build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make all test
 
-      - name: Test
-        working-directory: build
+      - name: Stop rtrouted
         run: |
-          # ARGS=-VV make test       # use this version for debugging
-          make test
+          killall -9 rtrouted
 
       - name: Merge GCOV Reports for Sonarcloud
         working-directory: build
