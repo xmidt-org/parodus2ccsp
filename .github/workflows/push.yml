@@ -66,12 +66,7 @@ jobs:
           cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib        
           build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make all test
 
-  #uncomment these for debugging
-      #- name: Test
-      #  working-directory: build
-      #  run: |
-          # ARGS=-VV make test       # use this version for debugging
-      #    make test
+        # ARGS=-VV make test       # use this version for debugging
       
       - name: Stop rtrouted
         run: |
