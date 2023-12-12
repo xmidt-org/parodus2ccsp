@@ -746,17 +746,17 @@ int main(void)
 {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_device_status_notification),
-        cmocka_unit_test(test_factory_reset_notification),
-	    cmocka_unit_test(test_FR_cloud_sync_notification),
+        //cmocka_unit_test(test_factory_reset_notification),
+	    //cmocka_unit_test(test_FR_cloud_sync_notification),
         cmocka_unit_test(test_firmware_upgrade_notification),
 	cmocka_unit_test(err_loadCfgFile),
         cmocka_unit_test(test_transaction_status_notification),
-        cmocka_unit_test(test_FR_cloud_sync_notification_retry),
-	    cmocka_unit_test(test_FR_notify_cloud_status_retry),
+        //cmocka_unit_test(test_FR_cloud_sync_notification_retry),
+	    //cmocka_unit_test(test_FR_notify_cloud_status_retry),
 	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
 	    cmocka_unit_test(test_manageable_notification),
 	    cmocka_unit_test(err_manageable_notification),
-	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
+	//cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
     };
 

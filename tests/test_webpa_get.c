@@ -78,7 +78,9 @@ void test_singleGet()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     int count = 1;
     int totalCount = 1;
-
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+    
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*totalCount);
@@ -94,7 +96,7 @@ void test_singleGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -122,6 +124,8 @@ void test_singleWildcardGet()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL, *value = NULL, *valueObj = NULL;
     int count = 1, i=0;
     int totalCount = 3;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*totalCount);
@@ -141,7 +145,7 @@ void test_singleWildcardGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -179,6 +183,8 @@ void test_largeWildcardGet()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL, *value = NULL, *valueObj = NULL;
     int count = 1, i=0, j=0;
     int totalCount = 5;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
 
@@ -224,7 +230,7 @@ void test_largeWildcardGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -260,6 +266,8 @@ void test_wildcardGetWithNoChilds()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     int count = 1;
     int totalCount = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     will_return(get_global_parameters_count, totalCount);
@@ -269,7 +277,7 @@ void test_wildcardGetWithNoChilds()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -296,6 +304,8 @@ void test_multipleParameterGet()
     char *values[MAX_PARAMETER_LEN] = {"test1234","false"};
     int type[MAX_PARAMETER_LEN] = {ccsp_string, ccsp_boolean};
     int totalCount = 2;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*totalCount);
@@ -315,7 +325,7 @@ void test_multipleParameterGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 2);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -347,6 +357,9 @@ void test_mixedGet()
     char *names[MAX_PARAMETER_LEN] = {"Device.Webpa.Enable", "Device.Webpa.CID", "Device.Webpa.CMC", "Device.Webpa.Version"};
     char *values[MAX_PARAMETER_LEN] = {"false","abcd","32","1"};
     int type[MAX_PARAMETER_LEN] = {ccsp_boolean,ccsp_int,ccsp_string,ccsp_string};
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
     valueList[0][0].parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
@@ -379,7 +392,7 @@ void test_mixedGet()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -433,6 +446,8 @@ void test_multipleParameterGetWithDifferentComponents()
     char *webpaNames[MAX_PARAMETER_LEN] = {"Device.Webpa.Enable", "Device.DeviceInfo.Webpa.Version"};
     char *webpaValues[MAX_PARAMETER_LEN] = {"true","2"};
     int webpaType[MAX_PARAMETER_LEN] = {ccsp_boolean,ccsp_int};
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*2);
@@ -475,7 +490,7 @@ void test_multipleParameterGetWithDifferentComponents()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -518,6 +533,8 @@ void err_singleGetInvalidParam()
     char *transactionId = "erejujaasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     will_return(get_global_parameters_count,0);
@@ -526,7 +543,7 @@ void err_singleGetInvalidParam()
     will_return(CcspBaseIf_getParameterValues, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -543,6 +560,8 @@ void err_singleGetComponentErr()
     char *transactionId = "erejujaasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     will_return(get_global_component_size,0);
     will_return(get_global_components,NULL);
@@ -551,7 +570,7 @@ void err_singleGetComponentErr()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -568,8 +587,10 @@ void err_singleGetLargeReq()
     char *transactionId = "erejujaasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -586,9 +607,11 @@ void err_getWithWiFiBusy()
     char *transactionId = "erejujaasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     applySettingsFlag = TRUE;
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -605,9 +628,11 @@ void err_getWithInvalidWiFiIndex()
     char *transactionId = "erejujaasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     applySettingsFlag = FALSE;
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -624,9 +649,11 @@ void err_getWithInvalidRadioIndex()
     char *transactionId = "erejujaasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;    
     applySettingsFlag = FALSE;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -643,6 +670,8 @@ void err_multipleGet()
     char *transactionId = "erejujaasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     applySettingsFlag = FALSE;
     getCompDetails();
@@ -652,7 +681,7 @@ void err_multipleGet()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -672,6 +701,8 @@ void err_multipleGetWildCardErr()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int i;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;    
 
     applySettingsFlag = FALSE;
     getCompDetails();
@@ -699,7 +730,7 @@ void err_multipleGetWildCardErr()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
