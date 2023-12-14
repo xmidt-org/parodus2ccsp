@@ -41,6 +41,20 @@ char *faultParam;
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
+void clearTraceContext()
+{
+
+}
+
+rbusError_t getTraceContext(char* traceContext[])
+{
+    UNUSED(traceContext);
+}
+
+rbusError_t setTraceContext(char* traceContext[])
+{
+    UNUSED(traceContext);
+}
 
 void set_global_components(componentStruct_t **components)
 {

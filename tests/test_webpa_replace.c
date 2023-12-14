@@ -102,6 +102,9 @@ void test_replaceRow()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 2, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -111,6 +114,11 @@ void test_replaceRow()
     list1[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list1[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
     list1[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    componentStruct_t **list3 = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list3[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list3[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list3[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);    
 
     char *names[MAX_PARAMETER_LEN] = {"Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.DeviceName", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.MacAddress"};
     char *values[MAX_PARAMETER_LEN] = {"Device1","12:2:3:5:11"};
@@ -131,19 +139,42 @@ void test_replaceRow()
         info[i][0].writable = 1;
     }
 
+    parameterValStruct_t **valueList_rbus = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList_rbus[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList_rbus[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterName, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterValue, "false",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->type = ccsp_boolean;
+
     will_return(get_global_components, list);
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
     will_return(get_global_values, valueList);
     will_return(get_global_parameters_count, paramCount);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(get_global_components, list1);
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, valueList_rbus);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, list3);
+    will_return(get_global_component_size, count);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
     expect_function_call(CcspBaseIf_getParameterNames);
     will_return(CcspBaseIf_getParameterNames, CCSP_SUCCESS);
     will_return(get_global_parameters_count, paramCount);
@@ -160,7 +191,7 @@ void test_replaceRow()
     expect_function_call(addRowTable);
     will_return(get_global_new_row, strdup("Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.3."));
     will_return(get_global_status, WDMP_SUCCESS);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -177,6 +208,9 @@ void test_replaceRow_empty_table()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 4, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -204,11 +238,7 @@ void test_replaceRow_empty_table()
     expect_value(CcspBaseIf_getParameterValues, size, 1);
     expect_function_call(free_componentStruct_t);
     expect_function_call(free_parameterValStruct_t);
-    expect_function_call(deleteRow);
-    will_return(deleteRow, CCSP_SUCCESS);
-    expect_function_call(deleteRow);
-    will_return(deleteRow, CCSP_SUCCESS);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -225,6 +255,9 @@ void test_replaceRow_to_empty_table()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 2, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -241,10 +274,7 @@ void test_replaceRow_to_empty_table()
     expect_value(CcspBaseIf_getParameterValues, size, 1);
     expect_function_call(free_componentStruct_t);
     expect_function_call(free_parameterValStruct_t);
-    expect_function_call(addRowTable);
-    will_return(get_global_new_row, strdup("Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.5."));
-    will_return(get_global_status, WDMP_SUCCESS);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -261,6 +291,9 @@ void test_replaceRow_failure_in_delete_tableData()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 6, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -270,6 +303,11 @@ void test_replaceRow_failure_in_delete_tableData()
     list1[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list1[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
     list1[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    componentStruct_t **list3 = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list3[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list3[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list3[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);    
 
     char *names[MAX_PARAMETER_LEN] = {"Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.7.DeviceName", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.7.MacAddress", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.8.DeviceName", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.8.MacAddress","Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.9.DeviceName", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.9.MacAddress"};
     char *values[MAX_PARAMETER_LEN] = {"Device7","12:2:3:5:77", "Device8","12:2:3:5:88", "Device9","12:2:3:5:99"};
@@ -290,6 +328,14 @@ void test_replaceRow_failure_in_delete_tableData()
         info[i][0].writable = 1;
     }
 
+    parameterValStruct_t **valueList_rbus = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList_rbus[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList_rbus[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterName, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterValue, "false",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->type = ccsp_boolean;
+
     will_return(get_global_components, list);
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
@@ -303,6 +349,19 @@ void test_replaceRow_failure_in_delete_tableData()
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);    
+
+    will_return(get_global_values, valueList_rbus);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, list3);
+    will_return(get_global_component_size, count);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);    
+
     expect_function_call(CcspBaseIf_getParameterNames);
     will_return(CcspBaseIf_getParameterNames, CCSP_SUCCESS);
     will_return(get_global_parameters_count, 2);
@@ -323,7 +382,7 @@ void test_replaceRow_failure_in_delete_tableData()
     expect_function_call(addRowTable);
     will_return(get_global_new_row, strdup("Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.3."));
     will_return(get_global_status, WDMP_SUCCESS);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -340,6 +399,9 @@ void err_replaceRow_failure_in_addNewRow()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 2, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -349,6 +411,11 @@ void err_replaceRow_failure_in_addNewRow()
     list1[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list1[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
     list1[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    componentStruct_t **list3 = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list3[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list3[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list3[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);      
 
     char *names[MAX_PARAMETER_LEN] = {"Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.DeviceName", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.MacAddress"};
     char *values[MAX_PARAMETER_LEN] = {"Device1","12:2:3:5:11"};
@@ -369,6 +436,14 @@ void err_replaceRow_failure_in_addNewRow()
         info[i][0].writable = 1;
     }
 
+    parameterValStruct_t **valueList_rbus = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList_rbus[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList_rbus[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterName, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterValue, "false",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->type = ccsp_boolean;    
+
     will_return(get_global_components, list);
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
@@ -382,6 +457,22 @@ void err_replaceRow_failure_in_addNewRow()
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
+    expect_function_call(free_componentStruct_t);
+
+
+    will_return(get_global_values, valueList_rbus);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+
+    will_return(get_global_components, list3);
+    will_return(get_global_component_size, count);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
     expect_function_call(CcspBaseIf_getParameterNames);
     will_return(CcspBaseIf_getParameterNames, CCSP_SUCCESS);
     will_return(get_global_parameters_count, paramCount);
@@ -403,7 +494,7 @@ void err_replaceRow_failure_in_addNewRow()
     expect_function_call(addRowTable);
     will_return(get_global_new_row, strdup("Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.6."));
     will_return(get_global_status, WDMP_SUCCESS);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -419,6 +510,9 @@ void err_replaceRow_failure_in_addCachedRow()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 2, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -428,6 +522,11 @@ void err_replaceRow_failure_in_addCachedRow()
     list1[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list1[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
     list1[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    componentStruct_t **list3 = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list3[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list3[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list3[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);    
 
     char *names[MAX_PARAMETER_LEN] = {"Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.DeviceName", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.MacAddress"};
     char *values[MAX_PARAMETER_LEN] = {"Device1","12:2:3:5:11"};
@@ -448,6 +547,14 @@ void err_replaceRow_failure_in_addCachedRow()
         info[i][0].writable = 1;
     }
 
+    parameterValStruct_t **valueList_rbus = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList_rbus[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList_rbus[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterName, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterValue, "false",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->type = ccsp_boolean;
+
     will_return(get_global_components, list);
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
@@ -461,6 +568,19 @@ void err_replaceRow_failure_in_addCachedRow()
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, valueList_rbus);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, list3);
+    will_return(get_global_component_size, count);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
     expect_function_call(CcspBaseIf_getParameterNames);
     will_return(CcspBaseIf_getParameterNames, CCSP_SUCCESS);
     will_return(get_global_parameters_count, paramCount);
@@ -482,7 +602,7 @@ void err_replaceRow_failure_in_addCachedRow()
     expect_function_call(addRowTable);
     will_return(get_global_new_row, NULL);
     will_return(get_global_status, WDMP_FAILURE);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -497,13 +617,15 @@ void err_replaceRow_with_invalid_table()
     char *transactionId = "aasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     will_return(get_global_components, NULL);
     will_return(get_global_component_size, 0);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -519,6 +641,9 @@ void err_replaceRow_failure_in_getValues()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 2, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -535,7 +660,7 @@ void err_replaceRow_failure_in_getValues()
     expect_value(CcspBaseIf_getParameterValues, size, 1);
     expect_function_call(free_componentStruct_t);
     expect_function_call(free_parameterValStruct_t);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -551,6 +676,9 @@ void err_replaceRow_failure_in_construct_rollbackData()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 2, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -571,19 +699,28 @@ void err_replaceRow_failure_in_construct_rollbackData()
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
     will_return(get_global_values, valueList);
     will_return(get_global_parameters_count, paramCount);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(get_global_components, NULL);
     will_return(get_global_component_size, 0);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_FAILURE);
     expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_components, NULL);
+    will_return(get_global_component_size, 0);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_FAILURE);
+    expect_function_call(free_componentStruct_t);    
+
     expect_function_call(free_componentStruct_t);
     expect_function_call(free_parameterValStruct_t);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -599,6 +736,9 @@ void err_replaceRow_failure_in_get_writable_params()
     char *resPayload = NULL;
     cJSON *response = NULL;
     int count = 1, paramCount = 2, i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
     list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
@@ -608,6 +748,11 @@ void err_replaceRow_failure_in_get_writable_params()
     list1[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
     list1[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
     list1[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    componentStruct_t **list3 = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list3[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list3[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list3[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);       
 
     char *names[MAX_PARAMETER_LEN] = {"Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.DeviceName", "Device.WiFi.AccessPoint.1.X_CISCO_COM_MacFilterTable.1.MacAddress"};
     char *values[MAX_PARAMETER_LEN] = {"Device1","12:2:3:5:11"};
@@ -619,6 +764,15 @@ void err_replaceRow_failure_in_get_writable_params()
         valueList[i][0].parameterValue = strdup(values[i]);
         valueList[i][0].type = ccsp_string;
     }
+
+    parameterValStruct_t **valueList_rbus = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList_rbus[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    valueList_rbus[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterName, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList_rbus[0]->parameterValue, "false",MAX_PARAMETER_LEN);
+    valueList_rbus[0]->type = ccsp_boolean;
+
 
     will_return(get_global_components, list);
     will_return(get_global_component_size, count);
@@ -633,6 +787,20 @@ void err_replaceRow_failure_in_get_writable_params()
     will_return(get_global_component_size, count);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, valueList_rbus);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, list3);
+    will_return(get_global_component_size, count);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+
     expect_function_call(CcspBaseIf_getParameterNames);
     will_return(CcspBaseIf_getParameterNames, CCSP_FAILURE);
     will_return(get_global_parameters_count, 0);
@@ -641,7 +809,7 @@ void err_replaceRow_failure_in_get_writable_params()
     expect_function_call(free_parameterInfoStruct_t);
     expect_function_call(free_componentStruct_t);
     expect_function_call(free_parameterValStruct_t);
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -656,8 +824,10 @@ void err_replaceRow_with_invalid_wifi_index()
     char *transactionId = "aasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -672,8 +842,10 @@ void err_replaceRow_with_invalid_radio_index()
     char *transactionId = "aasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -688,8 +860,10 @@ void err_replaceRow_with_invalid_table_length()
     char *transactionId = "aasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -704,8 +878,10 @@ void err_replaceRow_with_invalid_parameter_name_length()
     char *transactionId = "aasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -720,8 +896,10 @@ void err_replaceRow_with_invalid_parameter_value_length()
     char *transactionId = "aasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);

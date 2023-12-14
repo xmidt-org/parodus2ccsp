@@ -78,6 +78,8 @@ void test_set_with_single_parameter()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     int count = 1;
     int totalCount = 1;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
@@ -99,7 +101,7 @@ void test_set_with_single_parameter()
     expect_function_call(CcspBaseIf_setParameterValues);
     expect_value(CcspBaseIf_setParameterValues, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -121,6 +123,8 @@ void test_set_with_webpa_parameter()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     int count = 1;
     int totalCount = 1;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
@@ -140,7 +144,7 @@ void test_set_with_webpa_parameter()
     will_return(setWebpaParameterValues, CCSP_SUCCESS);
     expect_function_call(setWebpaParameterValues);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -166,6 +170,8 @@ void test_set_with_multiple_parameters()
     char *values[MAX_PARAMETER_LEN] = {"test1234","false","false"};
     int type[MAX_PARAMETER_LEN] = {ccsp_string, ccsp_boolean, ccsp_boolean};
     int totalCount = 3;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*totalCount);
@@ -190,7 +196,7 @@ void test_set_with_multiple_parameters()
     expect_function_call(CcspBaseIf_setParameterValues);
     expect_value(CcspBaseIf_setParameterValues, size, 3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -220,6 +226,8 @@ void test_set_with_multiple_parameters_different_components()
     char *webpaNames[MAX_PARAMETER_LEN] = {"Device.DeviceInfo.Webpa.Name","Device.Webpa.Enable"};
     char *webpaValues[MAX_PARAMETER_LEN] = {"true","webpa"};
     int webpaType[MAX_PARAMETER_LEN] = {ccsp_string,ccsp_base64};
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
@@ -281,7 +289,7 @@ void test_set_with_multiple_parameters_different_components()
     expect_value(CcspBaseIf_setParameterValues, size, 2);
     expect_function_calls(CcspBaseIf_setParameterValues,3);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
     response = cJSON_Parse(resPayload);
@@ -315,8 +323,10 @@ void err_set_with_wildcard_parameter()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.DeviceInfo.Webpa.\",\"value\":\"true\",\"dataType\":3}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -332,8 +342,10 @@ void err_set_with_cid_parameter()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.DeviceInfo.Webpa.X_COMCAST-COM_CID\",\"value\":\"abcd\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -349,8 +361,10 @@ void err_set_with_cmc_parameter()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.DeviceInfo.Webpa.X_COMCAST-COM_CMC\",\"value\":\"32\",\"dataType\":2}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -366,8 +380,10 @@ void err_set_without_value()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.Webpa.Name\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -383,6 +399,9 @@ void err_set_invalid_parameter()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.Webpa.SSID\",\"value\":\"1234\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     getCompDetails();
 
     will_return(get_global_parameters_count,0);
@@ -390,7 +409,7 @@ void err_set_invalid_parameter()
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -410,6 +429,9 @@ void err_set_invalid_component()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.Abcd.SSID\",\"value\":\"1234\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     getCompDetails();
 
     will_return(get_global_component_size,0);
@@ -419,7 +441,7 @@ void err_set_invalid_component()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -439,10 +461,12 @@ void err_set_with_wifi_busy()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WiFi.SSID\",\"value\":\"1234\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;    
     applySettingsFlag = TRUE;
 
     getCompDetails();
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -463,6 +487,8 @@ void err_set_with_invalid_type()
     char *transactionId = "aasfsdfgeh";
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;    
     applySettingsFlag = FALSE;
 
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
@@ -486,7 +512,7 @@ void err_set_with_invalid_type()
     will_return(CcspBaseIf_setParameterValues, CCSP_ERR_INVALID_PARAMETER_TYPE);
     expect_value(CcspBaseIf_setParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -506,9 +532,12 @@ void err_set_with_large_parameter_name()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WiFi.SSID.10001.sfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUyteygfwgfw\",\"value\":\"1234\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     applySettingsFlag = FALSE;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -524,9 +553,12 @@ void err_set_with_large_parameter_value()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WiFi.SSID.10001.SSID\",\"value\":\"sfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGsfdgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUFTGJVHEDFKWJESDFWEGFWEGFGAQWWEGYTEHERHAEGTWERHTBQR4WYTRgfgherejrehigeiruwegwegwiegfuwgfegfwegfwefegaugdfosFYQWPIYRSDAWIEUyteygfwgfwhyerwdfjgtgwtqatwtwsftw\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     applySettingsFlag = FALSE;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -542,6 +574,9 @@ void err_set_not_writable_parameter()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WiFi.RadioNumberOfEntries\",\"value\":\"1234\",\"dataType\":7}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     applySettingsFlag = FALSE;
 
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
@@ -565,7 +600,7 @@ void err_set_not_writable_parameter()
     will_return(CcspBaseIf_setParameterValues, CCSP_ERR_NOT_WRITABLE);
     expect_value(CcspBaseIf_setParameterValues, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -585,8 +620,10 @@ void err_set_with_empty_value()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.Webpa.Name\",\"value\":\"\",\"dataType\":0}],\"command\":\"SET\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -606,6 +643,8 @@ void err_set_with_multiple_parameters()
     int count = 1, i=0;
     char *names[MAX_PARAMETER_LEN] = {"Device.WiFi.SSID.10001.name", "Device.WiFi.SSID.10002.Enable","Device.WiFi.Radio.10000.Enab"};
     int totalCount = 3;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
 
@@ -615,7 +654,7 @@ void err_set_with_multiple_parameters()
     will_return(CcspBaseIf_getParameterValues, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_value(CcspBaseIf_getParameterValues, size, 3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -647,6 +686,8 @@ void err_set_with_multiple_parameters_different_component()
     char *webpaNames[MAX_PARAMETER_LEN] = {"Device.DeviceInfo.Webpa.Alias"};
     char *webpaValues[MAX_PARAMETER_LEN] = {"webpa"};
     int webpaType[MAX_PARAMETER_LEN] = {ccsp_float};
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
 
@@ -710,7 +751,7 @@ void err_set_with_multiple_parameters_different_component()
     expect_value(CcspBaseIf_setParameterValues, size, 1);
     expect_function_calls(CcspBaseIf_setParameterValues,3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -742,6 +783,8 @@ void err_set_with_multiple_parameters_failure_in_get()
     char *webpaNames[MAX_PARAMETER_LEN] = {"Device.DeviceInfo.Webpa.Alias"};
     char *webpaValues[MAX_PARAMETER_LEN] = {"webpa"};
     int webpaType[MAX_PARAMETER_LEN] = {ccsp_byte};
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
 
@@ -784,7 +827,7 @@ void err_set_with_multiple_parameters_failure_in_get()
     will_return(CcspBaseIf_getParameterValues, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -816,6 +859,8 @@ void err_set_with_multiple_parameters_failure_in_rollback()
     char *webpaNames[MAX_PARAMETER_LEN] = {"Device.DeviceInfo.Webpa.Alias"};
     char *webpaValues[MAX_PARAMETER_LEN] = {"webpa"};
     int webpaType[MAX_PARAMETER_LEN] = {ccsp_unsignedLong};
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
 
@@ -879,7 +924,7 @@ void err_set_with_multiple_parameters_failure_in_rollback()
     expect_value(CcspBaseIf_setParameterValues, size, 1);
     expect_function_calls(CcspBaseIf_setParameterValues,3);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -911,7 +956,9 @@ void err_set_with_multiple_parameters_failure_in_wifi_rollback()
     char *webpaNames[MAX_PARAMETER_LEN] = {"Device.DeviceInfo.Webpa.Alias"};
     char *webpaValues[MAX_PARAMETER_LEN] = {"webpa"};
     int webpaType[MAX_PARAMETER_LEN] = {ccsp_string};
-
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+    
     getCompDetails();
 
     parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
@@ -981,7 +1028,7 @@ void err_set_with_multiple_parameters_failure_in_wifi_rollback()
     expect_value(CcspBaseIf_setParameterValues, size, 1);
     expect_function_calls(CcspBaseIf_setParameterValues,5);
 
-    processRequest(reqPayload, transactionId, &resPayload);
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);

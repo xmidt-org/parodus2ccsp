@@ -73,6 +73,8 @@ void test_setAttrWithSingleParameterNotifyOn()
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.DeviceInfo.Webpa.Enable\",\"attributes\": { \"notify\": 1}}],\"command\":\"SET_ATTRIBUTES\"}";
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     expect_function_call(CcspBaseIf_Register_Event);
@@ -82,7 +84,7 @@ void test_setAttrWithSingleParameterNotifyOn()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_SUCCESS);
     expect_value(CcspBaseIf_setParameterAttributes, size, 1);
 
-    processRequest(reqPayload, "abcd-1234-efgh-5678", &resPayload);
+    processRequest(reqPayload, "abcd-1234-efgh-5678", &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -103,6 +105,8 @@ void test_setAttrWithSingleParameterNotifyOff()
     char *resPayload = NULL;
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.DeviceInfo.SerialNumber\",\"attributes\": { \"notify\": 0}}],\"command\":\"SET_ATTRIBUTES\"}";
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     will_return(get_global_components, getDeviceInfoCompDetails());
@@ -121,7 +125,7 @@ void test_setAttrWithSingleParameterNotifyOff()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_SUCCESS);
     expect_value(CcspBaseIf_setParameterAttributes, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -145,6 +149,9 @@ void test_setAttrWithMultipleParameters()
     char *getNames[] = {"Device.WiFi.RadioNumberOfEntries", "Device.WiFi.SSID.10001.SSID", "Device.WiFi.Radio.10000.Enable","Device.WiFi.AccessPoint.10001.Name"};
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     getCompDetails();
 
     expect_function_call(CcspBaseIf_Register_Event);
@@ -159,7 +166,7 @@ void test_setAttrWithMultipleParameters()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_SUCCESS);
     expect_value(CcspBaseIf_setParameterAttributes, size, paramCount);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -186,13 +193,16 @@ void err_SetAttrWithDifferentComponents()
     char *getNames[] = {"Device.WiFi.RadioNumberOfEntries", "Device.NAT.EnablePortMapping"};
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     getCompDetails();
 
     expect_function_call(CcspBaseIf_Register_Event);
     will_return(CcspBaseIf_Register_Event, CCSP_SUCCESS);
     expect_function_call(CcspBaseIf_SetCallback2);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -216,13 +226,15 @@ void err_setAttrWithInvalidParam()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     char *resPayload = NULL;
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WiFi.RadioNumberOfEntry\",\"attributes\": { \"notify\": 0}}],\"command\":\"SET_ATTRIBUTES\"}";
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
     expect_function_call(CcspBaseIf_setParameterAttributes);
     will_return(CcspBaseIf_setParameterAttributes, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_value(CcspBaseIf_setParameterAttributes, size, 1);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -243,8 +255,10 @@ void err_setAttrWithWildcardParam()
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.WiFi.\",\"attributes\": { \"notify\": 0}}],\"command\":\"SET_ATTRIBUTES\"}";
     char *resPayload = NULL;
     cJSON *response = NULL;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, "addf-sdfw-12ed-3fea", &resPayload);
+    processRequest(reqPayload, "addf-sdfw-12ed-3fea", &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -260,6 +274,8 @@ void err_setAttrWithInvalidComponent()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     char *resPayload = NULL;
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.Abcd.1234\",\"attributes\": { \"notify\": 0}}],\"command\":\"SET_ATTRIBUTES\"}";
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
 
@@ -275,7 +291,7 @@ void err_setAttrWithInvalidComponent()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -296,6 +312,8 @@ void err_setAttrWithInvalidComponentError()
     cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
     char *resPayload = NULL;
     char *reqPayload = "{\"parameters\":[{\"name\":\"Device.DeviceInfo.abcd\",\"attributes\": { \"notify\": 0}}],\"command\":\"SET_ATTRIBUTES\"}";
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     getCompDetails();
 
@@ -305,7 +323,7 @@ void err_setAttrWithInvalidComponentError()
     will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_CR_ERR_UNSUPPORTED_NAMESPACE);
     expect_function_call(free_componentStruct_t);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -329,8 +347,10 @@ void err_setAttrWithInvalidWiFiIndex()
     char *getNames[]={"Device.WiFi.SSID.10000.SSID","Device.WiFi.SSID.10001.Alias","Device.WiFi.Version"};
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -357,6 +377,8 @@ void err_setAttrWithInvalidRadioIndex()
     char *getNames[]={"Device.WiFi.SSID.10001.SSID","Device.WiFi.AccessPoint.10001.Alias","Device.WiFi.Radio.1.Enable"};
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
 
     expect_function_call(CcspBaseIf_Register_Event);
     will_return(CcspBaseIf_Register_Event, CCSP_FAILURE);
@@ -366,7 +388,7 @@ void err_setAttrWithInvalidRadioIndex()
     will_return(CcspBaseIf_Register_Event, CCSP_SUCCESS);
     expect_function_call(CcspBaseIf_SetCallback2);
 
-    processRequest(reqPayload, NULL, &resPayload);
+    processRequest(reqPayload, NULL, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -393,6 +415,9 @@ void err_SetAttrWithDifferentComponentsMultipleParameters()
     char *getNames[] = {"Device.WiFi.RadioNumberOfEntries","Device.WiFi.Version","Device.WiFi.Name","Device.NAT.Version","Device.NAT.EnablePortMapping","Device.NAT.PortMapping.1.Alias"};
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     getCompDetails();
 
     expect_function_call(CcspBaseIf_Register_Event);
@@ -403,7 +428,7 @@ void err_SetAttrWithDifferentComponentsMultipleParameters()
     will_return(CcspBaseIf_Register_Event, CCSP_FAILURE);
     expect_function_call(CcspBaseIf_SetCallback2);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
@@ -430,6 +455,9 @@ void err_setAttrWithMultipleParametersOneInvalidParam()
     char *getNames[] = {"Device.NAT.PortMapping.1.Name", "Device.NAT.PortMapping.1.Alias", "Device.NAT.PortMapping.2.Port","Device.NAT.PortMapping.20.Ver"};
     int paramCount = sizeof(getNames)/sizeof(getNames[0]);
     int i = 0;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
     getCompDetails();
 
     expect_function_call(CcspBaseIf_Register_Event);
@@ -440,7 +468,7 @@ void err_setAttrWithMultipleParametersOneInvalidParam()
     will_return(CcspBaseIf_setParameterAttributes, CCSP_ERR_INVALID_PARAMETER_NAME);
     expect_value(CcspBaseIf_setParameterAttributes, size, paramCount);
 
-    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload);
+    processRequest(reqPayload, "abcd-5678-1234-efgh", &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
 
     assert_non_null(resPayload);
