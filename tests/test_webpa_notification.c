@@ -185,6 +185,12 @@ void test_factory_reset_notification()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
+    will_return(get_global_values, cmcList1);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(get_global_components, getDeviceInfoCompDetails());
     will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
@@ -192,12 +198,6 @@ void test_factory_reset_notification()
     expect_function_call(free_componentStruct_t);
 
     will_return(get_global_values, rebootReasonList);
-    will_return(get_global_parameters_count, 1);
-    expect_function_call(CcspBaseIf_getParameterValues);
-    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
-    expect_value(CcspBaseIf_getParameterValues, size, 1);
-
-    will_return(get_global_values, cmcList1);
     will_return(get_global_parameters_count, 1);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
@@ -363,6 +363,12 @@ void test_FR_cloud_sync_notification()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(get_global_components, getDeviceInfoCompDetails());
     will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
@@ -370,12 +376,6 @@ void test_FR_cloud_sync_notification()
     expect_function_call(free_componentStruct_t);
 
     will_return(get_global_values, rebootReasonList);
-    will_return(get_global_parameters_count, 1);
-    expect_function_call(CcspBaseIf_getParameterValues);
-    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
-    expect_value(CcspBaseIf_getParameterValues, size, 1);
-
-    will_return(get_global_values, cmcList);
     will_return(get_global_parameters_count, 1);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
@@ -454,6 +454,12 @@ void test_FR_cloud_sync_notification_retry()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
+    will_return(get_global_values, oldCmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(get_global_components, getDeviceInfoCompDetails());
     will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
@@ -461,12 +467,6 @@ void test_FR_cloud_sync_notification_retry()
     expect_function_call(free_componentStruct_t);
 
     will_return(get_global_values, rebootReasonList);
-    will_return(get_global_parameters_count, 1);
-    expect_function_call(CcspBaseIf_getParameterValues);
-    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
-    expect_value(CcspBaseIf_getParameterValues, size, 1);
-
-    will_return(get_global_values, oldCmcList);
     will_return(get_global_parameters_count, 1);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
@@ -553,6 +553,12 @@ void test_FR_notify_cloud_status_retry()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
     will_return(get_global_components, getDeviceInfoCompDetails());
     will_return(get_global_component_size, 1);
     expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
@@ -560,12 +566,6 @@ void test_FR_notify_cloud_status_retry()
     expect_function_call(free_componentStruct_t);
 
     will_return(get_global_values, rebootReasonList);
-    will_return(get_global_parameters_count, 1);
-    expect_function_call(CcspBaseIf_getParameterValues);
-    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
-    expect_value(CcspBaseIf_getParameterValues, size, 1);
-
-    will_return(get_global_values, cmcList);
     will_return(get_global_parameters_count, 1);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
@@ -670,17 +670,17 @@ void test_factory_reset_notification_with_cmc_512()
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 
-    will_return(get_global_components, getDeviceInfoCompDetails());
-    will_return(get_global_component_size, 1);
-    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
-    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
-    expect_function_call(free_componentStruct_t);
-
     will_return(get_global_values, rebootReasonList);
     will_return(get_global_parameters_count, 1);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
 
     will_return(get_global_values, cmcList1);
     will_return(get_global_parameters_count, 1);
@@ -746,17 +746,17 @@ int main(void)
 {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_device_status_notification),
-        //cmocka_unit_test(test_factory_reset_notification),
-	    //cmocka_unit_test(test_FR_cloud_sync_notification),
+        cmocka_unit_test(test_factory_reset_notification),
+	    cmocka_unit_test(test_FR_cloud_sync_notification),
         cmocka_unit_test(test_firmware_upgrade_notification),
-	cmocka_unit_test(err_loadCfgFile),
+        cmocka_unit_test(err_loadCfgFile),
         cmocka_unit_test(test_transaction_status_notification),
-        //cmocka_unit_test(test_FR_cloud_sync_notification_retry),
-	    //cmocka_unit_test(test_FR_notify_cloud_status_retry),
+        cmocka_unit_test(test_FR_cloud_sync_notification_retry),
+	    cmocka_unit_test(test_FR_notify_cloud_status_retry),
 	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
 	    cmocka_unit_test(test_manageable_notification),
 	    cmocka_unit_test(err_manageable_notification),
-	//cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
+	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
     };
 
