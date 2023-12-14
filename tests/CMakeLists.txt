@@ -29,6 +29,14 @@ add_executable(test_libpd test_libpd.c ../source/app/libpd.c)
 target_link_libraries (test_libpd -lwrp-c ${WEBPA_COMMON_LIBS} -llibparodus)
 target_link_libraries (test_libpd gcov -Wl,--no-as-needed )
 
+#-------------------------------------------------------------------------------
+#   test_webpa_rbus
+#-------------------------------------------------------------------------------
+add_test(NAME test_webpa_rbus COMMAND ${MEMORY_CHECK} ./test_webpa_rbus)
+add_executable(test_webpa_rbus test_webpa_rbus.c ../source/broadband/webpa_rbus.c)
+target_link_libraries (test_webpa_rbus ${WEBPA_COMMON_LIBS} -llibparodus -lrbus)
+target_link_libraries (test_webpa_rbus gcov -Wl,--no-as-needed )
+
 # #-------------------------------------------------------------------------------
 # #   test_webpa_adapter
 # #-------------------------------------------------------------------------------

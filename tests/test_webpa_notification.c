@@ -305,17 +305,6 @@ void test_firmware_upgrade_notification()
     sendNotificationForFirmwareUpgrade();
 }
 
-void processFactoryResetNotification()
-{
-    NotifyData *notifyData = (NotifyData *) malloc(sizeof(NotifyData));
-    notifyData->type= TRANS_STATUS;
-    notifyData->u.status= (TransData *)malloc(sizeof(TransData));
-    notifyData->u.status->transId = strndup("qwkgfg75sgqwdgfhasfg", MAX_PARAMETER_LEN);
-    will_return(libparodus_send, (intptr_t)0);
-    expect_function_call(libparodus_send);
-    processNotification(notifyData);
-}
-
 void test_transaction_status_notification()
 {
     NotifyData *notifyData = (NotifyData *) malloc(sizeof(NotifyData));
@@ -782,7 +771,7 @@ int main(void)
 	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
 	    cmocka_unit_test(test_manageable_notification),
 	    cmocka_unit_test(err_manageable_notification),
-	    cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
+        cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
     };
 

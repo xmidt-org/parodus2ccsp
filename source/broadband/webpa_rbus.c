@@ -43,7 +43,7 @@ WDMP_STATUS webpaRbusInit(const char *pComponentName)
         return WDMP_SUCCESS;
 }
 
-static void webpaRbus_Uninit()
+void webpaRbus_Uninit()
 {
     rbus_close(rbus_handle);
 }
