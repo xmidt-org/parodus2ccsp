@@ -18,6 +18,7 @@
 #define _MOCK_SATCK_H_
 
 #include <ccsp_base_api.h>
+#include <rbus/rbus.h>
 #define UNUSED(x) (void )(x)
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
@@ -33,6 +34,9 @@ void set_global_parameters_count(int count);
 int get_global_parameters_count();
 void set_global_attributes(parameterAttributeStruct_t **attributes);
 parameterAttributeStruct_t ** get_global_attributes();
+void clearTraceContext();
+rbusError_t getTraceContext(char* traceContext[]);
+rbusError_t setTraceContext(char* traceContext[]);
 
 #endif
 

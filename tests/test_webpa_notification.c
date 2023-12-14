@@ -23,7 +23,6 @@
 #include <cmocka.h>
 #include <string.h>
 #include <sys/time.h>
-#include <rbus/rbus.h>
 
 #include "../source/include/webpa_adapter.h"
 #include "../source/broadband/include/webpa_internal.h"
@@ -61,20 +60,6 @@ extern char* cloud_status;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
-void clearTraceContext()
-{
-}
-
-rbusError_t getTraceContext(char* traceContext[])
-{
-    UNUSED(traceContext);
-}
-
-rbusError_t setTraceContext(char* traceContext[])
-{
-    UNUSED(traceContext);
-}
-
 int libparodus_send (libpd_instance_t instance, wrp_msg_t *msg)
 {
     UNUSED(instance);
@@ -771,7 +756,7 @@ int main(void)
 	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
 	    cmocka_unit_test(test_manageable_notification),
 	    cmocka_unit_test(err_manageable_notification),
-        cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
+	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
     };
 
