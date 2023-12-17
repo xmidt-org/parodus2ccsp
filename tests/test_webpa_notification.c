@@ -22,6 +22,8 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <string.h>
+#include <stdlib.h>
+#include <cJSON.h>
 #include <sys/time.h>
 
 #include "../source/include/webpa_adapter.h"
@@ -91,12 +93,6 @@ int pthread_cond_timedwait(pthread_cond_t *cloud_con, pthread_mutex_t *cloud_mut
     return (int) mock();
 }
 
-FILE* fopen(const char* pathname, const char* mode)
-{
-    UNUSED(pathname); UNUSED(mode);
-    function_called();
-    return (FILE*) mock();
-}
 int getWebpaParameterValues(char **parameterNames, int paramCount, int *val_size, parameterValStruct_t ***val)
 {
     UNUSED(parameterNames); UNUSED(paramCount); UNUSED(val_size); UNUSED(val);
@@ -120,6 +116,7 @@ unsigned int sleep(unsigned int seconds)
 
     return seconds;
 }
+
 
 /*----------------------------------------------------------------------------*/
 /*                                   Tests                                    */
@@ -262,8 +259,6 @@ void test_firmware_upgrade_notification()
 
     will_return(get_global_values, cmcList);
     will_return(get_global_parameters_count, 1);
-    will_return(fopen, NULL);
-    expect_function_call(fopen);
     expect_function_call(CcspBaseIf_getParameterValues);
     will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
     expect_value(CcspBaseIf_getParameterValues, size, 1);
@@ -597,10 +592,6 @@ void test_FR_notify_cloud_status_empty_mac()
 
 void err_loadCfgFile()
 {
-    will_return(fopen, NULL);
-    expect_function_call(fopen);
-    will_return(fopen, NULL);
-    expect_function_call(fopen);
     loadCfgFile();
 }
 
@@ -707,7 +698,7 @@ void test_processNotification()
 	node->hostname = strdup("wifi");
 	notifyData->u.node = node;
 
-	 parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+	parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
     version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
     version[0]->parameterValue =strdup("123456");
@@ -738,6 +729,465 @@ void test_processNotification()
     expect_function_call(libparodus_send);
 	processNotification(notifyData);
 }
+
+void test_processNotification_PARAM_NOTIFY()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = PARAM_NOTIFY;
+
+	NodeData * node = NULL;
+    notifyData->u.notify = (ParamNotify*)malloc(sizeof(ParamNotify));
+        if (notifyData->u.notify != NULL) 
+        {
+            notifyData->u.notify->paramName = PARAM_FIRMWARE_VERSION;
+            notifyData->u.notify->oldValue = "abcd";
+            notifyData->u.notify->newValue = "dcba";
+            notifyData->u.notify->type = WDMP_STRING;
+            notifyData->u.notify->changeSource = CHANGED_BY_WEBPA;
+        } 
+	node = (NodeData *) malloc(sizeof(NodeData) * 1);
+	memset(node, 0, sizeof(NodeData));
+    node->nodeMacId = strdup("14cfe2142144");
+	node->status = strdup("Connected");
+	node->interface = strdup("eth0");
+	node->hostname = strdup("wifi");
+	notifyData->u.node = node;
+
+	parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    parameterValStruct_t **version2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version2[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version2[0]->parameterValue =strdup("123456");
+    version2[0]->type = ccsp_string;
+
+	parameterValStruct_t **systemTime = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    systemTime[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    systemTime[0]->parameterName = strdup("Device.DeviceInfo.X_RDKCENTRAL-COM_SystemTime");
+    systemTime[0]->parameterValue =strdup("546543280");
+    systemTime[0]->type = ccsp_string;
+	getCompDetails();
+    
+	will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, version2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
+    will_return(get_global_values, systemTime);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+	processNotification(notifyData);
+}
+
+void test_processNotification_DEVICE_STATUS_PAM_FAILED()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = DEVICE_STATUS;
+
+    notifyData->u.device = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.device != NULL)
+    {
+        notifyData->u.device->status = 1;
+    }
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+	processNotification(notifyData);
+
+}
+
+void test_processNotification_DEVICE_STATUS_success()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = DEVICE_STATUS;
+
+    notifyData->u.device = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.device != NULL)
+    {
+        notifyData->u.device->status = 0;
+    }
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+	processNotification(notifyData);
+
+}
+
+void test_processNotification_DEVICE_STATUS_epon_fail()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = DEVICE_STATUS;
+
+    notifyData->u.device = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.device != NULL)
+    {
+        notifyData->u.device->status = 2;
+    }
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+	processNotification(notifyData);
+}
+
+void test_processNotification_DEVICE_STATUS_cm_fail()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = DEVICE_STATUS;
+
+    notifyData->u.device = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.device != NULL)
+    {
+        notifyData->u.device->status = 3;
+    }
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+	processNotification(notifyData);
+}
+
+void test_processNotification_DEVICE_STATUS_psm_fail()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = DEVICE_STATUS;
+
+    notifyData->u.device = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.device != NULL)
+    {
+        notifyData->u.device->status = 4;
+    }
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+	processNotification(notifyData);
+}
+
+void test_processNotification_DEVICE_STATUS_wifi_fail()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = DEVICE_STATUS;
+
+    notifyData->u.device = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.device != NULL)
+    {
+        notifyData->u.device->status = 5;
+    }
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+	processNotification(notifyData);
+}
+
+void test_processNotification_DEVICE_STATUS_fail()
+{
+    strcpy(deviceMAC, "14cfe2142112");
+	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+	memset(notifyData,0,sizeof(NotifyData));
+
+	notifyData->type = DEVICE_STATUS;
+
+    notifyData->u.device = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.device != NULL)
+    {
+        notifyData->u.device->status = 6;
+    }
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    will_return(get_global_components, getDeviceInfoCompDetails());
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+	processNotification(notifyData);
+}
+
+int writeFile(const char* fileName, const char* content) {
+    FILE* file = fopen(fileName, "w");
+    if (file == NULL) {
+        perror("Error opening file");
+        return 1;  // Return an error code
+    }
+
+    fprintf(file, "%s\n", content);
+
+    fclose(file);
+
+    WalInfo("Content written to %s\n", fileName);
+
+    return 0;  // Return success
+}
+
+void test_addOrUpdateFirmwareVerToConfigFile()
+{
+    getCompDetails();
+    int count = 1;
+    strcpy(deviceMAC, "14cfe2142112");
+    const char* fileContent = "{\n\"oldFirmwareVersion\": \"CGM4331COM_DEV_23Q4_sprint_20231121134451sdy\"\n}";
+    int result = writeFile(WEBPA_CFG_FILE, fileContent);
+
+    parameterValStruct_t **firmwareList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    firmwareList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    firmwareList[0]->parameterName = strndup(PARAM_FIRMWARE_VERSION,MAX_PARAMETER_LEN);
+    firmwareList[0]->parameterValue = strndup("CGM4331COM_DEV_23Q4_sprint_20231121134451sdy",MAX_PARAMETER_LEN);
+    firmwareList[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("12",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+
+    parameterValStruct_t **cmcList1 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList1[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList1[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList1[0]->parameterValue = strndup("32",MAX_PARAMETER_LEN);
+    cmcList1[0]->type = ccsp_int;
+
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("abcd",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+
+    componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    componentStruct_t **list1 = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list1[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list1[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list1[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    componentStruct_t **list3 = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list3[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list3[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list3[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    will_return(get_global_components, list);
+    will_return(get_global_component_size, 1);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    expect_function_call(free_componentStruct_t);
+
+    will_return(get_global_values, firmwareList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList1);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_faultParam, NULL);
+    will_return(CcspBaseIf_setParameterValues, CCSP_SUCCESS);
+    expect_function_call(CcspBaseIf_setParameterValues);
+    expect_value(CcspBaseIf_setParameterValues, size, 1);
+
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+    sendNotificationForFirmwareUpgrade();
+}
+
+void test_loadCfgFile_success()
+{
+    const char* fileContent = "{\n\"oldFirmwareVersion\": \"CGM4331COM_DEV_23Q4_sprint_20231121134451sdy\"\n}";
+    int result = writeFile(WEBPA_CFG_FILE, fileContent);
+
+    loadCfgFile();
+}
+
+void test_getDeviceMac()
+{
+    getCompDetails();
+    strcpy(deviceMAC, "14cfe2142112");
+    getDeviceMac();
+}
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -750,7 +1200,7 @@ int main(void)
 	    cmocka_unit_test(test_FR_cloud_sync_notification),
         cmocka_unit_test(test_firmware_upgrade_notification),
         cmocka_unit_test(err_loadCfgFile),
-        cmocka_unit_test(test_transaction_status_notification),
+        cmocka_unit_test(test_transaction_status_notification),   
         cmocka_unit_test(test_FR_cloud_sync_notification_retry),
 	    cmocka_unit_test(test_FR_notify_cloud_status_retry),
 	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
@@ -758,6 +1208,17 @@ int main(void)
 	    cmocka_unit_test(err_manageable_notification),
 	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
+        cmocka_unit_test(test_processNotification_PARAM_NOTIFY),
+        cmocka_unit_test(test_processNotification_DEVICE_STATUS_PAM_FAILED),
+        cmocka_unit_test(test_processNotification_DEVICE_STATUS_success),
+        cmocka_unit_test(test_processNotification_DEVICE_STATUS_epon_fail),
+        cmocka_unit_test(test_processNotification_DEVICE_STATUS_cm_fail),
+        cmocka_unit_test(test_processNotification_DEVICE_STATUS_psm_fail),
+        cmocka_unit_test(test_processNotification_DEVICE_STATUS_wifi_fail),
+        cmocka_unit_test(test_processNotification_DEVICE_STATUS_fail),
+        cmocka_unit_test(test_addOrUpdateFirmwareVerToConfigFile),
+        cmocka_unit_test(test_loadCfgFile_success),
+        cmocka_unit_test(test_getDeviceMac),
     };
 
     numLoops = 1;

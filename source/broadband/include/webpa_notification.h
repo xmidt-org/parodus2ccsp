@@ -91,7 +91,11 @@ typedef struct
  * @brief Function pointer for Notification callback
  */
 typedef void (*notifyCB)(NotifyData *notifyDataPtr);
-
+#if defined(BUILD_YOCTO)
+    #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
+#else
+    #define WEBPA_CFG_FILE    "/tmp/webpa_dummy.json"
+#endif
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */
 /*----------------------------------------------------------------------------*/
