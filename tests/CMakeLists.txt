@@ -94,6 +94,14 @@ target_link_libraries (test_webpa_replace -lwrp-c -ldbus-1 -lccsp_common -lwdmp-
 target_link_libraries (test_webpa_replace gcov -Wl,--no-as-needed )
 
 #-------------------------------------------------------------------------------
+#   test_webpa_table
+#-------------------------------------------------------------------------------
+add_test(NAME test_webpa_table COMMAND ${MEMORY_CHECK} ./test_webpa_table)
+add_executable(test_webpa_table test_webpa_table.c mock_stack.c mock_cache.c  ../source/broadband/webpa_adapter.c ../source/app/libpd.c ${WEBPA_COMMON_SOURCES} ${WEBPA_TABLE_SOURCES})
+target_link_libraries (test_webpa_table -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS} -llibparodus)
+target_link_libraries (test_webpa_table gcov -Wl,--no-as-needed )
+
+#-------------------------------------------------------------------------------
 #   test_webpa_notification_cunit
 #-------------------------------------------------------------------------------
 add_test(NAME test_webpa_notification_cunit COMMAND ${MEMORY_CHECK} ./test_webpa_notification_cunit)
@@ -123,6 +131,8 @@ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_replace.dir/__/src --output-fi
 COMMAND lcov -q --capture --directory 
 ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_notification.dir/__/src --output-file test_webpa_notification.info
 COMMAND lcov -q --capture --directory 
+${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_table.dir/__/src --output-file test_webpa_table.info
+COMMAND lcov -q --capture --directory 
 ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_notification_cunit.dir/__/src --output-file test_webpa_notification_cunit.info
 
 COMMAND lcov
@@ -135,6 +145,7 @@ COMMAND lcov
 -a test_webpa_set_attr.info
 -a test_webpa_replace.info
 -a test_webpa_notification.info
+-a test_webpa_table.info
 -a test_webpa_notification_cunit.info
 --output-file coverage.info
 

@@ -123,7 +123,7 @@ unsigned int sleep(unsigned int seconds)
 /*----------------------------------------------------------------------------*/
 void test_device_status_notification()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
     parameterValStruct_t **bootTime = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     bootTime[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
     bootTime[0]->parameterName = strndup(DEVICE_BOOT_TIME,MAX_PARAMETER_LEN);
@@ -150,7 +150,7 @@ void test_device_status_notification()
 void test_factory_reset_notification()
 {
     getCompDetails();
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
@@ -219,7 +219,7 @@ void test_factory_reset_notification()
 void test_firmware_upgrade_notification()
 {
     getCompDetails();
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 
     parameterValStruct_t **firmwareList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     firmwareList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
@@ -301,7 +301,7 @@ void test_FR_cloud_sync_notification()
     numLoops = 2;
     pthread_t threadId;
     getCompDetails();
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
     will_return(pthread_cond_signal, (intptr_t)0);
     expect_function_call(pthread_cond_signal);
 
@@ -398,7 +398,7 @@ void test_FR_cloud_sync_notification_retry()
     numLoops = 2;
     pthread_t threadId;
     getCompDetails();
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
     will_return(pthread_cond_signal, (intptr_t)0);
     expect_function_call(pthread_cond_signal);
 
@@ -478,7 +478,7 @@ void test_FR_notify_cloud_status_retry()
     numLoops = 3;
     pthread_t threadId;
     getCompDetails();
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
     will_return(pthread_cond_signal, (intptr_t)0);
     expect_function_call(pthread_cond_signal);
 
@@ -635,7 +635,7 @@ void err_manageable_notification()
 void test_factory_reset_notification_with_cmc_512()
 {
     getCompDetails();
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 
     parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
     cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
@@ -684,7 +684,7 @@ void test_factory_reset_notification_with_cmc_512()
 
 void test_processNotification()
 {
-	strcpy(deviceMAC, "14cfe2142112");
+	strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -732,7 +732,7 @@ void test_processNotification()
 
 void test_processNotification_PARAM_NOTIFY()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -805,7 +805,7 @@ void test_processNotification_PARAM_NOTIFY()
 
 void test_processNotification_DEVICE_STATUS_PAM_FAILED()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -844,7 +844,7 @@ void test_processNotification_DEVICE_STATUS_PAM_FAILED()
 
 void test_processNotification_DEVICE_STATUS_success()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -883,7 +883,7 @@ void test_processNotification_DEVICE_STATUS_success()
 
 void test_processNotification_DEVICE_STATUS_epon_fail()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -921,7 +921,7 @@ void test_processNotification_DEVICE_STATUS_epon_fail()
 
 void test_processNotification_DEVICE_STATUS_cm_fail()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -959,7 +959,7 @@ void test_processNotification_DEVICE_STATUS_cm_fail()
 
 void test_processNotification_DEVICE_STATUS_psm_fail()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -997,7 +997,7 @@ void test_processNotification_DEVICE_STATUS_psm_fail()
 
 void test_processNotification_DEVICE_STATUS_wifi_fail()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -1035,7 +1035,7 @@ void test_processNotification_DEVICE_STATUS_wifi_fail()
 
 void test_processNotification_DEVICE_STATUS_fail()
 {
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
 	NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
 	memset(notifyData,0,sizeof(NotifyData));
 
@@ -1072,8 +1072,8 @@ void test_processNotification_DEVICE_STATUS_fail()
 }
 
 int writeFile(const char* fileName, const char* content) {
-    FILE* file = fopen(fileName, "w");
-    if (file == NULL) {
+    FILE* file = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (file != -1) {
         perror("Error opening file");
         return 1;  // Return an error code
     }
@@ -1091,7 +1091,7 @@ void test_addOrUpdateFirmwareVerToConfigFile()
 {
     getCompDetails();
     int count = 1;
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
     const char* fileContent = "{\n\"oldFirmwareVersion\": \"CGM4331COM_DEV_23Q4_sprint_20231121134451sdy\"\n}";
     int result = writeFile(WEBPA_CFG_FILE, fileContent);
 
@@ -1185,7 +1185,7 @@ void test_loadCfgFile_success()
 void test_getDeviceMac()
 {
     getCompDetails();
-    strcpy(deviceMAC, "14cfe2142112");
+    strcpy(deviceMAC, "abcdeg1234");
     getDeviceMac();
 }
 /*----------------------------------------------------------------------------*/

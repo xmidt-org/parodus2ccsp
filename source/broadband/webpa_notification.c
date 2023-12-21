@@ -31,7 +31,6 @@
 #define PARAM_HOSTS_VERSION	        "Device.Hosts.X_RDKCENTRAL-COM_HostVersionId"
 #define PARAM_SYSTEM_TIME		        "Device.DeviceInfo.X_RDKCENTRAL-COM_SystemTime"
 #define PARAM_FIRMWARE_VERSION		        "Device.DeviceInfo.X_CISCO_COM_FirmwareName"
-//#define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
 #define WEBPA_CFG_FIRMWARE_VER		"oldFirmwareVersion"
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
 #define FP_PARAM                  "Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable"
@@ -935,7 +934,7 @@ static void handleNotificationEvents()
 		}
 		else
 		{		
-			WalPrint("handleNotificationEvents : Before pthread cond wait in consumer thread\n"); 
+			WalPrint("handleNotificationEvents : Before pthread cond wait in consumer thread\n");   
 			pthread_cond_wait(&con, &mut);
 			pthread_mutex_unlock (&mut);
 			WalPrint("handleNotificationEvents : mutex unlock in consumer thread after cond wait\n");
@@ -985,7 +984,7 @@ static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value)
 	int len;
 	int configUpdateStatus = -1;
 	size_t sz;
-	fileRead = fopen( WEBPA_CFG_FILE, "r+" );
+	fileRead = fopen( WEBPA_CFG_FILE, "r+" );    
 	if( fileRead == NULL ) 
 	{
 		WalError( "Error opening file in read mode\n" );
@@ -1261,7 +1260,7 @@ void processNotification(NotifyData *notifyData)
                                 {
                                         reason = (char *)malloc(sizeof(char)*MAX_REASON_LENGTH);
 				        mapComponentStatusToGetReason(notifyData->u.device->status, reason);
-				        OnboardLog("%s\n",reason);
+				                        OnboardLog("%s\n",reason);
                                         snprintf(dest, WEBPA_NOTIFY_EVENT_MAX_LENGTH, "event:device-status/%s/non-operational/%s/%s", device_id,(NULL != strBootTime)?strBootTime:"unknown",reason);
                                         cJSON_AddStringToObject(notifyPayload, "status", "non-operational");
                                         cJSON_AddStringToObject(notifyPayload, "reason", reason);
