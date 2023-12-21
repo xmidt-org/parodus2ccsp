@@ -16,7 +16,7 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -g -fprofile-arcs -ftest-coverage 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTEST -D_ANSC_LINUX")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W  -g -fprofile-arcs -ftest-coverage -O0")
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs -ftest-coverage -O0")
-set (WEBPA_COMMON_LIBS gcov -lcunit -lcimplog -lwrp-c -lpthread -lmsgpackc -lnanomsg -Wl,--no-as-needed -lcjson -ltrower-base64 -lssl -lcrypto -lrt -luuid -lm -lcmocka)
+set (WEBPA_COMMON_LIBS gcov  -lcimplog -lwrp-c -lpthread -lmsgpackc -lnanomsg -Wl,--no-as-needed -lcjson -ltrower-base64 -lssl -lcrypto -lrt -luuid -lm -lcmocka)
 set (WEBPA_COMMON_SOURCES ../source/broadband/webpa_adapter.c ../source/broadband/webpa_internal.c ../source/broadband/webpa_parameter.c ../source/broadband/webpa_attribute.c ../source/broadband/webpa_notification.c)
 set (WEBPA_TABLE_SOURCES ../source/broadband/webpa_replace.c ../source/broadband/webpa_table.c)
 link_directories ( ${LIBRARY_DIR} )
@@ -34,7 +34,7 @@ target_link_libraries (test_libpd gcov -Wl,--no-as-needed )
 #-------------------------------------------------------------------------------
 add_test(NAME test_webpa_rbus COMMAND ${MEMORY_CHECK} ./test_webpa_rbus)
 add_executable(test_webpa_rbus test_webpa_rbus.c ../source/broadband/webpa_rbus.c)
-target_link_libraries (test_webpa_rbus ${WEBPA_COMMON_LIBS} -llibparodus -lrbus)
+target_link_libraries (test_webpa_rbus ${WEBPA_COMMON_LIBS} -llibparodus -lrbus -lcunit)
 target_link_libraries (test_webpa_rbus gcov -Wl,--no-as-needed )
 
 #-------------------------------------------------------------------------------
@@ -102,6 +102,14 @@ target_link_libraries (test_webpa_table -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c 
 target_link_libraries (test_webpa_table gcov -Wl,--no-as-needed )
 
 #-------------------------------------------------------------------------------
+#   test_webpa_notification_cunit
+#-------------------------------------------------------------------------------
+add_test(NAME test_webpa_notification_cunit COMMAND ${MEMORY_CHECK} ./test_webpa_notification_cunit)
+add_executable(test_webpa_notification_cunit test_webpa_notification_cunit.c mock_cache.c ../source/app/libpd.c ${WEBPA_COMMON_SOURCES} ${WEBPA_TABLE_SOURCES})
+target_link_libraries (test_webpa_notification_cunit -lwrp-c -ldbus-1 -lccsp_common -lwdmp-c -lcjson ${WEBPA_COMMON_LIBS} -llibparodus -lcunit)
+target_link_libraries (test_webpa_notification_cunit gcov -Wl,--no-as-needed )
+
+#-------------------------------------------------------------------------------
 #   test_webpa_test_set
 #-------------------------------------------------------------------------------
 add_test(NAME test_webpa_test_set COMMAND ${MEMORY_CHECK} ./test_webpa_test_set)
@@ -133,6 +141,8 @@ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_notification.dir/__/src --outp
 COMMAND lcov -q --capture --directory 
 ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_table.dir/__/src --output-file test_webpa_table.info
 COMMAND lcov -q --capture --directory 
+${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_notification_cunit.dir/__/src --output-file test_webpa_notification_cunit.info
+COMMAND lcov -q --capture --directory 
 ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_test_set.dir/__/src --output-file test_webpa_test_set.info
 
 COMMAND lcov
@@ -146,6 +156,7 @@ COMMAND lcov
 -a test_webpa_replace.info
 -a test_webpa_notification.info
 -a test_webpa_table.info
+-a test_webpa_notification_cunit.info
 -a test_webpa_test_set.info
 --output-file coverage.info
 
