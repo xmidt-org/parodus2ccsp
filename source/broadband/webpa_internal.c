@@ -156,7 +156,9 @@ static int getMatchingComponentValArrayIndex(char *objectName);
 static int getMatchingSubComponentValArrayIndex(char *objectName);
 static void getObjectName(char *str, char *objectName, int objectLevel);
 static int waitForComponentReady(char *compName, char *dbusPath);
+#if 0
 static void checkComponentReady(char *compName, char *dbusPath);
+#endif
 static void checkComponentHealthStatus(char * compName, char * dbusPath, char *status, int *retStatus);
 static void waitUntilSystemReady();
 static void ccspSystemReadySignalCB(void* user_data);
@@ -1113,9 +1115,14 @@ static void waitUntilSystemReady()
 	    );
 
 	    FILE *file;
+#ifndef TEST
 	    int wait_time = 0;
 	    int total_wait_time = 0;
-
+#else
+//To get 1 sec delay the below wait_time and total_wait_time is initialised
+	    int wait_time = 23;
+	    int total_wait_time = 83;
+#endif
 	    // Wait till Call back touches the indicator to proceed further
 	    while((file = fopen("/var/tmp/cacheready", "r")) == NULL)
 	    {
@@ -1143,7 +1150,7 @@ static void waitUntilSystemReady()
 				    }
 			    }
 		    }
-		    sleep(5);
+		    sleep(WEBPA_SYSTEM_READY_SLEEP);
 		    wait_time++;
 		    total_wait_time++;
 	    };
@@ -1260,6 +1267,7 @@ static void checkComponentHealthStatus(char * compName, char * dbusPath, char *s
 	*retStatus = ret;
 }
 
+#if 0
 /**
  * @brief checkComponentReady Checks if the given component is ready, its health is green
    if not green, retry for 4 times and proceed .
@@ -1294,6 +1302,7 @@ static void checkComponentReady(char *compName, char *dbusPath)
 		}
 	} 
 }
+#endif
 
 /*
  * @brief To retry component caching for failed objects
@@ -1359,7 +1368,7 @@ static void retryFailedComponentCaching()
 					}
 				}
 				free_componentStruct_t(bus_handle, size, ppComponents);
-			}while((retryCount > 1) && (retryCount <= 4));
+			}while((retryCount > WEBPA_RETRY_MIN_COUNT) && (retryCount <= WEBPA_RETRY_MAX_COUNT));
 		}
 
 		for(i = 0; i < count1 ; i++)
@@ -1407,7 +1416,7 @@ static void retryFailedComponentCaching()
 				}
 				free_componentStruct_t(bus_handle, size, ppComponents);
 
-			}while((retryCount > 1) && (retryCount <= 4));
+			}while((retryCount > WEBPA_RETRY_MIN_COUNT) && (retryCount <= WEBPA_RETRY_MAX_COUNT));
 		}
 
 		compCacheSuccessCnt = cnt;
