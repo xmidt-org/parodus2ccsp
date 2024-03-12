@@ -27,6 +27,7 @@
 #define CCSP_COMPONENT_ID_WEBCONFIG             0x00000100
 #endif
 #define CCSP_COMPONENT_ID_NOTIFY_COMP           0x0000000C
+#define DSLH_MPA_ACCESS_CONTROL_PAM             0x0000000D
 #define CCSP_COMPONENT_ID_WebPA                 0x0000000A
 #define CCSP_COMPONENT_ID_XPC                   0x0000000B
 #define CCSP_COMPONENT_ID_ACS                   0x00000004
