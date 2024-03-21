@@ -851,6 +851,8 @@ static void *notifyTask(void *status)
 	processDeviceStatusNotification(*(int *)status);
 	RegisterNotifyCB(&notifyCallback);
 	sendNotificationForFactoryReset();
+	WalInfo("Registered notifyCallback, create webpanotifyready file\n");
+	system("touch /var/tmp/webpanotifyready");
 	FactoryResetCloudSyncTask();
 	sendNotificationForFirmwareUpgrade();
 	setInitialNotify();
