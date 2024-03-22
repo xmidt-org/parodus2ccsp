@@ -172,8 +172,6 @@ const char * notifyparameters[]={
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.LocalInterfaces",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.VLANID",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.LocalInterfaces",
-"Device.DeviceInfo.X_COMCAST-COM_WAN_IP",
-"Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6",
 #ifdef _HUB4_PRODUCT_REQ_
 "Device.NAT.X_CISCO_COM_PortTriggers.Enable",
 "Device.UPnP.Device.UPnPIGD",
@@ -853,6 +851,8 @@ static void *notifyTask(void *status)
 	processDeviceStatusNotification(*(int *)status);
 	RegisterNotifyCB(&notifyCallback);
 	sendNotificationForFactoryReset();
+	WalInfo("Registered notifyCallback, create /tmp/webpanotifyready file\n");
+	system("touch /tmp/webpanotifyready");
 	FactoryResetCloudSyncTask();
 	sendNotificationForFirmwareUpgrade();
 	setInitialNotify();

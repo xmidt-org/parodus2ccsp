@@ -16,6 +16,7 @@
 #endif
 #ifndef RDKB_BUILD
 #define CCSP_COMPONENT_ID_NOTIFY_COMP       1
+#define DSLH_MPA_ACCESS_CONTROL_PAM         2
 #ifdef WEBCONFIG_BIN_SUPPORT
 #define CCSP_COMPONENT_ID_WEBCONFIG         1
 #endif
@@ -56,7 +57,10 @@ Webpa_SetParamStringValue
 	
         if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_WebPA_Notification", TRUE))
         {
-		if( GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_NOTIFY_COMP )
+		WalPrint("PAM writeID is %ld , Write ID received is %ld\n", DSLH_MPA_ACCESS_CONTROL_PAM, GET_CURRENT_WRITE_ENTITY());
+
+		//Along with notify component writeID , allow direct set from PAM as set attributes is not supported for wan ip RBUS only parameters.
+		if((GET_CURRENT_WRITE_ENTITY() == CCSP_COMPONENT_ID_NOTIFY_COMP) || (GET_CURRENT_WRITE_ENTITY() == DSLH_MPA_ACCESS_CONTROL_PAM))
 		{
 		#ifdef USE_NOTIFY_COMPONENT
 
