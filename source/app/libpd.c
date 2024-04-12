@@ -179,8 +179,8 @@ static void parodus_receive()
 				WalPrint("Allocating memory for response headers\n");
                         	res_headers = (headers_t *)malloc(sizeof(headers_t) + sizeof( char * ) * (wrp_msg->u.req.headers->count));
 				if(res_headers != NULL) {
-					WalPrint("Memory allocated successfully for response headers\n");
-					memset(res_headers, 0, sizeof(headers_t));
+					WalInfo("Memory allocated successfully for response headers\n");
+					memset(res_headers, 0, (sizeof(headers_t) + sizeof( char * ) * (wrp_msg->u.req.headers->count)));
 				}
 				else {
 					WalError("Memory not allocated for response headers\n");
@@ -190,7 +190,9 @@ static void parodus_receive()
 			else {
                                 WalPrint("Request headers field is empty so, Memory not allocated for response headers\n");
                         }
+ 			WalInfo("************** processRequest *****************\n");						
 			processRequest((char *)wrp_msg->u.req.payload, wrp_msg->u.req.transaction_uuid, ((char **)(&(res_wrp_msg->u.req.payload))), wrp_msg->u.req.headers, res_headers);
+			WalInfo("************** processedRequest *****************\n");
 			if(res_headers != NULL && res_headers->headers[0] != NULL && res_headers->headers[1] != NULL) {
                                 if(strlen(res_headers->headers[0]) > 0 && strlen(res_headers->headers[1]) > 0) {
                                           res_headers->count = wrp_msg->u.req.headers->count;
@@ -203,6 +205,13 @@ static void parodus_receive()
 					}
                                	}
                          }
+			 else if(res_headers != NULL)
+			 {
+				 WalInfo("Deallocating memory for response headers");
+				 free(res_headers);
+				 res_headers = NULL;
+				 WalInfo("Deallocated memory for response headers");
+			 }
 		
                         if(res_wrp_msg->u.req.payload !=NULL)
                         {   
@@ -241,6 +250,7 @@ static void parodus_receive()
                         getCurrentTime(endPtr);
                         WalInfo("Elapsed time : %ld ms\n", timeValDiff(startPtr, endPtr));
 			wrp_free_struct (res_wrp_msg);
+			WalInfo("Deallocated memory for res_wrp_msg");
                     }
 		    wrp_free_struct (wrp_msg);
 	    }
