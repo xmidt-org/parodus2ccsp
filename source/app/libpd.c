@@ -185,7 +185,7 @@ static void parodus_receive()
                         	res_headers = (headers_t *)malloc(sizeof(headers_t) + sizeof( char * ) * (wrp_msg->u.req.headers->count));
 				if(res_headers != NULL) {
 					WalPrint("Memory allocated successfully for response headers\n");
-					memset(res_headers, 0, sizeof(headers_t));
+					memset(res_headers, 0, (sizeof(headers_t) + sizeof( char * ) * (wrp_msg->u.req.headers->count)));
 				}
 				else {
 					WalError("Memory not allocated for response headers\n");
@@ -208,7 +208,13 @@ static void parodus_receive()
 					}
                                	}
                          }
-		
+			 else if(res_headers != NULL)
+			 {
+				 WalInfo("Deallocating memory for non processing response headers\n");
+				 free(res_headers);
+				 res_headers = NULL;
+			 }	
+			 			
                         if(res_wrp_msg->u.req.payload !=NULL)
                         {   
                                 WalPrint("Response payload is %s\n",(char *)(res_wrp_msg->u.req.payload));
