@@ -56,7 +56,6 @@ static NotifyMsg *notifyMsgQ = NULL;
 void (*notifyCbFn)(NotifyData*) = NULL;
 static WebPaCfg webPaCfg;
 char deviceMAC[32]={'\0'};
-char *cloud_status_val = "online";
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 char *g_systemReadyTime=NULL;
 #endif
@@ -928,15 +927,12 @@ static void handleNotificationEvents()
 		if(notifyMsgQ != NULL)
 		{
 			NotifyMsg *message = notifyMsgQ;
+			notifyMsgQ = notifyMsgQ->next;
 			pthread_mutex_unlock (&mut);
 			WalPrint("handleNotificationEvents : mutex unlock in consumer thread\n");
 			NotifyData *notifyData = message->notifyData;
 			processNotification(notifyData);
-			if ((cloud_status_val !=NULL) && (strcmp(cloud_status_val, "online") == 0))
-			{
-				notifyMsgQ = notifyMsgQ->next;
-				WAL_FREE(message);
-			}
+			WAL_FREE(message);
 		}
 		else
 		{		
@@ -1131,7 +1127,7 @@ void processNotification(NotifyData *notifyData)
 	unsigned int cmc;
 	char *strBootTime = NULL;
 	char *reason = NULL;
-        char *cloud_status_val = NULL;
+	int cld_status = 0;
 
 	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
 	WalPrint("Device_id %s\n", device_id);
@@ -1164,27 +1160,8 @@ void processNotification(NotifyData *notifyData)
 				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
 				sleep(5);
 
-					WalInfo("After sleep of 5sec\n");
-
-					cloud_status_val = get_global_cloud_status();
-
-					if (cloud_status_val == NULL)
-					{
-						WalInfo("Received cloud_status as NULL\n");
-						free(dest);
-						return;
-					}
-
-					if ((cloud_status_val !=NULL) && (strcmp(cloud_status_val, "online") != 0))
-					{
-						WalInfo("Received cloud_status as %s\n", cloud_status_val);
-						free(dest);
-						return;
-					}
-					else
-					{
-						WalInfo("Received cloud_status as %s\n", cloud_status_val);
-					}
+					cld_status = getConnCloudStatus(deviceMAC);
+					WalPrint("Received cld_status is %d\n", cld_status);
 	        	}
 	        		break;
 
