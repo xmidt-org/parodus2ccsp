@@ -1127,6 +1127,7 @@ void processNotification(NotifyData *notifyData)
 	unsigned int cmc;
 	char *strBootTime = NULL;
 	char *reason = NULL;
+        char *cloud_status_val = NULL;
 
 	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
 	WalPrint("Device_id %s\n", device_id);
@@ -1158,6 +1159,15 @@ void processNotification(NotifyData *notifyData)
 				//Added delay of 5s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
 				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
 				sleep(5);
+
+				cloud_status_val = get_global_cloud_status();
+				if ((cloud_status_val !=NULL) && (strcmp(cloud_status_val, "online") != 0))
+				{
+					WalInfo("Received cloud_status as %s\n", cloud_status_val);
+					free(cloud_status_val);
+					cloud_status_val = NULL;
+					return;
+				}					
 	        	}
 	        		break;
 
