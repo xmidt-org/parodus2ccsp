@@ -331,8 +331,8 @@ char *get_global_cloud_status()
 	int  rv;
     struct timeval ts;
 	pthread_mutex_lock (&cloud_mut);
-	WalPrint("mutex lock in consumer thread\n");
-	WalPrint("Before pthread cond wait in consumer thread\n");
+	WalInfo("mutex lock in consumer thread\n");
+	WalInfo("Before pthread cond wait in consumer thread\n");
 
 	gettimeofday(&ts, NULL);
     ts.tv_sec += WAIT_TIME_IN_SECONDS;
@@ -340,7 +340,7 @@ char *get_global_cloud_status()
 	while (!wakeUpFlag)
 	{
 		rv = pthread_cond_timedwait(&cloud_con, &cloud_mut, &ts);
-		WalPrint("After pthread_cond_timedwait\n");
+		WalInfo("After pthread_cond_timedwait\n");
 		if (rv == ETIMEDOUT)
 		{
 			WalError("Timeout Error. Unable to get cloud_status even after %d minutes\n", (WAIT_TIME_IN_SECONDS/60));
@@ -351,7 +351,7 @@ char *get_global_cloud_status()
 	temp = cloud_status;
 	wakeUpFlag = 0;
 	pthread_mutex_unlock (&cloud_mut);
-	WalPrint("mutex unlock in consumer thread after cond wait\n");
+	WalInfo("mutex unlock in consumer thread after cond wait\n");
 	return temp;
 }
 
