@@ -1127,6 +1127,7 @@ void processNotification(NotifyData *notifyData)
 	unsigned int cmc;
 	char *strBootTime = NULL;
 	char *reason = NULL;
+	int cld_status = 0;
 
 	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
 	WalPrint("Device_id %s\n", device_id);
@@ -1158,6 +1159,9 @@ void processNotification(NotifyData *notifyData)
 				//Added delay of 5s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
 				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
 				sleep(5);
+
+					cld_status = getConnCloudStatus(deviceMAC);
+					WalPrint("Received cld_status is %d\n", cld_status);
 	        	}
 	        		break;
 
