@@ -19,5 +19,6 @@ void webpaRbus_Uninit();
 rbusError_t setTraceContext(char* traceContext[]);
 rbusError_t getTraceContext(char* traceContext[]);
 rbusError_t clearTraceContext();
-
+static void SubscribeCloudConnOnlineEventCallbackHandler(rbusHandle_t handle,rbusEvent_t const* event,rbusEventSubscription_t* subscription);
+void SubscribeCloudConnOnlineEvent();
 #endif
