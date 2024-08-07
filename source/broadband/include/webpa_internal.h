@@ -81,7 +81,7 @@
 #define DEVICE_MAC                   "Device.DPoE.Mac_address"
 #elif defined(PLATFORM_RASPBERRYPI)
 #define DEVICE_MAC                   "Device.Ethernet.Interface.5.MACAddress"
-#elif defined(RDKB_EMU)
+#elif defined(RDKB_EMU) || defined(PLATFORM_BANANAPI_R4)
 #define DEVICE_MAC                   "Device.DeviceInfo.X_COMCAST-COM_WAN_MAC"
 #elif defined(_HUB4_PRODUCT_REQ_) || defined(_WNXL11BWL_PRODUCT_REQ_)
 #define DEVICE_MAC                   "Device.DeviceInfo.X_COMCAST-COM_WAN_MAC"
