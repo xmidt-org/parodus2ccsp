@@ -38,7 +38,7 @@ char *objectList[] ={
 "Device.UserInterface.",
 "Device.InterfaceStack.",
 "Device.Ethernet.",
-#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_)
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_)
 "Device.MoCA.",
 #endif
 "Device.PPP.",
@@ -74,7 +74,7 @@ char *objectList[] ={
 "Device.Hosts.",
 "Device.ManagementServer.",
 "Device.XHosts.",
-#ifndef _HUB4_PRODUCT_REQ_
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_)
 "Device.X_CISCO_COM_MTA.",
 #endif
 "Device.X_RDKCENTRAL-COM_XDNS.",
@@ -92,7 +92,7 @@ char *objectList[] ={
 char *subObjectList[] = 
 {
 "Device.DeviceInfo.NetworkProperties.",
-#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_)
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_)
 "Device.MoCA.Interface.",
 #endif
 "Device.IP.Diagnostics.",
@@ -199,7 +199,7 @@ int waitForOperationalReadyCondition()
 	{
 		return EPON_FAILED;
 	}
-#elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU)
+#elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU) && !defined(PLATFORM_BANANAPI_R4)
     if(check_ethernet_wan_status() != WDMP_SUCCESS)
 	{
 #if !defined(_SKY_HUB_COMMON_PRODUCT_REQ_)
