@@ -90,7 +90,7 @@ add_definitions(-DRDKB_EMU)
 endif (BUILD_EMULATOR)
 
 if (BUILD_BANANAPI_R4)
-add_definitions(-DPLATFORM_BANANAPI_R4)
+add_definitions(-D_PLATFORM_BANANAPI_R4_)
 endif (BUILD_BANANAPI_R4)
 
 if (FEATURE_SUPPORT_WEBCONFIG)
