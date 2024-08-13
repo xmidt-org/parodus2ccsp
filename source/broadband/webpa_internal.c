@@ -199,7 +199,7 @@ int waitForOperationalReadyCondition()
 	{
 		return EPON_FAILED;
 	}
-#elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU) && !defined(PLATFORM_BANANAPI_R4)
+#elif !defined(PLATFORM_RASPBERRYPI) && !defined(RDKB_EMU) && !defined(_PLATFORM_BANANAPI_R4_)
     if(check_ethernet_wan_status() != WDMP_SUCCESS)
 	{
 #if !defined(_SKY_HUB_COMMON_PRODUCT_REQ_)
