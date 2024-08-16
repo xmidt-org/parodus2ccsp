@@ -8,11 +8,8 @@
 #include "webpa_rbus.h"
 #include "webpa_notification.h"
 
-#define CLOUD_CONN_ONLINE "cloud_conn_online_event"
-
 static rbusHandle_t rbus_handle;
 static bool isRbus = false;
-int RetrySync = 0;
 
 bool isRbusEnabled()
 {
@@ -130,37 +127,45 @@ rbusError_t clearTraceContext()
         }
 }
 
-static void CloudConnOnlineCallbackHandler(
+static void cloudConnEventHandler(
     rbusHandle_t handle,
     rbusEvent_t const* event,
     rbusEventSubscription_t* subscription)
 {
 
     rbusValue_t newValue = rbusObject_GetValue(event->data, "value");
+    if(newValue == NULL)
+    {
+    	WalError("cloudConnEventHandler: Received newValue as NULL \n");
+    	return;
+    }    
     
     int incoming_value = rbusValue_GetInt32(newValue);
 
-    WalInfo("Received cloud online callback event %s\n", event->name);
+    WalInfo("Received cloud online callback event %s, incoming_value %d\n", event->name, incoming_value);
 
     if(incoming_value)
     {
 	WalPrint("Received cloud connection online event\n");
 	pthread_mutex_lock (get_global_sync_mutex());
-	//Triggering cloud connection online event for retrying sync notification.
+	//Signalling sync notification retry when cloud connection event is received.
 	pthread_cond_signal(get_global_sync_condition());
 	pthread_mutex_unlock(get_global_sync_mutex());
     }
+    else
+    {
+    	WalError("Failed in cloud connection event, incoming_value is not 1\n");
+    }    
     (void)handle;
 }
 
 void SubscribeCloudConnOnlineEvent()
 {
-	int rc = RBUS_ERROR_SUCCESS;
-	WalPrint("================= CloudConnOnlineEventSubscribeHandler ==========\n");	
-    	WalInfo("rbus event subscribe to cloud connection online subscribe callback\n");
+	int rc = RBUS_ERROR_SUCCESS;	
+    	WalPrint("rbus event subscribe to cloud connection online subscribe callback\n");
     	if(isRbusInitialized)
     	{
-    		rc = rbusEvent_Subscribe(rbus_handle, CLOUD_CONN_ONLINE, CloudConnOnlineCallbackHandler, NULL, 0);
+    		rc = rbusEvent_Subscribe(rbus_handle, CLOUD_CONN_ONLINE, cloudConnEventHandler, NULL, 0);
     		if(rc != RBUS_ERROR_SUCCESS)
 		{
 			WalError("consumer: rbusEvent_Subscribe for %s failed: %d\n", CLOUD_CONN_ONLINE, rc);
@@ -168,12 +173,12 @@ void SubscribeCloudConnOnlineEvent()
 		}
 		else
 		{
-			WalInfo("consumer: rbusEvent_Subscribe for %s success\n", CLOUD_CONN_ONLINE);
+			WalInfo("rbusEvent_Subscribe to %s success\n", CLOUD_CONN_ONLINE);
 		}
 	}
 	else 
 	{
-		WalError("Rbus not initialized in CloudConnOnlineEventSubscribeHandler funcion\n");
+		WalError("Failed to subscribe to cloud_conn_online event as rbus is not initialized\n");
         }
 }
 
