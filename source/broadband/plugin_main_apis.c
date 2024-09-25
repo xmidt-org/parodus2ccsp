@@ -72,6 +72,10 @@
 #include <webcfg_log.h>
 #endif
 #include "webpa_adapter.h"
+#include "cosa_webpa_internal.h"
+
+extern ANSC_HANDLE CosaWebConfigCreate (VOID);
+extern ANSC_STATUS CosaWebConfigRemove(ANSC_HANDLE hThisObject);
 
 ANSC_HANDLE                        g_MessageBusHandle;
 
