@@ -1439,7 +1439,7 @@ WDMP_STATUS check_ethernet_wan_status()
         eth_wan_status = TRUE;
         return WDMP_SUCCESS;
     }
-    return WDMP_FAILURE;
+    else
 #endif
     {
         if(waitForComponentReady(RDKB_ETHAGENT_COMPONENT_NAME,RDKB_ETHAGENT_DBUS_PATH) != CCSP_SUCCESS)
