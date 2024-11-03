@@ -242,7 +242,7 @@ void sendNotificationForFactoryReset();
 void sendNotificationForFirmwareUpgrade();
 static WDMP_STATUS addOrUpdateFirmwareVerToConfigFile(char *value);
 static WDMP_STATUS processParamNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
-static WDMP_STATUS processParamNotificationRetry(unsigned int *cmc, char **cid);
+static WDMP_STATUS getCmcCidValues(unsigned int *cmc, char **cid);
 static void processConnectedClientNotification(NodeData *connectedNotify, char *deviceId, char **version, char ** nodeMacId, char **timeStamp, char **destination);
 static WDMP_STATUS processFactoryResetNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid, char **reason);
 static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, unsigned int *cmc, char **cid);
@@ -1041,12 +1041,59 @@ static void addNotifyMsgToQueue(NotifyData *notifyData)
 	WalPrint("*****Returned from addNotifyMsgToQueue*****\n");
 }
 
+/*
+ * @brief To delay sync notifications until FR cloud sync is acknowledged by cloud with Test and Set request for max wait period of 60s
+ */
+void FR_CloudSyncCheck()
+{
+	char *cid = NULL;
+	unsigned int cmc = 0;
+	int FR_cloud_sync_completed = false;
+	WDMP_STATUS ret = WDMP_FAILURE;
+
+	for(int i=0;i<12;i++)
+	{
+		ret = getCmcCidValues(&cmc, &cid);
+		if (ret != WDMP_SUCCESS)
+		{
+			WalError("Unable to get dbCID/CMC value during FR cloud sync check\n");
+		}
+		else if ((strcmp(cid, "0") == 0) && cmc != 512) //To check whether the device is up after factory reset
+		{
+			WalInfo("Factory reset cloud sync is in progress, wait for 5sec to process sync notifications\n");
+			WAL_FREE(cid);
+		}
+		else
+		{
+			FR_cloud_sync_completed = true;
+			WAL_FREE(cid);			
+			break;
+		}
+		sleep(5);		
+	}
+
+	if(FR_cloud_sync_completed == false)
+	{
+		WalInfo("Factory reset cloud sync is failed after 60sec, proceeding to sync notifications without FR cloud sync\n");
+	}else
+	{
+		WalInfo("Factory reset cloud sync is completed, proceeding to sync notifications\n");
+	}	
+}
 
 /*
  * @brief To monitor notification events in Notification queue
  */
 static void handleNotificationEvents()
 {
+	char *reboot_reason = NULL;
+	reboot_reason = getParameterValue(PARAM_REBOOT_REASON);
+	if( (NULL != reboot_reason) && (strcmp(reboot_reason,"factory-reset")==0) )
+	{
+		WAL_FREE(reboot_reason);
+		FR_CloudSyncCheck();
+	}
+
 	while(1)
 	{
 		pthread_mutex_lock (&mut);
@@ -1420,7 +1467,7 @@ void processNotification(NotifyData *notifyData)
 	        	case PARAM_NOTIFY_RETRY:
 	        	{
 	        		strcpy(dest, "event:SYNC_NOTIFICATION");
-				ret = processParamNotificationRetry(&cmc, &cid);
+				ret = getCmcCidValues(&cmc, &cid);
 	        		if (ret != WDMP_SUCCESS)
 	        		{
 	        			free(dest);
@@ -1522,7 +1569,7 @@ static WDMP_STATUS processParamNotification(ParamNotify *paramNotify,
 	return status;
 }
 
-static WDMP_STATUS processParamNotificationRetry(unsigned int *cmc, char **cid)
+static WDMP_STATUS getCmcCidValues(unsigned int *cmc, char **cid)
 {
 	char *dbCID = NULL, *dbCMC = NULL;
 
