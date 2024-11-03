@@ -136,4 +136,4 @@ WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* inte
  * @return status.
  */
 WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *write_id);
-
+void FR_CloudSyncCheck();
