@@ -714,14 +714,9 @@ static void getNotifyParamList(const char ***paramList, int *size)
     	    }
 	    char meshEnable[64];
 	    memset(meshEnable, 0, sizeof(meshEnable));
-	    if(0 == syscfg_init())
-	    {
-		    syscfg_get( NULL, "mesh_enable", meshEnable, sizeof(meshEnable));
-	    }
-	    else
-	    {
-		    WalError("syscfg_init failed\n");
-	    }
+	    if(syscfg_get( NULL, "mesh_enable", meshEnable, sizeof(meshEnable))!=0)
+	        WalError("syscfg_get failed\n"); 
+
 	    if(meshEnable[0] != '\0' && strncmp(meshEnable, "true", strlen("true")) == 0)
 	    {
 		    WalInfo("Mesh/plume is enabled\n");

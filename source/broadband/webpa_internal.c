@@ -20,6 +20,9 @@
 #endif
 
 #include <cJSON.h>
+#ifdef RDKB_BUILD
+#include <syscfg/syscfg.h>
+#endif
 /*----------------------------------------------------------------------------*/
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
@@ -1431,15 +1434,12 @@ WDMP_STATUS check_ethernet_wan_status()
     char *status = NULL;
     char isEthEnabled[64]={'\0'};
 #ifdef RDKB_BUILD
-    if(0 == syscfg_init())
+    if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0))
     {
-        if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0))
-        {
-            WalInfo("Ethernet WAN is enabled\n");
-            OnboardLog("Ethernet WAN is enabled\n");
-            eth_wan_status = TRUE;
-            return WDMP_SUCCESS;
-        }
+        WalInfo("Ethernet WAN is enabled\n");
+        OnboardLog("Ethernet WAN is enabled\n");
+        eth_wan_status = TRUE;
+        return WDMP_SUCCESS;
     }
     else
 #endif
