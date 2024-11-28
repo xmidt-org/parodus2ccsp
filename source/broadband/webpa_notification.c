@@ -60,7 +60,7 @@ static NotifyMsg *notifyMsgQ = NULL;
 void (*notifyCbFn)(NotifyData*) = NULL;
 static WebPaCfg webPaCfg;
 char deviceMAC[32]={'\0'};
-static int g_syncRetryThreadStarted = 0;
+int g_syncRetryThreadStarted = 0;
 
 //This flag is used to avoid sync notification retry when param notification is already in progress.
 int g_syncNotifyInProgress = 0;

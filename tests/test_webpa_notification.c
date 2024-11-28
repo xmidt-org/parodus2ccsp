@@ -61,6 +61,7 @@ extern int numLoops;
 extern int g_checkSyncNotifyRetry;
 extern int g_syncNotifyInProgress;
 extern char* cloud_status;
+extern int g_syncRetryThreadStarted;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -731,6 +732,7 @@ void test_processNotification()
     expect_value(CcspBaseIf_getParameterValues, size, 1);
 	will_return(libparodus_send, (intptr_t)0);
     expect_function_call(libparodus_send);
+    g_syncRetryThreadStarted = 1; //skip SyncNotifyRetryTask thread creation
 	processNotification(notifyData);
 }
 
@@ -1076,15 +1078,16 @@ void test_processNotification_DEVICE_STATUS_fail()
 }
 
 int writeFile(const char* fileName, const char* content) {
-    FILE* file = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (file != -1) {
-        perror("Error opening file");
+	FILE *fp;
+	fp = fopen(fileName , "w+");
+    if (fp == NULL) {
+        perror("Error opening file:");
         return 1;  // Return an error code
     }
 
-    fprintf(file, "%s\n", content);
+    fprintf(fp, "%s\n", content);
 
-    fclose(file);
+    fclose(fp);
 
     WalInfo("Content written to %s\n", fileName);
 
@@ -1724,6 +1727,332 @@ void test_processNotification_PARAM_NOTIFY_RETRY_FAIL()
     processNotification(notifyData);
 }
 
+void test_FR_CloudSyncCheck()
+{
+    getCompDetails();    
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("6789",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    FR_CloudSyncCheck();
+}
+
+void test_FR_CloudSyncCheck_FRSyncFailed()
+{
+    getCompDetails();
+
+    parameterValStruct_t **cmcList1 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList1[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList1[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList1[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList1[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList1 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList1[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList1[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList1[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList1[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList2[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList2[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList2[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList3 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList3[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList3[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList3[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList3[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList3 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList3[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList3[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList3[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList3[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList4 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList4[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList4[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList4[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList4[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList4 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList4[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList4[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList4[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList4[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList5 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList5[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList5[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList5[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList5[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList5 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList5[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList5[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList5[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList5[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList6 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList6[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList6[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList6[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList6[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList6 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList6[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList6[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList6[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList6[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList7 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList7[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList7[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList7[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList7[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList7 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList7[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList7[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList7[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList7[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList8 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList8[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList8[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList8[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList8[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList8 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList8[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList8[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList8[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList8[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList9 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList9[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList9[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList9[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList9[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList9 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList9[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList9[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList9[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList9[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList10 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList10[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList10[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList10[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList10[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList10 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList10[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList10[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList10[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList10[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList11 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList11[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList11[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList11[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList11[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList11 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList11[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList11[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList11[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList11[0]->type = ccsp_string;
+
+    parameterValStruct_t **cmcList12 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList12[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList12[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList12[0]->parameterValue = strndup("1",MAX_PARAMETER_LEN);
+    cmcList12[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cidList12 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList12[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList12[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList12[0]->parameterValue = strndup("0",MAX_PARAMETER_LEN);
+    cidList12[0]->type = ccsp_string;
+
+  
+    will_return(get_global_values, cmcList1);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList1);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cmcList3);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList3);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList4);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList4);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList5);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList5);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList6);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList6);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList7);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList7);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList8);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList8);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList9);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList9);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList10);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList10);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList11);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList11);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    will_return(get_global_values, cmcList12);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, cidList12);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);            
+
+    FR_CloudSyncCheck();
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -1763,7 +2092,9 @@ int main(void)
         cmocka_unit_test(test_syncNotifyRetry_dbCMC_NULL),
         cmocka_unit_test(test_syncNotifyRetry_CMC_Is_512),
         cmocka_unit_test(test_processNotification_PARAM_NOTIFY_RETRY_SUCCESS),
-        cmocka_unit_test(test_processNotification_PARAM_NOTIFY_RETRY_FAIL)
+        cmocka_unit_test(test_processNotification_PARAM_NOTIFY_RETRY_FAIL),
+        cmocka_unit_test(test_FR_CloudSyncCheck),
+        cmocka_unit_test(test_FR_CloudSyncCheck_FRSyncFailed),
     };
 
     numLoops = 1;
