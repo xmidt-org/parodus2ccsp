@@ -388,25 +388,25 @@ void *SyncNotifyRetry()
 	pthread_detach(pthread_self());
 	char *dbCMC = NULL;
 	int backoffRetryTime = 0;
-	int backoff_max_time = 9;
+	int retryCount = 0;
 	struct timespec ts;
-	int c = 3;
-	int  rv;    
-	int max_retry_sleep = (int) pow(2, backoff_max_time) -1;
-	WalInfo("SyncNotifyRetry: max_retry_sleep is %d\n", max_retry_sleep );
-        
+	int c = 120;
+	int  rv;
+	//This flag is used to send sync notification retries to cloud for max 5 times. This flag will be reset to 0 when CMC is 512 to check the next sync.
+	bool SendSyncNotifyFlag = 1; 
+
 	while(FOREVER())
 	{
-		if(backoffRetryTime < max_retry_sleep)
-       		{
-			backoffRetryTime = (int) pow(2, c) -1;
-		}
+		backoffRetryTime = (int) (1 << retryCount)*c+1;
 		clock_gettime(CLOCK_REALTIME, &ts);
 		ts.tv_sec += backoffRetryTime;
 		//wait for backoff delay for retransmission
 		if(g_checkSyncNotifyRetry == 1)
 		{
-			WalInfo("Wait for backoffRetryTime %d sec to check sync notification retry\n", backoffRetryTime);
+			if(SendSyncNotifyFlag == 1)
+				WalInfo("Wait for backoffRetryTime %d sec to check sync notification retry, retryCount=%d\n", backoffRetryTime,retryCount);
+			else
+				WalInfo("Wait for backoffRetryTime %d sec to check CMC\n", backoffRetryTime);
 		}
 
 		rv = pthread_cond_timedwait(&sync_condition, &sync_mutex, &ts);
@@ -447,30 +447,35 @@ void *SyncNotifyRetry()
 		if(strcmp(dbCMC,"512"))
 		{       
 			//Retry sending sync notification to cloud			
-			WalInfo("Retrying sync notification as cloud and CPE are out of sync, dbCMC is %s\n", dbCMC);
-			NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData) * 1);
-			if(notifyData != NULL)
+			if(SendSyncNotifyFlag == 1)
 			{
-				memset(notifyData,0,sizeof(NotifyData));
-				notifyData->type = PARAM_NOTIFY_RETRY;
-				processNotification(notifyData);
+				WalInfo("Retrying sync notification as cloud and CPE are out of sync, dbCMC is %s\n", dbCMC);
+				NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData) * 1);
+				if(notifyData != NULL)
+				{
+					memset(notifyData,0,sizeof(NotifyData));
+					notifyData->type = PARAM_NOTIFY_RETRY;
+					processNotification(notifyData);
+				}
+				WalPrint("After Sending processNotification\n");
+				retryCount++;
 			}
-			WalPrint("After Sending processNotification\n");
-			c++;
-			if(backoffRetryTime == max_retry_sleep)
-		        {
-	        		c = 3;
-		        	backoffRetryTime = 0;
-			        WalPrint("backoffRetryTime reached max value, reseting to initial value\n");
-		        }
 
+			if(retryCount == SYNC_NOTIFY_MAX_RETRY_COUNT)
+			{
+				SendSyncNotifyFlag = 0;
+				retryCount = 0;
+				backoffRetryTime = 0;
+				WalError("Max Retransmission limit reached for Sync notification retry.\n");
+			}
 		}
 		else
 		{
 			g_checkSyncNotifyRetry = 0;
 			WalInfo("CMC is equal to 512, cloud and CPE are in sync\n");			
-			WalInfo("g_checkSyncNotifyRetry is set to 0\n");			
-			c = 3;
+			WalPrint("g_checkSyncNotifyRetry is set to 0\n");
+			SendSyncNotifyFlag = 1;
+			retryCount = 0;
 			backoffRetryTime = 0;
 			WalPrint("CMC is 512, reseting backoffRetryTime to initial value\n");
 		}
