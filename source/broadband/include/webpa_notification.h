@@ -15,6 +15,7 @@
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
 #define FACTORY_RESET_NOTIFY_MAX_RETRY_COUNT			5
+#define SYNC_NOTIFY_MAX_RETRY_COUNT			5
 #define XPC_CID 					"61f4db9"
 #if defined(BUILD_YOCTO)
     #define WEBPA_CFG_FILE                     "/nvram/webpa_cfg.json"
