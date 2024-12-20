@@ -39,7 +39,7 @@ jobs:
         run: mkdir build
 
       - name: Get Sonarcloud Binaries
-        uses: sonarsource/sonarcloud-github-c-cpp@v2
+        uses: xmidt-org/sonarcloud-installer-action@v1
         with:
           working-directory: build
 
@@ -64,7 +64,7 @@ jobs:
           mkdir _install
           mkdir _install/lib
           cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib        
-          build-wrapper-linux-x86-64 --out-dir bw-output make all test
+          build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make all test
 
         # ARGS=-VV make test       # use this version for debugging
       
