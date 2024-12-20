@@ -21,5 +21,5 @@ rbusError_t setTraceContext(char* traceContext[]);
 rbusError_t getTraceContext(char* traceContext[]);
 rbusError_t clearTraceContext();
 static void cloudConnEventHandler(rbusHandle_t handle,rbusEvent_t const* event,rbusEventSubscription_t* subscription);
-int SubscribeCloudConnOnlineEvent();
+void SubscribeCloudConnOnlineEvent();
 #endif

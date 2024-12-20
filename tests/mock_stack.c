@@ -126,7 +126,6 @@ parameterInfoStruct_t **get_global_parameterInfo()
 
 int CcspBaseIf_discComponentSupportingNamespace (void* bus_handle, const char* dst_component_id, const char *name_space, const char *subsystem_prefix, componentStruct_t ***components, int *size)
 {
-
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(name_space); UNUSED(subsystem_prefix);
     *components = get_global_components();
     *size = get_global_component_size();
@@ -150,7 +149,6 @@ void free_componentStruct_t (void* bus_handle, int size, componentStruct_t **val
 
 int CcspBaseIf_getParameterValues(void* bus_handle, const char* dst_component_id, char* dbus_path, char * parameterNames[], int size, int *val_size, parameterValStruct_t ***val)
 {
-
     UNUSED(bus_handle); UNUSED(dst_component_id); UNUSED(dbus_path); UNUSED(parameterNames);
     check_expected(size);
     *val = get_global_values();
