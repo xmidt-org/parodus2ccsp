@@ -140,5 +140,3 @@ WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *writ
 
 pthread_cond_t *get_global_sync_condition(void);
 pthread_mutex_t *get_global_sync_mutex(void);
-
-void FR_CloudSyncCheck();
