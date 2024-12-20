@@ -63,10 +63,10 @@ char deviceMAC[32]={'\0'};
 static int g_syncRetryThreadStarted = 0;
 
 //This flag is used to avoid sync notification retry when param notification is already in progress.
-int g_syncNotifyInProgress = 0;
+static int g_syncNotifyInProgress = 0;
 
 //This flag is used to avoid CMC check when CPE and cloud are in sync.
-int g_checkSyncNotifyRetry = 0;
+static int g_checkSyncNotifyRetry = 0;
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 char *g_systemReadyTime=NULL;
 #endif
@@ -379,7 +379,7 @@ void SyncNotifyRetryTask()
 	else
 	{
 		WalInfo("SyncNotifyRetry Thread created Successfully\n");
-		g_syncRetryThreadStarted = 1;
+		g_syncRetryThreadStarted = 1;		
 	}
 }
 
@@ -429,6 +429,7 @@ void *SyncNotifyRetry()
 			WalInfo("PARAM_NOTIFY is in progress\n");
 			continue;
 		}
+
 		if(g_checkSyncNotifyRetry || (rv == 0))
 		{
 			dbCMC = getParameterValue(PARAM_CMC);
@@ -1420,7 +1421,7 @@ void processNotification(NotifyData *notifyData)
 	        		{
 	        			free(dest);
 	        			return;
-	        		}	
+	        		}					
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				WAL_FREE(cid);

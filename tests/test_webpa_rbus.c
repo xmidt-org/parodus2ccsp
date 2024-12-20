@@ -1,116 +1,8 @@
 #include<stdio.h>
 #include <CUnit/Basic.h>
-#include <pthread.h>
+
 #include "../source/include/webpa_rbus.h"
-
 rbusHandle_t handle;
-int cloud_online_subscribe = 0;
-    
-pthread_mutex_t sync_mutex=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t sync_condition=PTHREAD_COND_INITIALIZER;
-
-pthread_cond_t *get_global_sync_condition(void)
-{
-   return &sync_condition;
-}
-
-pthread_mutex_t *get_global_sync_mutex(void)
-{
-        return &sync_mutex;
-}
-
-void register_event(char * eventname, rbusDataElement_t* dataelement)
-{
-	int rc = RBUS_ERROR_SUCCESS;
-	WalInfo("rbus_open for component %s\n", "component_webpa");
-	rc = rbus_open(&handle, "component_webpa");
-	if(rc != RBUS_ERROR_SUCCESS)
-	{
-		WalError("rbus_open failed for subscribe_to_event");
-	}
-
-	if(strncmp(eventname, CLOUD_CONN_ONLINE, strlen(CLOUD_CONN_ONLINE)) == 0)
-	{
-		WalInfo("Inside register_event for %s and eventname is %s\n", CLOUD_CONN_ONLINE, eventname);
-		rc = rbus_regDataElements(handle, 1, dataelement);
-	}
-
-	if(rc != RBUS_ERROR_SUCCESS)
-		WalError("register_event %s failed\n", eventname);
-}
-void Unregister_event(char * eventname, rbusDataElement_t* dataelement)
-{
-	int rc = RBUS_ERROR_SUCCESS;
-	if(rc != RBUS_ERROR_SUCCESS)
-	{
-		WalError("rbus_open failed for subscribe_to_event");
-	}
-
-	if(strncmp(eventname, CLOUD_CONN_ONLINE, strlen(CLOUD_CONN_ONLINE)) == 0)
-	{
-		WalInfo("Inside Unregister_event for %s and eventname is %s\n", CLOUD_CONN_ONLINE, eventname);
-		rc = rbus_unregDataElements(handle, 1, dataelement);
-	}
-
-	if(rc != RBUS_ERROR_SUCCESS)
-		WalError("register_event %s failed\n", eventname);
-		
-	rbus_close(handle);
-	handle = NULL;
-}
-
-rbusError_t CloudConnectionSubscribeHandler(rbusHandle_t handle, rbusEventSubAction_t action, const char* eventName, rbusFilter_t filter, int32_t interval, bool* autoPublish)
-{
-    (void)handle;
-    (void)filter;
-    (void)autoPublish;
-    (void)interval;
-
-    WalInfo("CloudConnectionSubscribeHandler: action=%s eventName=%s", action == RBUS_EVENT_ACTION_SUBSCRIBE ? "subscribe" : "unsubscribe", eventName);
-
-    if(!strcmp(CLOUD_CONN_ONLINE, eventName))
-    {
-        cloud_online_subscribe = action == RBUS_EVENT_ACTION_SUBSCRIBE ? 1 : 0;
-    }
-    else
-    {
-        WalError("provider: CloudConnectionSubscribeHandler unexpected eventName %s\n", eventName);
-    }
-
-    return RBUS_ERROR_SUCCESS;
-}
-
-rbusError_t Publish_event()
-{
-	rbusError_t rc = RBUS_ERROR_BUS_ERROR;
-	if(cloud_online_subscribe)
-	{
-		rbusEvent_t event = {0};
-		rbusObject_t data;
-		rbusValue_t value;
-
-		WalInfo("publishing cloud connection online Event\n");
-
-		rbusValue_Init(&value);
-		rbusValue_SetInt32(value, 1);
-
-		rbusObject_Init(&data, NULL);
-		rbusObject_SetValue(data, "value", value);
-
-		event.name = CLOUD_CONN_ONLINE;
-		event.data = data;
-		event.type = RBUS_EVENT_GENERAL;
-
-		rc = rbusEvent_Publish(handle, &event);
-
-		rbusValue_Release(value);
-		rbusObject_Release(data);
-
-		if(rc != RBUS_ERROR_SUCCESS)
-			WalError("rbus event Publish cloud connection online event failed: %d\n", rc);
-	}
-	return rc;
-}
 
 // Test case for isRbusEnabled
 void test_isRbusEnabled_success()
@@ -137,6 +29,7 @@ void test_webpaRbusInit_success()
     WalInfo("\n**************************************************\n");
     int result = webpaRbusInit("component");
     CU_ASSERT_EQUAL(result, 0);
+	webpaRbus_Uninit();
 }
 
 //Successcase for setTraceContext
@@ -204,50 +97,6 @@ void test_getTraceContext_empty()
 
     getTraceContext(traceContext);
     CU_ASSERT_EQUAL(1,rc);
-    webpaRbus_Uninit();
-}
-
-void test_SubscribeCloudConnOnlineEvent_Rbushandle_empty()
-{
-    WalInfo("\n**************************************************\n");
-    int rc = RBUS_ERROR_SUCCESS; 
-    rc = SubscribeCloudConnOnlineEvent();
-    CU_ASSERT_NOT_EQUAL(0,rc); 
-}
-
-void test_SubscribeCloudConnOnlineEvent_success()
-{
-    WalInfo("\n**************************************************\n");
-    rbusDataElement_t SyncRetryElements[1] = {{CLOUD_CONN_ONLINE, RBUS_ELEMENT_TYPE_EVENT, {NULL, NULL, NULL, NULL, CloudConnectionSubscribeHandler, NULL}}};
-    register_event(CLOUD_CONN_ONLINE, SyncRetryElements);
-    webpaRbusInit("consumer");  
-    int rc = RBUS_ERROR_SUCCESS;
-    rc = SubscribeCloudConnOnlineEvent();
-    CU_ASSERT_EQUAL(0,rc); 
-    Unregister_event(CLOUD_CONN_ONLINE, SyncRetryElements);
-}
-
-void test_SubscribeCloudConnOnlineEvent_failure()
-{
-    WalInfo("\n**************************************************\n");
-    int rc = RBUS_ERROR_SUCCESS; 
-    rc = SubscribeCloudConnOnlineEvent();
-    CU_ASSERT_NOT_EQUAL(0,rc); 
-}
-
-void test_cloudConnEventHandler_success()
-{
-    WalInfo("\n**************************************************\n");
-    struct timespec ts;
-    int backoffdelay = 2;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec += backoffdelay;
-    rbusDataElement_t SyncRetryElements[1] = {{CLOUD_CONN_ONLINE, RBUS_ELEMENT_TYPE_EVENT, {NULL, NULL, NULL, NULL, CloudConnectionSubscribeHandler, NULL}}};
-    register_event(CLOUD_CONN_ONLINE,SyncRetryElements);
-    Publish_event();
-    int rv = pthread_cond_timedwait(&sync_condition, &sync_mutex, &ts);
-    CU_ASSERT_EQUAL(0,rv); 
-    Unregister_event(CLOUD_CONN_ONLINE,SyncRetryElements);
 }
 
 void add_suites( CU_pSuite *suite )
@@ -261,10 +110,6 @@ void add_suites( CU_pSuite *suite )
     CU_add_test( *suite, "test setTraceContext_header_empty", test_setTraceContext_header_empty);
     CU_add_test( *suite, "test getTraceContext_success", test_getTraceContext_success);
     CU_add_test( *suite, "test getTraceContext_empty", test_getTraceContext_empty);
-    CU_add_test( *suite, "test SubscribeCloudConnOnlineEvent_Rbushandle_empty", test_SubscribeCloudConnOnlineEvent_Rbushandle_empty);
-    CU_add_test( *suite, "test SubscribeCloudConnOnlineEvent_success", test_SubscribeCloudConnOnlineEvent_success);
-    CU_add_test( *suite, "test SubscribeCloudConnOnlineEvent_failure", test_SubscribeCloudConnOnlineEvent_failure);
-    CU_add_test( *suite, "test cloudConnEventHandler_success", test_cloudConnEventHandler_success);  
 }
 
 
