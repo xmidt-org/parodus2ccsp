@@ -10,6 +10,7 @@
 #include "webpa_adapter.h"
 #include "libpd.h"
 #include "webpa_rbus.h"
+#include "cap.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include <curl/curl.h>
 #endif
