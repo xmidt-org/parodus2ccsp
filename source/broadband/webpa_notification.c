@@ -69,6 +69,7 @@ static int g_syncNotifyInProgress = 0;
 //This flag is used to avoid CMC check when CPE and cloud are in sync.
 static int g_checkSyncNotifyRetry = 0;
 
+static char param_notify_string[256] = {0};
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 char *g_systemReadyTime=NULL;
 #endif
@@ -383,7 +384,8 @@ void SyncNotifyRetryTask()
 	else
 	{
 		WalInfo("SyncNotifyRetry Thread created Successfully\n");
-		g_syncRetryThreadStarted = 1;		
+		g_syncRetryThreadStarted = 1;
+		g_checkSyncNotifyRetry = 1;
 	}
 }
 
@@ -391,26 +393,20 @@ void *SyncNotifyRetry()
 {
 	pthread_detach(pthread_self());
 	char *dbCMC = NULL;
-	int backoffRetryTime = 0;
-	int backoff_max_time = 9;
+	int RetryTime = 420;//7mins
 	struct timespec ts;
-	int c = 3;
-	int  rv;    
-	int max_retry_sleep = (int) pow(2, backoff_max_time) -1;
-	WalInfo("SyncNotifyRetry: max_retry_sleep is %d\n", max_retry_sleep );
+	int  rv;
+	int retry_count = 0;    
+	WalInfo("SyncNotifyRetry: max_retry_sleep is 15mins\n");
 
 	while(FOREVER())
 	{
-		if(backoffRetryTime < max_retry_sleep)
-       		{
-			backoffRetryTime = (int) pow(2, c) -1;
-		}
 		clock_gettime(CLOCK_REALTIME, &ts);
-		ts.tv_sec += backoffRetryTime;
+		ts.tv_sec += RetryTime;
 		//wait for backoff delay for retransmission
 		if(g_checkSyncNotifyRetry == 1)
 		{
-			WalInfo("Wait for backoffRetryTime %d sec to check sync notification retry\n", backoffRetryTime);
+			WalInfo("Wait for backoffRetryTime %d sec to check sync notification retry\n", RetryTime);
 		}
 
 		rv = pthread_cond_timedwait(&sync_condition, &sync_mutex, &ts);
@@ -461,27 +457,25 @@ void *SyncNotifyRetry()
 				processNotification(notifyData);
 			}
 			WalPrint("After Sending processNotification\n");
-			c++;
-			if(backoffRetryTime == max_retry_sleep)
+			retry_count++;
+			if(retry_count >= 2)
 		        {
-	        		c = 3;
-		        	backoffRetryTime = 0;
-			        WalPrint("backoffRetryTime reached max value, reseting to initial value\n");
+		        	retry_count = 0;
+					g_checkSyncNotifyRetry = 0;
+			        WalInfo("retry reached max value, stop retrying\n");
 		        }
 
 		}
 		else
 		{
 			g_checkSyncNotifyRetry = 0;
-			WalInfo("CMC is equal to 512, cloud and CPE are in sync\n");			
-			WalInfo("g_checkSyncNotifyRetry is set to 0\n");			
-			c = 3;
-			backoffRetryTime = 0;
-			WalPrint("CMC is 512, reseting backoffRetryTime to initial value\n");
+			retry_count = 0;
+			WalInfo("CMC is equal to 512, cloud and CPE are in sync\n");
+			WalInfo("g_checkSyncNotifyRetry is set to 0\n");
 		}
 		WAL_FREE(dbCMC);			
 	}
-	return NULL;
+	return NULL;	
 }
 
 void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size, void* user_data)
@@ -1095,6 +1089,12 @@ static void handleNotificationEvents()
 		FR_CloudSyncCheck();
 	}
 
+	//thread for retrying sync notifications when cloud and CPE are out of sync
+	if(!g_syncRetryThreadStarted)
+	{
+		SyncNotifyRetryTask();
+	}
+
 	while(1)
 	{
 		pthread_mutex_lock (&mut);
@@ -1324,7 +1324,7 @@ void processNotification(NotifyData *notifyData)
 	        		strcpy(dest, "event:SYNC_NOTIFICATION");
 
 	        		ret = processParamNotification(notifyData->u.notify, &cmc, &cid);
-
+					
 	        		if (ret != WDMP_SUCCESS)
 	        		{
 	        			free(dest);
@@ -1333,28 +1333,27 @@ void processNotification(NotifyData *notifyData)
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				OnboardLog("%s/%d/%s\n",dest,cmc,cid);
+					param_notify_string[0] = '\0';
 					if(cmc == 768)
 					{
-						sync_transaction_uuid = generate_trans_uuid();
-						WalInfo("processNotification: Parameter Name: %s, Data Type: %d, Change Source: %d\n", notifyData->u.notify->paramName, notifyData->u.notify->type, notifyData->u.notify->changeSource);
-						WalInfo("oldValue %s, newValue %s sync_transaction_uuid %s\n", notifyData->u.notify->oldValue, notifyData->u.notify->newValue,sync_transaction_uuid);
+						//WalInfo("processNotification: Parameter Name: %s, Data Type: %d, Change Source: %d\n", notifyData->u.notify->paramName, notifyData->u.notify->type, notifyData->u.notify->changeSource);
+						//WalInfo("oldValue %s, newValue %s sync_transaction_uuid %s\n", notifyData->u.notify->oldValue, notifyData->u.notify->newValue,sync_transaction_uuid);
 						cJSON *parameter = cJSON_CreateObject();
 						cJSON_AddStringToObject(parameter, "name",(notifyData->u.notify->paramName != NULL) ? notifyData->u.notify->paramName : "unknown");
 						cJSON_AddStringToObject(parameter, "old_value", (notifyData->u.notify->oldValue != NULL) ? notifyData->u.notify->oldValue : "unknown");
 						cJSON_AddStringToObject(parameter, "new_value", (notifyData->u.notify->newValue != NULL) ? notifyData->u.notify->newValue : "unknown");
 						cJSON_AddNumberToObject(parameter, "dataType", notifyData->u.notify->type);
+						char *param_string = cJSON_PrintUnformatted(parameter);
+						strncpy(param_notify_string,param_string,sizeof(param_notify_string));
+						WAL_FREE(param_string);
 						cJSON_AddItemToObject(notifyPayload, "parameter", parameter);
-						cJSON_AddStringToObject(notifyPayload, "sync_transaction_uuid", (sync_transaction_uuid != NULL) ? sync_transaction_uuid : "unknown");
-						WAL_FREE(sync_transaction_uuid);
 					}
+					sync_transaction_uuid = generate_trans_uuid();						
+					cJSON_AddStringToObject(notifyPayload, "sync_transaction_uuid", (sync_transaction_uuid != NULL) ? sync_transaction_uuid : "unknown");
+					WAL_FREE(sync_transaction_uuid);					
 				//Added delay of 5s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
 				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
 				sleep(5);
-				//thread for retrying sync notifications when cloud and CPE are out of sync
-				if(!g_syncRetryThreadStarted)
-				{
-					SyncNotifyRetryTask();
-				}				
 	        	}
 	        		break;
 
@@ -1375,6 +1374,10 @@ void processNotification(NotifyData *notifyData)
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				cJSON_AddStringToObject(notifyPayload, "reboot_reason", (NULL != reboot_reason) ? reboot_reason : "NULL");
+					sync_transaction_uuid = generate_trans_uuid();
+					cJSON_AddStringToObject(notifyPayload, "sync_transaction_uuid", (sync_transaction_uuid != NULL) ? sync_transaction_uuid : "unknown");
+					WAL_FREE(sync_transaction_uuid);
+
 	        	}
 	        		break;
 
@@ -1490,6 +1493,19 @@ void processNotification(NotifyData *notifyData)
 						}					
 						cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 						cJSON_AddStringToObject(notifyPayload, "cid", cid);
+						if((cmc == 768) && (strlen(param_notify_string) > 0))
+						{
+							// Parse the JSON string
+							cJSON *parameter = cJSON_Parse(param_notify_string);
+							if (parameter == NULL) {
+								WalError("Error parsing JSON param_notify_string\n");
+								return;
+							}
+							cJSON_AddItemToObject(notifyPayload, "parameter", parameter);
+						}
+						sync_transaction_uuid = generate_trans_uuid();							
+						cJSON_AddStringToObject(notifyPayload, "sync_transaction_uuid", (sync_transaction_uuid != NULL) ? sync_transaction_uuid : "unknown");
+						WAL_FREE(sync_transaction_uuid);												
 					WAL_FREE(cid);
 					}
 						break;
@@ -1501,7 +1517,7 @@ void processNotification(NotifyData *notifyData)
 			if(notifyData->type == PARAM_NOTIFY_RETRY)
 			WalInfo("stringifiedNotifyPayload during sync notify retry is %s\n", stringifiedNotifyPayload);
 		else
-	        	WalInfo("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
+	        	WalPrint("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
 
 	        if (stringifiedNotifyPayload != NULL
 	        		&& strlen(device_id) != 0)
