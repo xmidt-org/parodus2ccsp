@@ -83,11 +83,11 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
         {
             break;
         }
-       /* if ((paramCount == 1) && (parameterName[(strlen(parameterName)-1)] == '.'))
+        if ((paramCount == 1) && (parameterName[(strlen(parameterName)-1)] == '.'))
         {
             count = 1;
             isLargeWildCard = 0;
-        } */
+        }
         WalPrint("parameterName: %s count: %d\n",parameterName,count);
         for(i = 0; i < count; i++)
         {
@@ -101,7 +101,6 @@ void getValues(const char *paramName[], const unsigned int paramCount, int index
 
     if(error != 1)
     {
-	isLargeWildCard = 0;
         WalPrint("compCount : %d paramCount: %d\n",compCount,paramCount);
         if(compCount > paramCount)
         {
