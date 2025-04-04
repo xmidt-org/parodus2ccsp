@@ -172,7 +172,7 @@ const char * notifyparameters[]={
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.LocalInterfaces",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.VLANID",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.LocalInterfaces",
-#ifdef _HUB4_PRODUCT_REQ_
+#if defined(_HUB4_PRODUCT_REQ_) || defined(_SCER11BEL_PRODUCT_REQ_)
 "Device.NAT.X_CISCO_COM_PortTriggers.Enable",
 "Device.UPnP.Device.UPnPIGD",
 "Device.UserInterface.X_CISCO_COM_RemoteAccess.HttpEnable",
