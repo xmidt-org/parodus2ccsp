@@ -541,6 +541,7 @@ void loadCfgFile()
 			{
 				strcpy(webPaCfg.oldFirmwareVersion,"");
 			}
+                        cJSON_Delete(webpa_cfg);
 		}
 		else
 		{
@@ -1193,11 +1194,14 @@ void processNotification(NotifyData *notifyData)
 	        		if (ret != WDMP_SUCCESS)
 	        		{
 	        			free(dest);
+                                        cJSON_Delete(notifyPayload);
+                                        freeNotifyMessage(notifyData);
 	        			return;
 	        		}
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				OnboardLog("%s/%d/%s\n",dest,cmc,cid);
+                                WAL_FREE(cid);
 				//Added delay of 5s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
 				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
 				sleep(5);
@@ -1215,12 +1219,16 @@ void processNotification(NotifyData *notifyData)
 	        		if (ret != WDMP_SUCCESS)
 	        		{
 	        			free(dest);
+                                        cJSON_Delete(notifyPayload);
+                                        freeNotifyMessage(notifyData);
 	        			return;
 	        		}
 	        		WalPrint("Framing notifyPayload for Factory reset\n");
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				cJSON_AddStringToObject(notifyPayload, "reboot_reason", (NULL != reboot_reason) ? reboot_reason : "NULL");
+                                WAL_FREE(cid);
+                                WAL_FREE(reboot_reason);
 	        	}
 	        		break;
 
@@ -1235,12 +1243,15 @@ void processNotification(NotifyData *notifyData)
 	        			if (ret != WDMP_SUCCESS)
 	        			{
 	        				free(dest);
+                                                cJSON_Delete(notifyPayload);
+                                                freeNotifyMessage(notifyData);
 	        				return;
 	        			}
 	        			WalPrint("Framing notifyPayload for Firmware upgrade\n");
 	        			cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        			cJSON_AddStringToObject(notifyPayload, "cid", cid);
 					OnboardLog("FIRMWARE_UPGRADE/%d/%s\n",cmc,cid);
+                                        WAL_FREE(cid);
 	        		}
 	        			break;
 
@@ -1292,6 +1303,8 @@ void processNotification(NotifyData *notifyData)
 	        		else
 	        		{
 	        			free(dest);
+                                        cJSON_Delete(notifyPayload);
+                                        freeNotifyMessage(notifyData);
 	        			return;
 	        		}
 				OnboardLog("%s/%s\n",dest,notifyData->u.status->transId);
