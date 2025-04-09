@@ -12,6 +12,8 @@
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include <webcfg_generic.h>
 #endif
+#include <stdio.h>
+#include <unistd.h>
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -324,6 +326,12 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                         
                         case TEST_AND_SET:
                         {
+                                if(access("/nvram/webpa_test.txt", F_OK) == 0)
+                                {
+
+		                        WalError("Ignore TEST_AND_SET for testing purpose\n");
+                                        return;
+                                }                                
                                 WalPrint("Request:> ParamCount = %zu\n",reqObj->u.testSetReq->paramCnt);
                                 resObj->paramCnt = reqObj->u.testSetReq->paramCnt;
                                 WalPrint("Response:> paramCnt = %zu\n", resObj->paramCnt);
@@ -358,7 +366,6 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                         WalPrint("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
                                         setRebootReason(reqObj->u.setReq->param[i], WEBPA_ATOMIC_SET_XPC);
                                 }
-                                
                                 if(dbCMC != NULL && dbCID != NULL)
 	                        {
 	                                ret = validate_cmc_and_cid(reqObj->u.testSetReq, dbCMC, dbCID);
