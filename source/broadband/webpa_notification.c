@@ -64,10 +64,10 @@ char deviceMAC[32]={'\0'};
 static int g_syncRetryThreadStarted = 0;
 
 //This flag is used to avoid sync notification retry when param notification is already in progress.
-static int g_syncNotifyInProgress = 0;
+int g_syncNotifyInProgress = 0;
 
 //This flag is used to avoid CMC check when CPE and cloud are in sync.
-static int g_checkSyncNotifyRetry = 0;
+int g_checkSyncNotifyRetry = 0;
 
 static char param_notify_string[256] = {0};
 #ifdef FEATURE_SUPPORT_WEBCONFIG

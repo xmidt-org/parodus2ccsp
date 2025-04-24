@@ -59,6 +59,8 @@ extern char deviceMAC[32];
 extern int wakeUpFlag;
 extern int numLoops;
 extern char* cloud_status;
+extern int g_checkSyncNotifyRetry;
+extern int g_syncNotifyInProgress;
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -1071,6 +1073,107 @@ void test_processNotification_DEVICE_STATUS_fail()
 	processNotification(notifyData);
 }
 
+void test_processNotification_PARAM_NOTIFY_RETRY_SUCCESS()
+{
+    strcpy(deviceMAC, "abcdeg1234");
+    NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+    memset(notifyData,0,sizeof(NotifyData));
+
+    notifyData->type = PARAM_NOTIFY_RETRY;
+
+    NodeData * node = NULL;
+    notifyData->u.notify = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.notify != NULL) 
+    {
+        notifyData->u.notify->paramName = PARAM_FIRMWARE_VERSION;
+        notifyData->u.notify->oldValue = "abcd";
+        notifyData->u.notify->newValue = "dcba";
+        notifyData->u.notify->type = WDMP_STRING;
+        notifyData->u.notify->changeSource = CHANGED_BY_WEBPA;
+    } 
+    node = (NodeData *) malloc(sizeof(NodeData) * 1);
+    memset(node, 0, sizeof(NodeData));
+    node->nodeMacId = strdup("14cfe2142144");
+    node->status = strdup("Connected");
+    node->interface = strdup("eth0");
+    node->hostname = strdup("wifi");
+    notifyData->u.node = node;
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("123456");
+    version[0]->type = ccsp_string;
+
+    parameterValStruct_t **version2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version2[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version2[0]->parameterValue =strdup("123456");
+    version2[0]->type = ccsp_string;
+
+    getCompDetails();
+    
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(get_global_values, version2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+    
+    processNotification(notifyData);
+}
+
+void test_processNotification_PARAM_NOTIFY_RETRY_FAIL()
+{
+    strcpy(deviceMAC, "abcdeg1234");
+    NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData));
+    memset(notifyData,0,sizeof(NotifyData));
+    
+    notifyData->type = PARAM_NOTIFY_RETRY;
+    
+    NodeData * node = NULL;
+    notifyData->u.notify = (ParamNotify*)malloc(sizeof(ParamNotify));
+    if (notifyData->u.notify != NULL) 
+    {
+        notifyData->u.notify->paramName = PARAM_FIRMWARE_VERSION;
+        notifyData->u.notify->oldValue = "abcd";
+        notifyData->u.notify->newValue = "dcba";
+        notifyData->u.notify->type = WDMP_STRING;
+        notifyData->u.notify->changeSource = CHANGED_BY_WEBPA;
+    } 
+    node = (NodeData *) malloc(sizeof(NodeData) * 1);
+    memset(node, 0, sizeof(NodeData));
+    node->nodeMacId = strdup("14cfe2142144");
+    node->status = strdup("Connected");
+    node->interface = strdup("eth0");
+    node->hostname = strdup("wifi");
+    notifyData->u.node = node;
+
+    parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    version[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+    version[0]->parameterName = strdup("Device.Hosts.X_RDKCENTRAL-COM_HostVersionId");
+    version[0]->parameterValue =strdup("NULL");
+    version[0]->type = ccsp_string;
+
+    getCompDetails();
+    
+    will_return(get_global_values, version);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_FAILURE);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+	
+    processNotification(notifyData);
+}
+
 int writeFile(const char* fileName, const char* content) {
 	FILE *fp;
 	fp = fopen(fileName , "w+");
@@ -1516,6 +1619,433 @@ void test_FR_CloudSyncCheck_FRSyncFailed()
     FR_CloudSyncCheck();
 }
 
+void test_syncNotifyRetry()
+{
+
+    numLoops = 1;
+    getCompDetails();
+    strcpy(deviceMAC, "abcdeg1234");
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+   
+    will_return(pthread_cond_timedwait, (intptr_t)0);
+    expect_function_call(pthread_cond_timedwait);
+ 
+    g_checkSyncNotifyRetry = 1;
+    g_syncNotifyInProgress = 0;
+    
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("61f4db9",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("768",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+    
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    SyncNotifyRetry();
+}
+
+void test_syncNotifyRetry_timedout()
+{
+
+    numLoops = 1;
+    getCompDetails();
+    strcpy(deviceMAC, "abcdeg1234");
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+   
+    will_return(pthread_cond_timedwait, (intptr_t)ETIMEDOUT);
+    expect_function_call(pthread_cond_timedwait);
+
+    g_checkSyncNotifyRetry = 1;
+    g_syncNotifyInProgress = 0;
+    
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("61f4db9",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("768",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+
+    
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    SyncNotifyRetry();
+}
+
+void test_syncNotifyRetry_pthread_error()
+{
+    numLoops = 2;
+    getCompDetails();
+    strcpy(deviceMAC, "abcdeg1234");
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+   
+    will_return(pthread_cond_timedwait, (intptr_t)2);
+    expect_function_call(pthread_cond_timedwait);
+ 
+     will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+    
+    will_return(pthread_cond_timedwait, (intptr_t)0); 
+    expect_function_call(pthread_cond_timedwait);
+    
+    g_checkSyncNotifyRetry = 1;
+    g_syncNotifyInProgress = 0;
+    
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("61f4db9",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("768",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+  
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+    
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    SyncNotifyRetry();
+}
+
+void test_syncNotifyRetry_NotifyInProgress()
+{
+
+    numLoops = 1;
+    g_checkSyncNotifyRetry = 1;
+    g_syncNotifyInProgress = 1;
+
+    getCompDetails();
+    strcpy(deviceMAC, "abcdeg1234");
+
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+    
+    will_return(pthread_cond_timedwait, (intptr_t)0); 
+    expect_function_call(pthread_cond_timedwait);
+
+    SyncNotifyRetry();
+    
+    numLoops = 1;
+    g_syncNotifyInProgress = 0;
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+    
+    will_return(pthread_cond_timedwait, (intptr_t)0); 
+    expect_function_call(pthread_cond_timedwait);
+
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("61f4db9",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("768",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+    
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+    
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    SyncNotifyRetry();
+}
+
+void test_syncNotifyRetry_Skip_CMC_Check()
+{
+    numLoops = 1;
+    getCompDetails();
+    strcpy(deviceMAC, "abcdeg1234");
+    
+    g_checkSyncNotifyRetry = 0;
+    g_syncNotifyInProgress = 0;
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+   
+    will_return(pthread_cond_timedwait, (intptr_t)ETIMEDOUT); 
+    expect_function_call(pthread_cond_timedwait);
+    
+    SyncNotifyRetry();
+    
+    numLoops = 1;
+    g_checkSyncNotifyRetry = 1;
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+    
+    will_return(pthread_cond_timedwait, (intptr_t)0); 
+    expect_function_call(pthread_cond_timedwait);
+      
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("61f4db9",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("768",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+       
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    SyncNotifyRetry();    
+}
+
+void test_syncNotifyRetry_dbCMC_NULL()
+{
+    numLoops = 1;
+    g_checkSyncNotifyRetry = 1;
+    g_syncNotifyInProgress = 0;
+
+    getCompDetails();
+    strcpy(deviceMAC, "abcdeg1234");
+
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+    
+    will_return(pthread_cond_timedwait, (intptr_t)0); 
+    expect_function_call(pthread_cond_timedwait);
+
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("768",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+    
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_FAILURE);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    SyncNotifyRetry();
+    
+    numLoops = 1;
+    g_syncNotifyInProgress = 0;
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+    
+    will_return(pthread_cond_timedwait, (intptr_t)0); 
+    expect_function_call(pthread_cond_timedwait);
+      
+    parameterValStruct_t **cidList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cidList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cidList[0]->parameterName = strndup(PARAM_CID,MAX_PARAMETER_LEN);
+    cidList[0]->parameterValue = strndup("61f4db9",MAX_PARAMETER_LEN);
+    cidList[0]->type = ccsp_string;
+    
+    parameterValStruct_t **cmcList1 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList1[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList1[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList1[0]->parameterValue = strndup("768",MAX_PARAMETER_LEN);
+    cmcList1[0]->type = ccsp_int;
+
+    parameterValStruct_t **cmcList2 = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList2[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList2[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList2[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList2[0]->type = ccsp_int;
+       
+    will_return(get_global_values, cmcList1);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cmcList2);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(get_global_values, cidList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    
+    will_return(libparodus_send, (intptr_t)0);
+    expect_function_call(libparodus_send);
+
+    SyncNotifyRetry();    
+}
+
+void test_syncNotifyRetry_CMC_Is_512()
+{
+    numLoops = 1;
+    getCompDetails();
+    strcpy(deviceMAC, "abcdeg1234");
+    
+    will_return(pthread_cond_signal, (intptr_t)0);
+    expect_function_call(pthread_cond_signal);
+    
+    will_return(pthread_cond_timedwait, (intptr_t)0); 
+    expect_function_call(pthread_cond_timedwait);
+    
+    g_checkSyncNotifyRetry = 1;
+    g_syncNotifyInProgress = 0;
+    
+    parameterValStruct_t **cmcList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    cmcList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*1);
+    cmcList[0]->parameterName = strndup(PARAM_CMC,MAX_PARAMETER_LEN);
+    cmcList[0]->parameterValue = strndup("512",MAX_PARAMETER_LEN);
+    cmcList[0]->type = ccsp_int;
+    
+    will_return(get_global_values, cmcList);
+    will_return(get_global_parameters_count, 1);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    SyncNotifyRetry();
+}
+
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -1534,7 +2064,7 @@ int main(void)
 	    cmocka_unit_test(test_FR_notify_cloud_status_empty_mac),
 	    cmocka_unit_test(test_manageable_notification),
 	    cmocka_unit_test(err_manageable_notification),
-	cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
+	    cmocka_unit_test(test_factory_reset_notification_with_cmc_512),
 		cmocka_unit_test(test_processNotification),
         cmocka_unit_test(test_processNotification_PARAM_NOTIFY),
         cmocka_unit_test(test_processNotification_DEVICE_STATUS_PAM_FAILED),
@@ -1548,6 +2078,15 @@ int main(void)
         cmocka_unit_test(test_loadCfgFile_success),
         cmocka_unit_test(test_FR_CloudSyncCheck),
         cmocka_unit_test(test_FR_CloudSyncCheck_FRSyncFailed),
+        cmocka_unit_test(test_processNotification_PARAM_NOTIFY_RETRY_SUCCESS),
+        cmocka_unit_test(test_processNotification_PARAM_NOTIFY_RETRY_FAIL),
+        cmocka_unit_test(test_syncNotifyRetry),
+        cmocka_unit_test(test_syncNotifyRetry_timedout),
+        cmocka_unit_test(test_syncNotifyRetry_pthread_error),
+        cmocka_unit_test(test_syncNotifyRetry_NotifyInProgress),
+        cmocka_unit_test(test_syncNotifyRetry_Skip_CMC_Check),
+        cmocka_unit_test(test_syncNotifyRetry_dbCMC_NULL),
+        cmocka_unit_test(test_syncNotifyRetry_CMC_Is_512)
     };
 
     numLoops = 1;
