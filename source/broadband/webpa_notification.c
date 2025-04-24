@@ -412,7 +412,7 @@ void *SyncNotifyRetry()
 		rv = pthread_cond_timedwait(&sync_condition, &sync_mutex, &ts);
 		if (rv == 0)
 		{
-			WalInfo("Received connection online event signal for retrying sync notification.\n");
+			WalInfo("Received event signal for retrying sync notification.\n");
 		} 
 		else if (rv == ETIMEDOUT) 
 		{

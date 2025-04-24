@@ -11,7 +11,6 @@
 #include <wdmp-c.h>
 #include <cimplog.h>
 
-#define CLOUD_CONN_ONLINE "cloud_conn_online_event"
 
 bool isRbusEnabled();
 bool isRbusInitialized();
@@ -20,6 +19,5 @@ void webpaRbus_Uninit();
 rbusError_t setTraceContext(char* traceContext[]);
 rbusError_t getTraceContext(char* traceContext[]);
 rbusError_t clearTraceContext();
-static void cloudConnEventHandler(rbusHandle_t handle,rbusEvent_t const* event,rbusEventSubscription_t* subscription);
-void SubscribeCloudConnOnlineEvent();
+
 #endif
