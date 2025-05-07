@@ -8,6 +8,9 @@
 
 #include <pthread.h>
 #include <math.h>
+#include <uuid/uuid.h>
+#include <string.h>
+#include <errno.h>
 #include "webpa_notification.h"
 #include "webpa_internal.h"
 #ifdef RDKB_BUILD
@@ -35,6 +38,9 @@
 #define DEVICE_BOOT_TIME                "Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime"
 #define FP_PARAM                  "Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable"
 #define CLOUD_STATUS 				"cloud-status"
+
+pthread_mutex_t sync_mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t sync_condition=PTHREAD_COND_INITIALIZER;
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -56,6 +62,20 @@ static NotifyMsg *notifyMsgQ = NULL;
 void (*notifyCbFn)(NotifyData*) = NULL;
 static WebPaCfg webPaCfg;
 char deviceMAC[32]={'\0'};
+
+static int g_syncRetryThreadStarted = 0;
+
+//This flag is used to avoid sync notification retry when param notification is already in progress.
+int g_syncNotifyInProgress = 0;
+
+//This flag is used to avoid CMC check when CPE and cloud are in sync.
+int g_checkSyncNotifyRetry = 0;
+
+//This flag is used to skip ignore if first notification having same CMC  
+int g_checkSyncNotifyIgnore = 0;
+
+static char param_notify_string[256] = {0};
+
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 char *g_systemReadyTime=NULL;
 #endif
@@ -238,6 +258,10 @@ static WDMP_STATUS processFirmwareUpgradeNotification(ParamNotify *paramNotify, 
 void processDeviceStatusNotification(int status);
 static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason);
 void getDeviceMac();
+static WDMP_STATUS processParamNotificationRetry(unsigned int *cmc, char **cid);
+static char* generate_trans_uuid();
+void SyncNotifyRetryTask();
+void *SyncNotifyRetry();
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
@@ -354,6 +378,111 @@ void *FactoryResetCloudSync()
 	return NULL;
 }
 
+void SyncNotifyRetryTask()
+{
+	int err = 0;
+	pthread_t threadId;
+	err = pthread_create(&threadId, NULL, SyncNotifyRetry, NULL);
+	if (err != 0)
+	{
+		WalError("Error creating SyncNotifyRetry thread :[%s]\n", strerror(err));
+	}
+	else
+	{
+		WalInfo("SyncNotifyRetry Thread created Successfully\n");
+		g_syncRetryThreadStarted = 1;
+		g_checkSyncNotifyRetry = 1;
+	}
+}
+
+void *SyncNotifyRetry()
+{
+	pthread_detach(pthread_self());
+	char *dbCMC = NULL;
+	int RetryTime = 420;//7mins
+	struct timespec ts;
+	int  rv;
+	int retry_count = 0;    
+	WalInfo("SyncNotifyRetry: max_retry_sleep is 15mins\n");
+
+	while(FOREVER())
+	{
+		clock_gettime(CLOCK_REALTIME, &ts);
+		ts.tv_sec += RetryTime;
+		//wait for backoff delay for retransmission
+		if(g_checkSyncNotifyRetry == 1)
+		{
+			WalInfo("Wait for backoffRetryTime %d sec to check sync notification retry\n", RetryTime);
+		}
+
+		rv = pthread_cond_timedwait(&sync_condition, &sync_mutex, &ts);
+		if (rv == 0)
+		{
+			WalInfo("Received event signal for retrying sync notification.\n");
+		} 
+		else if (rv == ETIMEDOUT) 
+		{
+			WalPrint("SyncNotifyRetry thread: Timeout occurred.\n");
+		} 
+		else 
+		{
+			WalError("SyncNotifyRetry thread: Error occurred: %d\n", rv);	
+			continue;
+		}
+
+		if(g_syncNotifyInProgress == 1)
+		{	
+			WalInfo("PARAM_NOTIFY is in progress\n");
+			continue;
+		}
+
+		if(g_checkSyncNotifyRetry || (rv == 0))
+		{
+			dbCMC = getParameterValue(PARAM_CMC);
+		}
+		else
+		{
+			WalPrint("g_checkSyncNotifyRetry is 0 and skip dbCMC sync checking\n");
+			continue;
+		}
+
+		if(NULL == dbCMC)
+		{
+			WalError("SyncNotifyRetry thread: dbCMC is Null\n");	
+			continue;
+		} 		
+		if(strcmp(dbCMC,"512"))
+		{       
+			//Retry sending sync notification to cloud			
+			WalInfo("Retrying sync notification as cloud and CPE are out of sync, dbCMC is %s\n", dbCMC);
+			NotifyData *notifyData = (NotifyData *)malloc(sizeof(NotifyData) * 1);
+			if(notifyData != NULL)
+			{
+				memset(notifyData,0,sizeof(NotifyData));
+				notifyData->type = PARAM_NOTIFY_RETRY;
+				processNotification(notifyData);
+			}
+			WalPrint("After Sending processNotification\n");
+			retry_count++;
+			if(retry_count >= 2)
+		        {
+		        	retry_count = 0;
+					g_checkSyncNotifyRetry = 0;
+			        WalInfo("retry reached max value, stop retrying\n");
+		        }
+
+		}
+		else
+		{
+			g_checkSyncNotifyRetry = 0;
+			retry_count = 0;
+			WalInfo("CMC is equal to 512, cloud and CPE are in sync\n");
+			WalInfo("g_checkSyncNotifyRetry is set to 0\n");
+		}
+		WAL_FREE(dbCMC);			
+	}
+	return NULL;	
+}
 
 void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size, void* user_data)
 {
@@ -367,10 +496,14 @@ void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size, void* user_dat
 		return;
 	}
 
+	g_syncNotifyInProgress = 1;
+	g_checkSyncNotifyRetry = 1;
+	WalInfo("set g_syncNotifyInProgress, g_checkSyncNotifyRetry to 1\n");
+	
 	paramNotify= (ParamNotify *) malloc(sizeof(ParamNotify));
-	paramNotify->paramName = val->parameterName;
-	paramNotify->oldValue= val->oldValue;
-	paramNotify->newValue = val->newValue;
+	paramNotify->paramName = strdup(val->parameterName);
+	paramNotify->oldValue = strdup(val->oldValue);
+	paramNotify->newValue = strdup(val->newValue);
 	paramNotify->type = val->type;
 	paramNotify->changeSource = mapWriteID(val->writeID);
 
@@ -964,6 +1097,12 @@ static void handleNotificationEvents()
 		FR_CloudSyncCheck();
 	}
 
+	//thread for retrying sync notifications when cloud and CPE are out of sync
+	if(!g_syncRetryThreadStarted)
+	{
+		SyncNotifyRetryTask();
+	}
+
 	while(1)
 	{
 		pthread_mutex_lock (&mut);
@@ -980,6 +1119,8 @@ static void handleNotificationEvents()
 		}
 		else
 		{		
+			g_syncNotifyInProgress = 0;
+			WalInfo("g_syncNotifyInProgress is set to 0\n");
 			WalPrint("handleNotificationEvents : Before pthread cond wait in consumer thread\n");   
 			pthread_cond_wait(&con, &mut);
 			pthread_mutex_unlock (&mut);
@@ -1165,12 +1306,13 @@ void processNotification(NotifyData *notifyData)
 	char *cid = NULL, *dest = NULL, *version = NULL, *timeStamp =
 			NULL, *nodeMacId = NULL, *source = NULL, *reboot_reason = NULL;
 	cJSON * notifyPayload;
-	cJSON * nodes, *one_node;
+	cJSON * nodes, *one_node, *parameter;
 	char *stringifiedNotifyPayload = NULL;
 	notifyPayload = cJSON_CreateObject();
 	unsigned int cmc;
 	char *strBootTime = NULL;
 	char *reason = NULL;
+	char *sync_transaction_uuid = NULL;	
 
 	snprintf(device_id, sizeof(device_id), "mac:%s", deviceMAC);
 	WalPrint("Device_id %s\n", device_id);
@@ -1190,7 +1332,7 @@ void processNotification(NotifyData *notifyData)
 	        		strcpy(dest, "event:SYNC_NOTIFICATION");
 
 	        		ret = processParamNotification(notifyData->u.notify, &cmc, &cid);
-
+					g_checkSyncNotifyIgnore = 1;
 	        		if (ret != WDMP_SUCCESS)
 	        		{
 	        			free(dest);
@@ -1202,6 +1344,30 @@ void processNotification(NotifyData *notifyData)
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				OnboardLog("%s/%d/%s\n",dest,cmc,cid);
                                 WAL_FREE(cid);
+				param_notify_string[0] = '\0';
+				if(cmc == 768)
+				{
+					//WalInfo("processNotification: Parameter Name: %s, Data Type: %d, Change Source: %d\n", notifyData->u.notify->paramName, notifyData->u.notify->type, notifyData->u.notify->changeSource);
+					//WalInfo("oldValue %s, newValue %s sync_transaction_uuid %s\n", notifyData->u.notify->oldValue, notifyData->u.notify->newValue,sync_transaction_uuid);
+					cJSON *parameter = cJSON_CreateObject();
+					cJSON_AddStringToObject(parameter, "name",(notifyData->u.notify->paramName != NULL) ? notifyData->u.notify->paramName : "unknown");
+					cJSON_AddStringToObject(parameter, "old_value", (notifyData->u.notify->oldValue != NULL) ? notifyData->u.notify->oldValue : "unknown");
+					cJSON_AddStringToObject(parameter, "new_value", (notifyData->u.notify->newValue != NULL) ? notifyData->u.notify->newValue : "unknown");
+					cJSON_AddNumberToObject(parameter, "dataType", notifyData->u.notify->type);
+					char *param_string = cJSON_PrintUnformatted(parameter);
+					strncpy(param_notify_string,param_string,sizeof(param_notify_string));
+					WAL_FREE(param_string);
+					cJSON_AddItemToObject(notifyPayload, "parameter", parameter);
+
+					if(write_param_notify_into_file(param_notify_string) == 0)
+					{
+						WalError("Error while writing param_notify_string from file\n");
+					}					
+				}
+				sync_transaction_uuid = generate_trans_uuid();						
+				cJSON_AddStringToObject(notifyPayload, "sync_transaction_uuid", (sync_transaction_uuid != NULL) ? sync_transaction_uuid : "unknown");
+				WAL_FREE(sync_transaction_uuid);
+
 				//Added delay of 5s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
 				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
 				sleep(5);
@@ -1227,8 +1393,10 @@ void processNotification(NotifyData *notifyData)
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				cJSON_AddStringToObject(notifyPayload, "reboot_reason", (NULL != reboot_reason) ? reboot_reason : "NULL");
-                                WAL_FREE(cid);
+				sync_transaction_uuid = generate_trans_uuid();
+				cJSON_AddStringToObject(notifyPayload, "sync_transaction_uuid", (sync_transaction_uuid != NULL) ? sync_transaction_uuid : "unknown");			                               WAL_FREE(cid);
                                 WAL_FREE(reboot_reason);
+				WAL_FREE(sync_transaction_uuid);
 	        	}
 	        		break;
 
@@ -1339,12 +1507,51 @@ void processNotification(NotifyData *notifyData)
 			}
 	        		break;
 
+			case PARAM_NOTIFY_RETRY:
+			{
+				strcpy(dest, "event:SYNC_NOTIFICATION");
+				ret = processParamNotificationRetry(&cmc, &cid);
+				if (ret != WDMP_SUCCESS)
+				{
+					free(dest);
+					cJSON_Delete(notifyPayload);
+					freeNotifyMessage(notifyData);
+					return;
+				}					
+				cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
+				cJSON_AddStringToObject(notifyPayload, "cid", cid);
+				if(cmc == 768)
+				{
+					if(strlen(param_notify_string) == 0)
+					{
+						if(read_param_notify_from_file() == 0)
+						{
+							WalError("Error while reading param_notify_retry_string from file\n");
+							return;
+						}
+					}
+					cJSON *parameter = cJSON_Parse(param_notify_string);
+					if (parameter == NULL) {
+						WalError("Error parsing JSON param_notify_string\n");
+						return;
+					}
+					cJSON_AddItemToObject(notifyPayload, "parameter", parameter);
+				}
+				sync_transaction_uuid = generate_trans_uuid();							
+				cJSON_AddStringToObject(notifyPayload, "sync_transaction_uuid", (sync_transaction_uuid != NULL) ? sync_transaction_uuid : "unknown");
+				WAL_FREE(sync_transaction_uuid);												
+				WAL_FREE(cid);
+			}
+				break;
 	        	default:
 	        		break;
 	        }
 
 	        stringifiedNotifyPayload = cJSON_PrintUnformatted(notifyPayload);
-	        WalPrint("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
+		if(notifyData->type == PARAM_NOTIFY_RETRY)
+			WalInfo("stringifiedNotifyPayload during sync notify retry is %s\n", stringifiedNotifyPayload);
+		else
+			WalPrint("stringifiedNotifyPayload %s\n", stringifiedNotifyPayload);
 
 	        if (stringifiedNotifyPayload != NULL
 	        		&& strlen(device_id) != 0)
@@ -1363,6 +1570,32 @@ void processNotification(NotifyData *notifyData)
 	    free(dest);
         }
 		cJSON_Delete(notifyPayload);
+}
+
+static WDMP_STATUS processParamNotificationRetry(unsigned int *cmc, char **cid)
+{
+	char *dbCID = NULL, *dbCMC = NULL;
+
+	dbCMC = getParameterValue(PARAM_CMC);
+	if (NULL != dbCMC)
+	{
+	        dbCID = getParameterValue(PARAM_CID);
+	        if (NULL == dbCID)
+		{
+			WAL_FREE(dbCMC);
+			WalError("Error dbCID is NULL!\n");
+			return WDMP_FAILURE;
+		}
+	}
+	else
+	{
+	        WalError("Error dbCMC is NULL!\n");
+	        return WDMP_FAILURE;
+	}
+	(*cmc) = atoi(dbCMC);
+	(*cid) = dbCID;
+	WAL_FREE(dbCMC);
+	return WDMP_SUCCESS;
 }
 
 /*
@@ -1415,6 +1648,11 @@ static WDMP_STATUS processParamNotification(ParamNotify *paramNotify,
 		}
 		else
 		{
+			if(g_checkSyncNotifyIgnore == 0)
+			{
+				WalInfo("No change in CMC value, First notification din't ignore value change event\n");
+				return WDMP_SUCCESS;
+			}
 			WalInfo("No change in CMC value, ignoring value change event\n");
 		}
 	}
@@ -1714,6 +1952,23 @@ static void freeNotifyMessage(NotifyData *notifyData)
 
 	if(notifyData->type == PARAM_NOTIFY)
 	{
+		if (notifyData->u.notify->newValue != NULL)
+		{
+			WAL_FREE(notifyData->u.notify->newValue);
+			WalPrint("Free notifyData->u.notify->newValue\n");
+		}
+
+		if (notifyData->u.notify->oldValue != NULL)
+		{
+			WAL_FREE(notifyData->u.notify->oldValue);
+			WalPrint("Free notifyData->u.notify->oldValue\n");
+		}
+
+		if (notifyData->u.notify->paramName != NULL)
+		{
+			WAL_FREE(notifyData->u.notify->paramName);
+			WalPrint("Free notifyData->u.notify->paramName\n");
+		}		
 		WalPrint("Free notifyData->u.notify\n");
 		WAL_FREE(notifyData->u.notify);
 	}
@@ -1756,6 +2011,31 @@ static void freeNotifyMessage(NotifyData *notifyData)
 	{
 		WalPrint("Free notifyData->u.device\n");
 		WAL_FREE(notifyData->u.device);
+	}
+	else if(notifyData->type == PARAM_NOTIFY_RETRY)
+	{
+		if (notifyData->u.notify != NULL)
+		{
+			if (notifyData->u.notify->newValue != NULL)
+			{
+				WAL_FREE(notifyData->u.notify->newValue);
+				WalPrint("Free notifyData->u.notify->newValue\n");
+			}
+
+			if (notifyData->u.notify->oldValue != NULL)
+			{
+				WAL_FREE(notifyData->u.notify->oldValue);
+				WalPrint("Free notifyData->u.notify->oldValue\n");
+			}
+
+			if (notifyData->u.notify->paramName != NULL)
+			{
+				WAL_FREE(notifyData->u.notify->paramName);
+				WalPrint("Free notifyData->u.notify->paramName\n");
+			}
+			WalPrint("Free notifyData->u.notify\n");
+			WAL_FREE(notifyData->u.notify);
+		}
 	}
 
 	WalPrint("Free notifyData\n");
@@ -1847,4 +2127,92 @@ WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *writ
 	}
 
 	return WDMP_SUCCESS;
+}
+
+pthread_cond_t *get_global_sync_condition(void)
+{
+    return &sync_condition;
+}
+
+pthread_mutex_t *get_global_sync_mutex(void)
+{
+    return &sync_mutex;
+}
+
+char* generate_trans_uuid()
+{
+	char *transID = NULL;
+	uuid_t transaction_Id;
+	char *trans_id = NULL;
+	trans_id = (char *)malloc(37);
+	uuid_generate_random(transaction_Id);
+	uuid_unparse(transaction_Id, trans_id);
+
+	if(trans_id !=NULL)
+	{
+		transID = trans_id;
+	}
+	return transID;
+}
+
+int read_param_notify_from_file()
+{
+    char err_buf[256];  // To store strerror_r error messages
+	WalInfo("parameter payload reading from backup file during sync notify retry");
+    // Open the file in read mode
+    FILE *fp = fopen(PARAM_BACKUP_FILE, "r");
+    if (fp == NULL) {
+        strerror_r(errno, err_buf, sizeof(err_buf));
+        WalError("Error opening file '%s': %s\n", PARAM_BACKUP_FILE, err_buf);
+        return 1;
+    }
+
+    // Read the file line by line
+    fgets(param_notify_string, sizeof(param_notify_string), fp);
+
+    // Check for read error
+    if (ferror(fp)) {
+        strerror_r(errno, err_buf, sizeof(err_buf));
+        WalError("Error reading file '%s': %s\n", PARAM_BACKUP_FILE, err_buf);
+        fclose(fp);
+        return 1;
+    }
+
+    // Close the file
+    if (fclose(fp) != 0) {
+        strerror_r(errno, err_buf, sizeof(err_buf));
+        WalError("Error closing file '%s': %s\n", PARAM_BACKUP_FILE, err_buf);
+        return 1;
+    }
+
+    return 0;
+}
+
+int write_param_notify_into_file(char *buff)
+{
+    char err_buf[256];  // Buffer to store strerror_r result	
+
+    FILE *fp = fopen(PARAM_BACKUP_FILE, "w");
+    if (fp == NULL) {
+        strerror_r(errno, err_buf, sizeof(err_buf));
+        WalError("Error opening file '%s': %s\n", PARAM_BACKUP_FILE, err_buf);
+        return 1;
+    }
+
+    // Write to the file
+    if (fprintf(fp, "%s", buff) < 0) {
+        strerror_r(errno, err_buf, sizeof(err_buf));
+        WalError("Error writing to file '%s': %s\n", PARAM_BACKUP_FILE, err_buf);
+        fclose(fp);
+        return 1;
+    }
+
+    // Close the file
+    if (fclose(fp) != 0) {
+        strerror_r(errno, err_buf, sizeof(err_buf));
+        WalError("Error closing file '%s': %s\n", PARAM_BACKUP_FILE, err_buf);
+        return 1;
+    }
+
+    return 0;
 }
