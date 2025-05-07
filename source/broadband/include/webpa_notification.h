@@ -78,7 +78,8 @@ typedef enum
     CONNECTED_CLIENT_NOTIFY,
     DEVICE_STATUS,
     FACTORY_RESET,
-    FIRMWARE_UPGRADE
+    FIRMWARE_UPGRADE,
+    PARAM_NOTIFY_RETRY
 } NOTIFY_TYPE;
 
 typedef struct
@@ -137,3 +138,5 @@ WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* inte
  */
 WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *write_id);
 void FR_CloudSyncCheck();
+pthread_cond_t *get_global_sync_condition(void);
+pthread_mutex_t *get_global_sync_mutex(void);
