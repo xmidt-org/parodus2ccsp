@@ -1198,9 +1198,15 @@ void processNotification(NotifyData *notifyData)
 	        		cJSON_AddNumberToObject(notifyPayload, "cmc", cmc);
 	        		cJSON_AddStringToObject(notifyPayload, "cid", cid);
 				OnboardLog("%s/%d/%s\n",dest,cmc,cid);
+			#if defined(_SCER11BEL_PRODUCT_REQ_)
+                               //XER10-1536: Added delay of 8s in XER10 platform to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
+				WalInfo("Sleeping for 8 sec before sending SYNC_NOTIFICATION\n");
+				sleep(8);
+			#else
 				//Added delay of 5s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
 				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
 				sleep(5);
+			#endif
 	        	}
 	        		break;
 
