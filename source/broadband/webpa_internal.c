@@ -1471,12 +1471,15 @@ WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** s
 		return WDMP_FAILURE;
 	}
 
-	char forcesyncVal[32] = { '\0' };
-	char forcesynctransID[32] = { '\0' };
+	char *forcesyncVal = strdup(value);
+	char *forcesynctransID = strdup(transactionId);
 	cJSON *jsonresponse = NULL;
 
-	walStrncpy(forcesyncVal , value, sizeof(forcesyncVal));
-	walStrncpy(forcesynctransID , transactionId, sizeof(forcesynctransID));
+	if (forcesyncVal == NULL || forcesynctransID == NULL)
+	{
+		WalError("Memory allocation failed in createForceSyncJsonSchema\n");
+		return WDMP_FAILURE;
+	}
 
 	WalPrint("forcesyncVal %s forcesynctransID %s\n", forcesyncVal, forcesynctransID);
 	jsonresponse = cJSON_CreateObject();
@@ -1489,8 +1492,13 @@ WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** s
 		*stringifiedJson = cJSON_PrintUnformatted(jsonresponse);
 		WalPrint("*stringifiedJson is %s\n", *stringifiedJson);
 		cJSON_Delete(jsonresponse);
+		WAL_FREE(forcesyncVal);
+		WAL_FREE(forcesynctransID);
 		return WDMP_SUCCESS;
 	}
+
+	WAL_FREE(forcesyncVal);
+	WAL_FREE(forcesynctransID);
 	return WDMP_FAILURE;
 }
 #endif
