@@ -21,6 +21,7 @@
 #else
     #define WEBPA_CFG_FILE                      "/tmp/webpa_cfg.json"
 #endif
+#define SYNC_NOTIFY_PARAM_BACKUP_FILE "/tmp/webpa_sync_notification.json"
 /*----------------------------------------------------------------------------*/
 /*                               Data Structures                              */
 /*----------------------------------------------------------------------------*/
@@ -78,7 +79,8 @@ typedef enum
     CONNECTED_CLIENT_NOTIFY,
     DEVICE_STATUS,
     FACTORY_RESET,
-    FIRMWARE_UPGRADE
+    FIRMWARE_UPGRADE,
+    PARAM_NOTIFY_RETRY
 } NOTIFY_TYPE;
 
 typedef struct
@@ -137,3 +139,6 @@ WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* inte
  */
 WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *write_id);
 void FR_CloudSyncCheck();
+
+int read_sync_notify_from_file();
+int write_sync_notify_into_file(char *buff);
