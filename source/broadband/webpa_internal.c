@@ -62,7 +62,7 @@ char *objectList[] ={
 "Device.NeighborDiscovery.",
 "Device.IPv6rd.",
 "Device.X_CISCO_COM_MLD.",
-#ifndef _HUB4_PRODUCT_REQ_
+#if ! defined(_HUB4_PRODUCT_REQ_) || ! defined(_SCER11BEL_PRODUCT_REQ_)
 #if defined(_COSA_BCM_MIPS_)
 "Device.DPoE.",
 #else
@@ -77,7 +77,7 @@ char *objectList[] ={
 "Device.Hosts.",
 "Device.ManagementServer.",
 "Device.XHosts.",
-#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_)
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_)
 "Device.X_CISCO_COM_MTA.",
 #endif
 "Device.X_RDKCENTRAL-COM_XDNS.",
@@ -1471,12 +1471,15 @@ WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** s
 		return WDMP_FAILURE;
 	}
 
-	char forcesyncVal[32] = { '\0' };
-	char forcesynctransID[32] = { '\0' };
+	char *forcesyncVal = strdup(value);
+	char *forcesynctransID = strdup(transactionId);
 	cJSON *jsonresponse = NULL;
 
-	walStrncpy(forcesyncVal , value, sizeof(forcesyncVal));
-	walStrncpy(forcesynctransID , transactionId, sizeof(forcesynctransID));
+	if (forcesyncVal == NULL || forcesynctransID == NULL)
+	{
+		WalError("Memory allocation failed in createForceSyncJsonSchema\n");
+		return WDMP_FAILURE;
+	}
 
 	WalPrint("forcesyncVal %s forcesynctransID %s\n", forcesyncVal, forcesynctransID);
 	jsonresponse = cJSON_CreateObject();
@@ -1489,8 +1492,13 @@ WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** s
 		*stringifiedJson = cJSON_PrintUnformatted(jsonresponse);
 		WalPrint("*stringifiedJson is %s\n", *stringifiedJson);
 		cJSON_Delete(jsonresponse);
+		WAL_FREE(forcesyncVal);
+		WAL_FREE(forcesynctransID);
 		return WDMP_SUCCESS;
 	}
+
+	WAL_FREE(forcesyncVal);
+	WAL_FREE(forcesynctransID);
 	return WDMP_FAILURE;
 }
 #endif
