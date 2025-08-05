@@ -1434,6 +1434,8 @@ WDMP_STATUS check_ethernet_wan_status()
     char *status = NULL;
     char isEthEnabled[64]={'\0'};
 #ifdef RDKB_BUILD
+    extern int syscfg_get (const char *ns, const char *name, char *out_val, int outbufsz);
+
     if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0))
     {
         WalInfo("Ethernet WAN is enabled\n");

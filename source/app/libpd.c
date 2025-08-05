@@ -329,12 +329,12 @@ char *get_global_cloud_status()
 {
 	char *temp = NULL;
 	int  rv;
-    struct timeval ts;
+    struct timespec ts;
 	pthread_mutex_lock (&cloud_mut);
 	WalPrint("mutex lock in consumer thread\n");
 	WalPrint("Before pthread cond wait in consumer thread\n");
 
-	gettimeofday(&ts, NULL);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     ts.tv_sec += WAIT_TIME_IN_SECONDS;
 
 	while (!wakeUpFlag)

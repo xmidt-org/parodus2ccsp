@@ -6,7 +6,7 @@
  * Copyright (c) 2015  Comcast
  */
 
-#include "webpa_internal.h"
+#include "webpa_table.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
