@@ -48,6 +48,7 @@ pthread_cond_t cloud_con=PTHREAD_COND_INITIALIZER;
 
 static void connect_parodus()
 {
+	    pthread_condattr_t attr;
         int backoffRetryTime = 0;
         int backoff_max_time = 5;
         int max_retry_sleep;
@@ -57,6 +58,11 @@ static void connect_parodus()
         int fd = 0;
         char *parodus_url = NULL;
         char *client_url = NULL;
+
+	    pthread_condattr_init(&attr);
+        pthread_condattr_setclock(&attr, CLOCK_MONOTONIC_RAW);
+        pthread_cond_init(&cloud_con, &attr);
+        pthread_condattr_destroy(&attr);
 
         max_retry_sleep = (int) pow(2, backoff_max_time) -1;
         WalInfo("max_retry_sleep is %d\n", max_retry_sleep );
@@ -132,16 +138,10 @@ static void connect_parodus()
 //set global conn status and to awake waiting getter threads
 void set_global_cloud_status(char *status)
 {
-	pthread_condattr_t attr;
 	pthread_mutex_lock (&cloud_mut);
 	WalPrint("mutex lock in producer thread\n");
 	wakeUpFlag = 1;
 	cloud_status = status;
-
-	pthread_condattr_init(&attr);
-    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC_RAW);
-    pthread_cond_init(&cloud_con, &attr);
-    pthread_condattr_destroy(&attr);
 	
 	pthread_cond_signal(&cloud_con);
 	pthread_mutex_unlock (&cloud_mut);
