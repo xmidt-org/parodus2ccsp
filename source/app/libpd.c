@@ -142,7 +142,6 @@ void set_global_cloud_status(char *status)
 	WalPrint("mutex lock in producer thread\n");
 	wakeUpFlag = 1;
 	cloud_status = status;
-	
 	pthread_cond_signal(&cloud_con);
 	pthread_mutex_unlock (&cloud_mut);
 	WalPrint("mutex unlock in producer thread\n");
@@ -341,7 +340,7 @@ char *get_global_cloud_status()
 	WalPrint("mutex lock in consumer thread\n");
 	WalPrint("Before pthread cond wait in consumer thread\n");
 
-	// cloud_con clock attribute set to CLOCK_MONOTONIC_RAW in set_global_cloud_status() so that it's compatible with pthread_cond_timedwait
+	// cloud_con clock attribute set to CLOCK_MONOTONIC_RAW in connect_parodus() so that it's compatible with pthread_cond_timedwait
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     ts.tv_sec += WAIT_TIME_IN_SECONDS;
 
