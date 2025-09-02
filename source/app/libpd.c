@@ -44,7 +44,6 @@ libpd_instance_t current_instance;
 char *cloud_status = "offline";
 int wakeUpFlag = 0;
 pthread_mutex_t cloud_mut=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cloud_con=PTHREAD_COND_INITIALIZER;
 
 static void connect_parodus()
 {
