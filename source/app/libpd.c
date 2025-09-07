@@ -59,7 +59,7 @@ static void connect_parodus()
         char *client_url = NULL;
 
 	    pthread_condattr_init(&attr);
-        pthread_condattr_setclock(&attr, CLOCK_MONOTONIC_RAW);
+        pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
         pthread_cond_init(&cloud_con, &attr);
         pthread_condattr_destroy(&attr);
 
@@ -339,8 +339,8 @@ char *get_global_cloud_status()
 	WalPrint("mutex lock in consumer thread\n");
 	WalPrint("Before pthread cond wait in consumer thread\n");
 
-	// cloud_con clock attribute set to CLOCK_MONOTONIC_RAW in connect_parodus() so that it's compatible with pthread_cond_timedwait
-    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+	// cloud_con clock attribute set to CLOCK_MONOTONIC in connect_parodus() so that it's compatible with pthread_cond_timedwait
+    clock_gettime(CLOCK_MONOTONIC, &ts);
     ts.tv_sec += WAIT_TIME_IN_SECONDS;
 
 	while (!wakeUpFlag)
