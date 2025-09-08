@@ -75,6 +75,7 @@
 #include <webcfg_log.h>
 #endif
 #include "webpa_adapter.h"
+#include "cosa_webpa_internal.h"
 
 ANSC_HANDLE                        g_MessageBusHandle;
 

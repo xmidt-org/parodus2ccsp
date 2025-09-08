@@ -88,10 +88,9 @@ CosaWebpaInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-        ANSC_STATUS                     returnStatus  = FALSE;
-        PCOSA_DATAMODEL_WEBPA           pMyObject     = (PCOSA_DATAMODEL_WEBPA)hThisObject;
-	PCOSA_DML_WEBPA 	        pWebpa	      = (PCOSA_DML_WEBPA )NULL;
-	PCOSA_DML_WEBPA_CONFIG          pWebpaCfg     = (PCOSA_DML_WEBPA_CONFIG)NULL; 
+    PCOSA_DATAMODEL_WEBPA   pMyObject   = (PCOSA_DATAMODEL_WEBPA)hThisObject;
+    PCOSA_DML_WEBPA         pWebpa	    = (PCOSA_DML_WEBPA )NULL;
+    PCOSA_DML_WEBPA_CONFIG  pWebpaCfg   = (PCOSA_DML_WEBPA_CONFIG)NULL; 
 
 	/*
 	  * Need to create memory for WEBPA DML pointer
@@ -100,23 +99,21 @@ CosaWebpaInitialize
 	
 	if ( !pWebpa )
 	{
-	   return  (ANSC_HANDLE)NULL;
+        return ANSC_STATUS_FAILURE;
 	}
 
 	pWebpaCfg = (PCOSA_DML_WEBPA_CONFIG)malloc(sizeof(COSA_DML_WEBPA_CONFIG));
 	
 	if ( !pWebpaCfg )
 	{
-            free(pWebpa);
-            return  (ANSC_HANDLE)NULL;
+        free(pWebpa);
+        return ANSC_STATUS_FAILURE;
 	}
 
 	memset(pWebpaCfg, 0, sizeof(COSA_DML_WEBPA_CONFIG));
 	pWebpa->pWebpaCfg	  = pWebpaCfg;
 	pMyObject->pWebpa     = pWebpa;
-
-EXIT:
-    return returnStatus;
+    return ANSC_STATUS_SUCCESS;
 }
 
 /**********************************************************************

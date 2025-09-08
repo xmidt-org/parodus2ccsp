@@ -16,6 +16,8 @@
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
 #endif
+#include "cosa_webpa_internal.h"
+#include "privilege.h"
 
 /*----------------------------------------------------------------------------*/
 /*                             Function Prototypes                            */

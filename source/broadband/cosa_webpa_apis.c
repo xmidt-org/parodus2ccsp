@@ -89,6 +89,7 @@ CosaDmlWEBPA_GetValueFromDB( char* ParamName, char* pString )
 {
 /* Value getting/retriving from syscfg.db or CCSPSM */
 #ifdef WEBPA_PARAMS_VIA_SYSCFG
+    extern int syscfg_get (const char *ns, const char *name, char *out_val, int outbufsz);
 	CHAR tmpbuf[ 128 ] = { 0 };
 
 	if( 0 != syscfg_get( NULL, ParamName, tmpbuf, sizeof(tmpbuf)))
