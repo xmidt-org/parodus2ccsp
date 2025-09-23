@@ -66,6 +66,7 @@
 **********************************************************************/
 
 #include "plugin_main_apis.h"
+#include "cosa_webpa_internal.h"
 #include "cosa_webpa_apis.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include "cosa_webconfig_apis.h"
