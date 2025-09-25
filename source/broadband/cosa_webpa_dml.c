@@ -48,6 +48,7 @@ Webpa_SetParamStringValue
 	char* p_mac_id = NULL;
 	char* p_status = NULL;
 	char* p_hostname = NULL;
+	char* p_ipv4 = NULL;
 	char* p_val_type;
 	UINT value_type,write_id;
 	parameterSigStruct_t param = {0};
@@ -139,8 +140,14 @@ Webpa_SetParamStringValue
                         p_mac_id = strtok_r(NULL, ",", &st);
                         p_status = strtok_r(NULL, ",", &st);
                         p_hostname = strtok_r(NULL, ",", &st);
+                        p_ipv4 = strtok_r(NULL, ",", &st);
 
-			if(p_hostname !=NULL && p_notify_param_name !=NULL && p_interface_name !=NULL && p_mac_id !=NULL && p_status !=NULL)
+                        //If IPv4 is NULL, assign "NULL" string as per the User Story requirement
+                        if(p_ipv4 == NULL)
+                        {
+                            p_ipv4 = "NULL";
+                        }
+			if(p_hostname !=NULL && p_notify_param_name !=NULL && p_interface_name !=NULL && p_mac_id !=NULL && p_status !=NULL && p_ipv4 !=NULL)
 			{
 				if(validate_conn_client_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname) == WDMP_SUCCESS)
 				{
@@ -149,6 +156,7 @@ Webpa_SetParamStringValue
 				        WalPrint(" \n Notification : MAC = %s \n", p_mac_id);
 				        WalPrint(" \n Notification : Status = %s \n", p_status);
 				        WalPrint(" \n Notification : HostName = %s \n", p_hostname);
+				        WalPrint(" \n Notification : IPv4 = %s \n", p_ipv4);
 
 				        notifyCbFnPtr = getNotifyCB();
 
@@ -160,7 +168,7 @@ Webpa_SetParamStringValue
 				        else
 				        {
 				                // Data received from stack is not sent upstream to server for Connected Client
-				                sendConnectedClientNotification(p_mac_id, p_status, p_interface_name, p_hostname);
+				                sendConnectedClientNotification(p_mac_id, p_status, p_interface_name, p_hostname, p_ipv4);
 				        }
 				}
 				else

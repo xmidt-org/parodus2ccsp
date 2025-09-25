@@ -561,18 +561,18 @@ void processTransactionNotification(char transId[])
 	}
 }
 
-void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname)
+void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname, char *ipv4)
 {
 
 	NotifyData *notifyDataPtr = (NotifyData *) malloc(sizeof(NotifyData) * 1);
 	NodeData * node = NULL;
 
 	notifyDataPtr->type = CONNECTED_CLIENT_NOTIFY;
-	if(macId != NULL && status != NULL && interface != NULL && hostname != NULL)
+	if(macId != NULL && status != NULL && interface != NULL && hostname != NULL && ipv4 != NULL)
 	{
 		node = (NodeData *) malloc(sizeof(NodeData) * 1);
 		memset(node, 0, sizeof(NodeData));
-		WalPrint("macId : %s status : %s interface : %s hostname :%s\n",macId,status, interface, hostname);
+		WalPrint("macId : %s status : %s interface : %s hostname :%s ipv4 : %s\n",macId,status, interface, hostname, ipv4);
 		node->nodeMacId = (char *)(malloc(sizeof(char) * strlen(macId) + 1));
 		strncpy(node->nodeMacId, macId, strlen(macId) + 1);
 
@@ -584,8 +584,11 @@ void sendConnectedClientNotification(char * macId, char *status, char *interface
 		
 		node->hostname = (char *)(malloc(sizeof(char) * strlen(hostname) + 1));
 		strncpy(node->hostname, hostname, strlen(hostname) + 1);
-		
-		WalPrint("node->nodeMacId : %s node->status: %s node->interface: %s node->hostname: %s\n",node->nodeMacId,node->status, node->interface, node->hostname);
+
+		node->ipv4 = (char *)(malloc(sizeof(char) * strlen(ipv4) + 1));
+		strncpy(node->ipv4, ipv4, strlen(ipv4) + 1);
+
+		WalPrint("node->nodeMacId : %s node->status: %s node->interface: %s node->hostname: %s node->ipv4: %s\n",node->nodeMacId,node->status, node->interface, node->hostname, node->ipv4);
 	}
 
 	notifyDataPtr->u.node = node;
@@ -1473,6 +1476,8 @@ void processNotification(NotifyData *notifyData)
 	        				(NULL != notifyData->u.node->hostname) ? notifyData->u.node->hostname : "unknown");
 	        		cJSON_AddStringToObject(one_node, "status",
 	        				(NULL != notifyData->u.node->status) ? notifyData->u.node->status : "unknown");
+	        		cJSON_AddStringToObject(one_node, "ipv4-address",
+	        				(NULL != notifyData->u.node->ipv4) ? notifyData->u.node->ipv4 : "unknown");
 	        		if (NULL != nodeMacId) {
 	        			free(nodeMacId);
 	        		}
@@ -2030,6 +2035,11 @@ static void freeNotifyMessage(NotifyData *notifyData)
 		{
 			WAL_FREE(notifyData->u.node->hostname);
 			WalPrint("Free notifyData->u.node->hostname\n");
+		}
+		if(notifyData->u.node->ipv4 != NULL)
+		{
+			WAL_FREE(notifyData->u.node->ipv4);
+			WalPrint("Free notifyData->u.node->ipv4\n");
 		}
 		WalPrint("Free notifyData->u.node\n");
 		WAL_FREE(notifyData->u.node);

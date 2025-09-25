@@ -65,6 +65,7 @@ typedef struct
    char *status;
    char *interface;
    char *hostname;
+   char *ipv4;
 }NodeData;
 
 typedef struct
@@ -107,7 +108,7 @@ typedef void (*notifyCB)(NotifyData *notifyDataPtr);
  * @brief sendConnectedClientNotification function to send Connected Client notification
  * for change to Device.Hosts.Host. dynamic table
  */
-void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname);
+void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname, char *ipv4);
 
 /**
  * @brief send_transaction_Notify function to send transaction status notification
