@@ -7,3 +7,4 @@
  */
 
 void libpd_client_mgr();
+int getConnCloudStatus(char *device_mac);

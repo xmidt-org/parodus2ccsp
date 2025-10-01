@@ -44,10 +44,11 @@ libpd_instance_t current_instance;
 char *cloud_status = "offline";
 int wakeUpFlag = 0;
 pthread_mutex_t cloud_mut=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cloud_con=PTHREAD_COND_INITIALIZER;
+pthread_cond_t cloud_con;
 
 static void connect_parodus()
 {
+	    pthread_condattr_t attr;
         int backoffRetryTime = 0;
         int backoff_max_time = 5;
         int max_retry_sleep;
@@ -57,6 +58,11 @@ static void connect_parodus()
         int fd = 0;
         char *parodus_url = NULL;
         char *client_url = NULL;
+
+	    pthread_condattr_init(&attr);
+        pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+        pthread_cond_init(&cloud_con, &attr);
+        pthread_condattr_destroy(&attr);
 
         max_retry_sleep = (int) pow(2, backoff_max_time) -1;
         WalInfo("max_retry_sleep is %d\n", max_retry_sleep );
@@ -329,12 +335,13 @@ char *get_global_cloud_status()
 {
 	char *temp = NULL;
 	int  rv;
-    struct timeval ts;
+    struct timespec ts;
 	pthread_mutex_lock (&cloud_mut);
 	WalPrint("mutex lock in consumer thread\n");
 	WalPrint("Before pthread cond wait in consumer thread\n");
 
-	gettimeofday(&ts, NULL);
+	// cloud_con clock attribute set to CLOCK_MONOTONIC in connect_parodus() so that it's compatible with pthread_cond_timedwait
+    clock_gettime(CLOCK_MONOTONIC, &ts);
     ts.tv_sec += WAIT_TIME_IN_SECONDS;
 
 	while (!wakeUpFlag)

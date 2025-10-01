@@ -7,6 +7,7 @@
  */
 
 #include "webpa_table.h"
+#include "webpa_adapter.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -169,7 +170,7 @@ static int cacheTableData(char *objectName,int paramcount,char ***rowList,int *n
     char **rows = NULL;
     char paramName[MAX_PARAMETERNAME_LEN] = {'\0'};
     char *p = NULL;
-    p = &paramName;
+    p = &paramName[0];
     TableData * getList = NULL;
     snprintf(dst_pathname_cr, sizeof(dst_pathname_cr),"%s%s", l_Subsystem, CCSP_DBUS_INTERFACE_CR);
     parameterValStruct_t **parameterval = NULL;
@@ -280,9 +281,11 @@ static void deleteAllTableData(char **deleteList,int rowCount)
  */
 static int addNewData(char *objectName,TableData * list,int paramcount)
 {
-    int cnt = 0,addRet = 0, i =0, delRet = 0;
+    int cnt = 0, i = 0;
     char paramName[MAX_PARAMETERNAME_LEN] = {'\0'};
     char **retObject = NULL;
+    WDMP_STATUS addRet = WDMP_SUCCESS;
+    WDMP_STATUS delRet = WDMP_SUCCESS;
     retObject = (char **)malloc(sizeof(char*) * paramcount);
     memset(retObject,0,(sizeof(char *) * paramcount));
     WalPrint("---------- Start of addNewData -----------\n");
@@ -327,9 +330,10 @@ static int addNewData(char *objectName,TableData * list,int paramcount)
  */
 static void addCachedData(char *objectName,TableData * addList,int rowCount)
 {
-    int cnt = 0, addRet = 0;
+    int cnt = 0;
     char paramName[MAX_PARAMETERNAME_LEN] = {'\0'};
     char **retRows = NULL;
+    WDMP_STATUS addRet = WDMP_SUCCESS;
     retRows = (char **)malloc(sizeof(char*) * rowCount);
     memset(retRows,0,(sizeof(char *) * rowCount));
     WalPrint("---------- Start of addCachedData -----------\n");
