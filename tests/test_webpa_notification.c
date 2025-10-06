@@ -698,6 +698,7 @@ void test_processNotification()
 	node->status = strdup("Connected");
 	node->interface = strdup("eth0");
 	node->hostname = strdup("wifi");
+	node->ipv4 = strdup("192.168.1.100");
 	notifyData->u.node = node;
 
 	parameterValStruct_t **version = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));

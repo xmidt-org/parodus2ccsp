@@ -142,21 +142,16 @@ Webpa_SetParamStringValue
                         p_hostname = strtok_r(NULL, ",", &st);
                         p_ipv4 = strtok_r(NULL, ",", &st);
 
-                        //If IPv4 is NULL, assign "NULL" string as per the User Story requirement
-                        if(p_ipv4 == NULL)
-                        {
-                            p_ipv4 = "NULL";
-                        }
-			if(p_hostname !=NULL && p_notify_param_name !=NULL && p_interface_name !=NULL && p_mac_id !=NULL && p_status !=NULL && p_ipv4 !=NULL)
+			if(p_hostname !=NULL && p_notify_param_name !=NULL && p_interface_name !=NULL && p_mac_id !=NULL && p_status !=NULL)
 			{
-				if(validate_conn_client_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname) == WDMP_SUCCESS)
+				if(validate_conn_client_notify_data(p_notify_param_name,p_interface_name,p_mac_id,p_status,p_hostname,p_ipv4) == WDMP_SUCCESS)
 				{
 				        WalPrint(" \n Notification : Parameter Name = %s \n", p_notify_param_name);
 				        WalPrint(" \n Notification : Interface = %s \n", p_interface_name);
 				        WalPrint(" \n Notification : MAC = %s \n", p_mac_id);
 				        WalPrint(" \n Notification : Status = %s \n", p_status);
 				        WalPrint(" \n Notification : HostName = %s \n", p_hostname);
-				        WalPrint(" \n Notification : IPv4 = %s \n", p_ipv4);
+				        WalPrint(" \n Notification : IPv4 = %s \n", p_ipv4 ? p_ipv4 : "");
 
 				        notifyCbFnPtr = getNotifyCB();
 
