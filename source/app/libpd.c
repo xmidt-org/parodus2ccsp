@@ -133,6 +133,15 @@ static void connect_parodus()
 	            WalPrint("libparodus_shutdown retval %d\n", retval);
 	    	}
 	}
+	/* CID-71358 CID-55326 Resource leak fix */
+	if (parodus_url != NULL)
+	{
+		free(parodus_url);
+	}
+	if (client_url != NULL)
+	{
+		free(client_url);
+	}
 }
 
 //set global conn status and to awake waiting getter threads
@@ -194,6 +203,9 @@ static void parodus_receive()
 					memset(res_headers, 0, (sizeof(headers_t) + sizeof( char * ) * (wrp_msg->u.req.headers->count)));
 				}
 				else {
+					/* CID-59824 Resource leak fix */
+					free(res_wrp_msg);
+					res_wrp_msg = NULL;
 					WalError("Memory not allocated for response headers\n");
 					return;
 				}	
@@ -257,7 +269,14 @@ static void parodus_receive()
                         }
                         getCurrentTime(endPtr);
                         WalInfo("Elapsed time : %ld ms\n", timeValDiff(startPtr, endPtr));
-			wrp_free_struct (res_wrp_msg);
+						wrp_free_struct (res_wrp_msg);
+						/* CID-334851 Resource leak fix */
+						if(res_headers != NULL)
+						{
+							WalInfo("Deallocating memory for response headers\n");
+							free(res_headers);
+							res_headers = NULL;
+						}
                     }
 		    wrp_free_struct (wrp_msg);
 	    }
@@ -279,6 +298,17 @@ static void parodus_receive()
 						set_global_cloud_status(status);
 						WalPrint("set cloud-status value as %s\n", status);
 					}
+				}
+				/* CID-273897 Resource leak fix */
+				if (sourceService != NULL)
+				{
+					free(sourceService);
+					sourceService = NULL;
+				}
+				if (sourceApplication != NULL)
+				{
+					free(sourceApplication);
+					sourceApplication = NULL;
 				}
 				wrp_free_struct (wrp_msg);
             }

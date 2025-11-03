@@ -220,7 +220,12 @@ X_RDK_Webpa_SetParamStringValue
 	PCOSA_DML_WEBPA_CONFIG      pWebpaCfg = (PCOSA_DML_WEBPA_CONFIG)pWebpa->pWebpaCfg;
 
 	WalPrint("<========= Start of X_RDK_Webpa_SetParamStringValue ========>\n");
-	WalInfo("Received data ParamName %s,data length: %d bytes\n",ParamName, strlen(pString));
+	/* CID-255476 Dereference before null check fix */
+	if (pString != NULL) {
+		WalInfo("Received data ParamName %s,data length: %d bytes\n",ParamName, strlen(pString));
+	} else {
+		WalInfo("Received data ParamName %s, pString is NULL\n",ParamName);
+	}
 	
 	if( AnscEqualString(ParamName, "ConnectedClientNotify", TRUE))
         {

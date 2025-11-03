@@ -98,17 +98,6 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
                     WalError("Failed to replace table, hence reverting the changes\n");
                     addCachedData(objectName,addList,rowCount);
                 }	
-                for ( cnt = 0 ; cnt < rowCount ; cnt++)
-                {
-                    for(cnt1 = 0; cnt1 < numParams; cnt1++)
-                    {
-                        WAL_FREE(addList[cnt].names[cnt1]);
-                        WAL_FREE(addList[cnt].values[cnt1]);
-                    }
-                    WAL_FREE(addList[cnt].names);
-                    WAL_FREE(addList[cnt].values);
-                }
-                WAL_FREE(addList);
             }
         }
 		else
@@ -130,6 +119,21 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
 				WalError("deleteList is NULL\n");
 			}
 		}
+        /* CID-280996 Resource leak fix */
+        if(addList != NULL)
+        {
+            for ( cnt = 0 ; cnt < rowCount ; cnt++)
+            {
+                for(cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
+                {
+                    WAL_FREE(addList[cnt].names[cnt1]);
+                    WAL_FREE(addList[cnt].values[cnt1]);
+                }
+                WAL_FREE(addList[cnt].names);
+                WAL_FREE(addList[cnt].values);
+            }
+            WAL_FREE(addList);
+        }
     }
     if(isWalStatus == 1)
     {
@@ -301,7 +305,8 @@ static int addNewData(char *objectName,TableData * list,int paramcount)
             OnboardLog("Failed to add/update row to %s table, addRet : %d, hence deleting the already added rows\n", objectName, addRet);
             for(i= cnt-1; i >= 0; i--)
             {
-                strncpy(paramName,retObject[i],sizeof(paramName));
+                /* CID-182375 Buffer not null terminated fix */
+                walStrncpy(paramName,retObject[i],sizeof(paramName));
                 deleteRowTable(paramName, &delRet);
                 WalPrint("delRet : %d\n",delRet);
                 if(delRet != WDMP_SUCCESS)
@@ -574,6 +579,8 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
         free_componentStruct_t(bus_handle, size, ppComponents);
     }
     WalPrint("==================== End of getWritableParams ==================\n");
+    /* CID-320315 Memory leak fix */
+    WAL_FREE(isRbus);
     return ret;
 }
 
