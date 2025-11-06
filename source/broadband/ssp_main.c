@@ -145,7 +145,7 @@ if ( bRunAsDaemon )
             cmd_dispatch(cmdChar);
         }
     }
-    #endif
+
 
     err = Cdm_Term();
     if (err != CCSP_SUCCESS)
@@ -156,6 +156,7 @@ if ( bRunAsDaemon )
 
     ssp_cancel();
     return WDMP_SUCCESS;
+    #endif
 }
 
 /*----------------------------------------------------------------------------*/
