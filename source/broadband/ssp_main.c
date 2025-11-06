@@ -134,6 +134,8 @@ if ( bRunAsDaemon )
     {
         return WDMP_FAILURE;
     }
+    /* CID-61738 Logically dead code - bRunAsDaemon is always true */
+    #if 0
     else
     {
         while ( cmdChar != 'q' )
@@ -143,6 +145,7 @@ if ( bRunAsDaemon )
             cmd_dispatch(cmdChar);
         }
     }
+    #endif
 
     err = Cdm_Term();
     if (err != CCSP_SUCCESS)
