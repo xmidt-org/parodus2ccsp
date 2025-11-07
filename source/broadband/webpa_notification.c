@@ -561,7 +561,7 @@ void processTransactionNotification(char transId[])
 	}
 }
 
-void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname)
+void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname, char *ipv4)
 {
 
 	NotifyData *notifyDataPtr = (NotifyData *) malloc(sizeof(NotifyData) * 1);
@@ -572,7 +572,7 @@ void sendConnectedClientNotification(char * macId, char *status, char *interface
 	{
 		node = (NodeData *) malloc(sizeof(NodeData) * 1);
 		memset(node, 0, sizeof(NodeData));
-		WalPrint("macId : %s status : %s interface : %s hostname :%s\n",macId,status, interface, hostname);
+		WalPrint("macId : %s status : %s interface : %s hostname :%s ipv4 : %s\n",macId,status, interface, hostname, ipv4 ? ipv4 : "");
 		node->nodeMacId = (char *)(malloc(sizeof(char) * strlen(macId) + 1));
 		strncpy(node->nodeMacId, macId, strlen(macId) + 1);
 
@@ -584,8 +584,17 @@ void sendConnectedClientNotification(char * macId, char *status, char *interface
 		
 		node->hostname = (char *)(malloc(sizeof(char) * strlen(hostname) + 1));
 		strncpy(node->hostname, hostname, strlen(hostname) + 1);
-		
-		WalPrint("node->nodeMacId : %s node->status: %s node->interface: %s node->hostname: %s\n",node->nodeMacId,node->status, node->interface, node->hostname);
+
+		// Handle NULL ipv4 by assigning empty string
+		if(ipv4 != NULL) {
+			node->ipv4 = (char *)(malloc(sizeof(char) * strlen(ipv4) + 1));
+			strncpy(node->ipv4, ipv4, strlen(ipv4) + 1);
+		} else {
+			node->ipv4 = (char *)(malloc(sizeof(char) * 1));
+			strcpy(node->ipv4, "");
+		}
+
+		WalPrint("node->nodeMacId : %s node->status: %s node->interface: %s node->hostname: %s node->ipv4: %s\n",node->nodeMacId,node->status, node->interface, node->hostname, node->ipv4);
 	}
 
 	notifyDataPtr->u.node = node;
@@ -1473,6 +1482,8 @@ void processNotification(NotifyData *notifyData)
 	        				(NULL != notifyData->u.node->hostname) ? notifyData->u.node->hostname : "unknown");
 	        		cJSON_AddStringToObject(one_node, "status",
 	        				(NULL != notifyData->u.node->status) ? notifyData->u.node->status : "unknown");
+	        		cJSON_AddStringToObject(one_node, "ipv4-address",
+					        (NULL != notifyData->u.node->ipv4) ? notifyData->u.node->ipv4 : "");
 	        		if (NULL != nodeMacId) {
 	        			free(nodeMacId);
 	        		}
@@ -2031,6 +2042,11 @@ static void freeNotifyMessage(NotifyData *notifyData)
 			WAL_FREE(notifyData->u.node->hostname);
 			WalPrint("Free notifyData->u.node->hostname\n");
 		}
+		if(notifyData->u.node->ipv4 != NULL)
+		{
+			WAL_FREE(notifyData->u.node->ipv4);
+			WalPrint("Free notifyData->u.node->ipv4\n");
+		}
 		WalPrint("Free notifyData->u.node\n");
 		WAL_FREE(notifyData->u.node);
 	}
@@ -2103,7 +2119,46 @@ static void mapComponentStatusToGetReason(COMPONENT_STATUS status, char *reason)
 	}
 }
 
-WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname)
+static int is_valid_ipv4(const char *ip)
+{
+	if(ip == NULL || strlen(ip) == 0)
+		return 1; // NULL or empty string is considered valid (will be converted to empty string)
+
+	int segments = 0;
+	int segment_value = 0;
+	int has_digit = 0;
+
+	for(const char *ptr = ip; *ptr != '\0'; ptr++)
+	{
+		if(*ptr >= '0' && *ptr <= '9')
+		{
+			has_digit = 1;
+			segment_value = segment_value * 10 + (*ptr - '0');
+			if(segment_value > 255)
+				return 0; // Invalid: segment value > 255
+		}
+		else if(*ptr == '.')
+		{
+			if(!has_digit || segments >= 3)
+				return 0; // Invalid: no digits before dot or too many segments
+			segments++;
+			segment_value = 0;
+			has_digit = 0;
+		}
+		else
+		{
+			return 0; // Invalid: non-digit, non-dot character
+		}
+	}
+
+	// Must have exactly 4 segments and the last segment must have digits
+	if(segments != 3 || !has_digit)
+		return 0;
+
+	return 1;
+}
+
+WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname, char* ipv4)
 {
 
 	if(strlen(notify_param_name) >= WEBPA_NOTIFY_EVENT_MAX_LENGTH)
@@ -2136,8 +2191,16 @@ WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* inte
 		return WDMP_FAILURE;
 	}
 
+	// IPv4 validation - only allow NULL or valid IPv4 address format
+	if(!is_valid_ipv4(ipv4))
+	{
+		WalError("ipv4 validation failed - invalid IPv4 format\n");
+		return WDMP_FAILURE;
+	}
+
 	return WDMP_SUCCESS;
 }
+
 
 WDMP_STATUS validate_webpa_notification_data(char *notify_param_name, char *write_id)
 {

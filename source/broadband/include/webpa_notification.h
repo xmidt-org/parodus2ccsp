@@ -65,6 +65,7 @@ typedef struct
    char *status;
    char *interface;
    char *hostname;
+   char *ipv4;
 }NodeData;
 
 typedef struct
@@ -107,7 +108,7 @@ typedef void (*notifyCB)(NotifyData *notifyDataPtr);
  * @brief sendConnectedClientNotification function to send Connected Client notification
  * for change to Device.Hosts.Host. dynamic table
  */
-void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname);
+void sendConnectedClientNotification(char * macId, char *status, char *interface, char *hostname, char *ipv4);
 
 /**
  * @brief send_transaction_Notify function to send transaction status notification
@@ -129,7 +130,7 @@ void * getNotifyCB();
  * @param[in] notification data values.
  * @return status.
  */
-WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname);
+WDMP_STATUS validate_conn_client_notify_data(char *notify_param_name, char* interface_name,char* mac_id,char* status,char* hostname, char* ipv4);
 
 /**
  * @brief Validate webpa notification data based on max length.
