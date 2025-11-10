@@ -41,7 +41,7 @@ char *objectList[] ={
 "Device.UserInterface.",
 "Device.InterfaceStack.",
 "Device.Ethernet.",
-#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_)
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_) && ! defined(NO_MOCA_FEATURE_SUPPORT)
 "Device.MoCA.",
 #endif
 "Device.PPP.",
@@ -77,7 +77,7 @@ char *objectList[] ={
 "Device.Hosts.",
 "Device.ManagementServer.",
 "Device.XHosts.",
-#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_)
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(NO_MTA_FEATURE_SUPPORT)
 "Device.X_CISCO_COM_MTA.",
 #endif
 "Device.X_RDKCENTRAL-COM_XDNS.",
@@ -95,7 +95,7 @@ char *objectList[] ={
 char *subObjectList[] = 
 {
 "Device.DeviceInfo.NetworkProperties.",
-#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_)
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_) && ! defined(NO_MOCA_FEATURE_SUPPORT)
 "Device.MoCA.Interface.",
 #endif
 "Device.IP.Diagnostics.",

@@ -152,7 +152,7 @@ const char * notifyparameters[]={
 #ifndef _CBR_PRODUCT_REQ_
 "Device.DeviceInfo.X_RDKCENTRAL-COM_AkerEnable",
 #endif
-#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_)
+#if ! defined(_HUB4_PRODUCT_REQ_) && ! defined(_CBR_PRODUCT_REQ_) && ! defined(_SCER11BEL_PRODUCT_REQ_) && ! defined(_XER5_PRODUCT_REQ_) && ! defined(NO_MOCA_FEATURE_SUPPORT)
 "Device.MoCA.Interface.1.Enable",
 #endif
 "Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
