@@ -511,6 +511,8 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
     {
 	WalInfo("Rbus = %s\n", isRbus);
 	rbusMode = (strncmp(isRbus, "true", strlen("true")) == 0) ? 1 : 0;
+    /* CID-320315 Memory leak fix */
+    WAL_FREE(isRbus);
     }
     else
     {
@@ -579,8 +581,6 @@ static int getWritableParams(char *paramName, char ***writableParams, int *param
         free_componentStruct_t(bus_handle, size, ppComponents);
     }
     WalPrint("==================== End of getWritableParams ==================\n");
-    /* CID-320315 Memory leak fix */
-    WAL_FREE(isRbus);
     return ret;
 }
 
