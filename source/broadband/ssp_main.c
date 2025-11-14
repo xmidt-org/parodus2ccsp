@@ -134,25 +134,6 @@ if ( bRunAsDaemon )
     {
         return WDMP_FAILURE;
     }
-    else
-    {
-        while ( cmdChar != 'q' )
-        {
-            cmdChar = getchar();
-
-            cmd_dispatch(cmdChar);
-        }
-    }
-
-    err = Cdm_Term();
-    if (err != CCSP_SUCCESS)
-    {
-    fprintf(stderr, "Cdm_Term: %s\n", Cdm_StrError(err));
-    exit(1);
-    }
-
-    ssp_cancel();
-    return WDMP_SUCCESS;
 }
 
 /*----------------------------------------------------------------------------*/

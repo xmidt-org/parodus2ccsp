@@ -1099,6 +1099,7 @@ static void getObjectName(char *str, char *objectName, int objectLevel)
 
 static void waitUntilSystemReady()
 {
+	int ret = 0;
     if(checkIfSystemReady())
 	{
 		WalInfo("Checked CR - System is ready, proceed with component caching\n");
@@ -1107,8 +1108,13 @@ static void waitUntilSystemReady()
 	}
 	else
 	{
-	    CcspBaseIf_Register_Event(bus_handle, NULL, "systemReadySignal");
-
+	    ret = CcspBaseIf_Register_Event(bus_handle, NULL, "systemReadySignal");
+		/* CID-65122 Unchecked return value fix */
+		if (CCSP_SUCCESS != ret)
+		{
+			WalError("Failed to register for systemReadySignal event, ret=%d\n", ret);
+			return;
+		}
             CcspBaseIf_SetCallback2
 	    (
 		    bus_handle,
@@ -1474,14 +1480,23 @@ WDMP_STATUS createForceSyncJsonSchema(char *value, char *transactionId, char** s
 	}
 
 	char *forcesyncVal = strdup(value);
-	char *forcesynctransID = strdup(transactionId);
-	cJSON *jsonresponse = NULL;
-
-	if (forcesyncVal == NULL || forcesynctransID == NULL)
+	/*CID-565213 CID-565214 Resource leak fix*/
+	if(forcesyncVal == NULL)
 	{
-		WalError("Memory allocation failed in createForceSyncJsonSchema\n");
+		WalError("Memory allocation failed in createForceSyncJsonSchema for forcesyncVal\n");
 		return WDMP_FAILURE;
 	}
+
+	char *forcesynctransID = strdup(transactionId);
+	/*CID-565213 CID-565214 Resource leak fix*/
+	if(forcesynctransID == NULL)
+	{
+		WalError("Memory allocation failed in createForceSyncJsonSchema for forcesynctransID\n");
+		WAL_FREE(forcesyncVal);
+		return WDMP_FAILURE;
+	}
+
+	cJSON *jsonresponse = NULL;
 
 	WalPrint("forcesyncVal %s forcesynctransID %s\n", forcesyncVal, forcesynctransID);
 	jsonresponse = cJSON_CreateObject();

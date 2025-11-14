@@ -51,7 +51,8 @@ void webpaRbus_Uninit()
 rbusError_t setTraceContext(char* traceContext[])
 {
         rbusError_t ret = RBUS_ERROR_BUS_ERROR;
-        if(isRbusInitialized)
+        /* CID-334852 Function address comparison fix */
+        if(isRbusInitialized())
         {
                 if(traceContext[0] != NULL && traceContext[1] != NULL) {
                        if(strlen(traceContext[0]) > 0 && strlen(traceContext[1]) > 0) {
@@ -83,7 +84,8 @@ rbusError_t getTraceContext(char* traceContext[])
         rbusError_t ret = RBUS_ERROR_BUS_ERROR;
         char traceParent[512] = {'\0'};
         char traceState[512] = {'\0'};
-	if(isRbusInitialized)
+	/* CID-334847 Function address comparison fix */
+	if(isRbusInitialized())
         {
 	      ret =  rbusHandle_GetTraceContextAsString(rbus_handle, traceParent, sizeof(traceParent), traceState, sizeof(traceState));
 	      if( ret == RBUS_ERROR_SUCCESS) {
@@ -110,7 +112,8 @@ rbusError_t getTraceContext(char* traceContext[])
 rbusError_t clearTraceContext()
 {
 	rbusError_t ret = RBUS_ERROR_BUS_ERROR;
-	if(isRbusInitialized)
+	/* CID-334849 Function address comparison fix */
+	if(isRbusInitialized())
 	{
 		ret = rbusHandle_ClearTraceContext(rbus_handle);
 		if(ret == RBUS_ERROR_SUCCESS) {
@@ -123,4 +126,6 @@ rbusError_t clearTraceContext()
 	else {
 		WalError("Rbus not initialized in clearTraceContext funcion\n");
         }
+        /* CID-334846 missing return statement fix */
+        return ret;
 }
