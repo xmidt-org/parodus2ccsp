@@ -48,7 +48,7 @@ jobs:
         working-directory: build
         run: |
           ps aux
-          export RBUS_ROOT=${HOME}/rbus
+          export RBUS_ROOT=$(pwd)/rbus_deps
           export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
           export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}
           export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include

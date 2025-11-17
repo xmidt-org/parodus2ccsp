@@ -1,26 +1,41 @@
 #!/bin/bash
 set -e
 
-export RBUS_ROOT=${HOME}/rbus
+# Use local directory relative to where script is run (should be build/ directory)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export RBUS_ROOT="$(pwd)/rbus_deps"
 export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
 export RBUS_BRANCH=main
 
-mkdir -p $RBUS_INSTALL_DIR
+mkdir -p $RBUS_ROOT
 cd $RBUS_ROOT
 
 # Build and install cJSON first (rbus dependency)
 echo "Building cJSON..."
 git clone https://github.com/DaveGamble/cJSON.git
-cmake -HcJSON -Bbuild/cjson \
+cmake -S cJSON -B build/cjson \
   -DCMAKE_INSTALL_PREFIX=${RBUS_INSTALL_DIR}/usr \
   -DENABLE_CJSON_TEST=OFF \
   -DBUILD_SHARED_AND_STATIC_LIBS=ON
 make -C build/cjson && make -C build/cjson install
 
+# Build and install msgpack (rbus dependency)
+echo "Building msgpack..."
+git clone https://github.com/msgpack/msgpack-c.git
+cd msgpack-c
+git checkout b6803a5fecbe321458faafd6a079dac466614ff9  # 3.1.0
+cd ..
+cmake -S msgpack-c -B build/msgpack \
+  -DCMAKE_INSTALL_PREFIX=${RBUS_INSTALL_DIR}/usr \
+  -DMSGPACK_ENABLE_CXX=OFF \
+  -DMSGPACK_BUILD_EXAMPLES=OFF \
+  -DMSGPACK_BUILD_TESTS=OFF
+make -C build/msgpack && make -C build/msgpack install
+
 # Now build rbus
 echo "Building rbus..."
 git clone https://github.com/rdkcentral/rbus
-cmake -Hrbus -Bbuild/rbus \
+cmake -S rbus -B build/rbus \
   -DCMAKE_INSTALL_PREFIX=${RBUS_INSTALL_DIR}/usr \
   -DCMAKE_PREFIX_PATH=${RBUS_INSTALL_DIR}/usr \
   -DBUILD_FOR_DESKTOP=ON \
