@@ -29,7 +29,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt update
-          sudo apt-get -y install valgrind libcunit1 libcunit1-doc libcunit1-dev libcurl4-openssl-dev openssl libexpat1-dev gcovr uuid-dev
+          sudo apt-get -y install valgrind libcunit1 libcunit1-doc libcunit1-dev libcurl4-openssl-dev openssl libexpat1-dev gcovr uuid-dev libdbus-1-dev libnanomsg-dev
 
       - name: Make Build Directory
         run: mkdir build
