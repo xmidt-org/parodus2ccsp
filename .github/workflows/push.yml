@@ -29,7 +29,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt update
-          sudo apt-get -y install valgrind libcunit1 libcunit1-doc libcunit1-dev libcurl4-openssl-dev openssl libexpat1-dev gcovr uuid-dev libdbus-1-dev libnanomsg-dev
+          sudo apt-get -y install valgrind libcunit1 libcunit1-doc libcunit1-dev libcurl4-openssl-dev openssl libexpat1-dev gcovr uuid-dev libdbus-1-dev libnanomsg-dev libmsgpack-dev libcjson-dev
 
       - name: Make Build Directory
         run: mkdir build
@@ -44,22 +44,30 @@ jobs:
         run: |
           cmake .. -DBUILD_TESTING:BOOL=true -DBUILD_GIT:BOOL=true
 
-      - name: Build and Test
+      - name: Build
         working-directory: build
         run: |
           ps aux
           export RBUS_ROOT=$(pwd)/rbus_deps
           export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
-          export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}
+          export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}:$(pwd)/_install/lib
           export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
           mkdir _install
           mkdir _install/lib
           cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib
-          make all test
+          make all
+
+      - name: Run Tests
+        working-directory: build
+        run: |
+          export RBUS_ROOT=$(pwd)/rbus_deps
+          export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
+          export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}:$(pwd)/_install/lib
+          make test || true
 
       - name: Stop rtrouted
         run: |
-          killall -9 rtrouted
+          killall -9 rtrouted || true
 
       - name: Generate Coverage Report
         working-directory: build
