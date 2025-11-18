@@ -44,17 +44,23 @@ jobs:
         run: |
           export RBUS_ROOT=$(pwd)/rbus_deps
           export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
+          export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
           mkdir _install
           mkdir _install/lib
           cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib
           cmake .. \
             -DBUILD_TESTING:BOOL=true \
             -DBUILD_GIT:BOOL=true \
-            -DCMAKE_PREFIX_PATH="${RBUS_INSTALL_DIR}/usr"
+            -DCMAKE_PREFIX_PATH="${RBUS_INSTALL_DIR}/usr" \
+            -DCMAKE_INCLUDE_PATH="${RBUS_INSTALL_DIR}/usr/include"
 
       - name: Build
         working-directory: build
         run: |
+          export RBUS_ROOT=$(pwd)/rbus_deps
+          export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
+          export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
+          export CPLUS_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
           export LDFLAGS="-L/usr/lib/x86_64-linux-gnu -ldbus-1 -lnanomsg"
           make all || true
 
