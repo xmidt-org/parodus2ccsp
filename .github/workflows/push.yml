@@ -62,11 +62,10 @@ jobs:
           export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
           export CPLUS_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
           export LDFLAGS="-L/usr/lib/x86_64-linux-gnu -ldbus-1 -lnanomsg"
-          make all || true
+          make all
 
       - name: Run Tests
         working-directory: build
-        continue-on-error: true
         run: |
           export RBUS_ROOT=$(pwd)/rbus_deps
           export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
@@ -79,7 +78,6 @@ jobs:
 
       - name: Generate Coverage Report
         working-directory: build
-        continue-on-error: true
         run: |
           gcovr --xml coverage.xml -r .. || echo "Coverage generation skipped"
 
