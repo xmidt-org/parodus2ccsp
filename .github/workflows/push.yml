@@ -26,10 +26,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Install the dependent packages
       - name: Install packages
         run: |
           sudo apt update
-          sudo apt-get -y install valgrind libcunit1 libcunit1-doc libcunit1-dev libcurl4-openssl-dev openssl libexpat1-dev gcovr uuid-dev libdbus-1-dev libnanomsg-dev libmsgpack-dev libcjson-dev
+          sudo apt-get -y install valgrind libcunit1 libcunit1-doc libcunit1-dev libcurl4-openssl-dev openssl libexpat1-dev gcovr libgtest-dev lcov gcovr libmsgpack* libcjson-dev  build-essential uuid-dev
+          pip install codecov
 
       - name: Make Build Directory
         run: mkdir build
@@ -42,39 +44,26 @@ jobs:
       - name: CMake
         working-directory: build
         run: |
-          export RBUS_ROOT=$(pwd)/rbus_deps
-          export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
-          export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
-          mkdir _install
-          mkdir _install/lib
-          cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib
-          cmake .. \
-            -DBUILD_TESTING:BOOL=true \
-            -DBUILD_GIT:BOOL=true \
-            -DCMAKE_PREFIX_PATH="${RBUS_INSTALL_DIR}/usr" \
-            -DCMAKE_INCLUDE_PATH="${RBUS_INSTALL_DIR}/usr/include"
+          cmake .. -DBUILD_TESTING:BOOL=true -DBUILD_GIT:BOOL=true
 
       - name: Build
         working-directory: build
         run: |
-          export RBUS_ROOT=$(pwd)/rbus_deps
-          export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
-          export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
-          export CPLUS_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include
-          export LDFLAGS="-L/usr/lib/x86_64-linux-gnu -ldbus-1 -lnanomsg"
-          make all
+          ps aux 
+          export RBUS_ROOT=${HOME}/rbus
+          export RBUS_INSTALL_DIR=${RBUS_ROOT}/install && \
+          export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}            
+          export C_INCLUDE_PATH=${RBUS_INSTALL_DIR}/usr/include                   
+          mkdir _install
+          mkdir _install/lib
+          cp ${RBUS_INSTALL_DIR}/usr/lib/librbus* _install/lib        
+          make all test
 
-      - name: Run Tests
-        working-directory: build
-        run: |
-          export RBUS_ROOT=$(pwd)/rbus_deps
-          export RBUS_INSTALL_DIR=${RBUS_ROOT}/install
-          export LD_LIBRARY_PATH=${RBUS_INSTALL_DIR}/usr/lib/rbus_temp_lib:${LD_LIBRARY_PATH}:$(pwd)/_install/lib:$(pwd)/_install/lib64
-          make test
-
+        # ARGS=-VV make test       # use this version for debugging
+      
       - name: Stop rtrouted
         run: |
-          killall -9 rtrouted || true
+          killall -9 rtrouted
 
       - name: Generate Coverage Report
         working-directory: build

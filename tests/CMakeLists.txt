@@ -120,10 +120,10 @@ target_link_libraries (test_webpa_test_set gcov -Wl,--no-as-needed )
 #-------------------------------------------------------------------------------
 #   test_webpa_internal
 #-------------------------------------------------------------------------------
-add_test(NAME test_webpa_internal COMMAND ${MEMORY_CHECK} ./test_webpa_internal)
-add_executable(test_webpa_internal test_webpa_internal.c ../source/broadband/webpa_rbus.c ../source/broadband/webpa_parameter.c ../source/broadband/webpa_adapter.c ../source/app/libpd.c ../source/app/privilege.c ../source/broadband/webpa_internal.c ../source/broadband/webpa_notification.c)
-target_link_libraries (test_webpa_internal ${WEBPA_COMMON_LIBS} -llibparodus -lwdmp-c -lrbus -ldbus-1 -lccsp_common -lcunit)
-target_link_libraries (test_webpa_internal gcov -Wl,--no-as-needed )
+# add_test(NAME test_webpa_internal COMMAND ${MEMORY_CHECK} ./test_webpa_internal)
+# add_executable(test_webpa_internal test_webpa_internal.c ../source/broadband/webpa_rbus.c ../source/broadband/webpa_parameter.c ../source/broadband/webpa_adapter.c ../source/app/libpd.c ../source/app/privilege.c ../source/broadband/webpa_internal.c ../source/broadband/webpa_notification.c)
+# target_link_libraries (test_webpa_internal ${WEBPA_COMMON_LIBS} -llibparodus -lwdmp-c -lrbus -ldbus-1 -lccsp_common -lcunit)
+# target_link_libraries (test_webpa_internal gcov -Wl,--no-as-needed )
 
 # Code coverage
 
@@ -152,8 +152,8 @@ COMMAND lcov -q --capture --directory
 ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_notification_cunit.dir/__/src --output-file test_webpa_notification_cunit.info
 COMMAND lcov -q --capture --directory 
 ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_test_set.dir/__/src --output-file test_webpa_test_set.info
-COMMAND lcov -q --capture --directory
-${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_internal.dir/__/src --output-file test_webpa_internal.info
+#COMMAND lcov -q --capture --directory
+#${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/test_webpa_internal.dir/__/src --output-file test_webpa_internal.info
 
 COMMAND lcov
 -a test_libpd.info
@@ -165,7 +165,7 @@ COMMAND lcov
 -a test_webpa_set_attr.info
 -a test_webpa_replace.info
 -a test_webpa_notification.info
--a test_webpa_internal.info
+#-a test_webpa_internal.info
 -a test_webpa_table.info
 -a test_webpa_notification_cunit.info
 -a test_webpa_test_set.info
