@@ -181,8 +181,9 @@ void test_validate_conn_client_notify_data()
     char *mac_id = "12345678901234567";
     char *status = "success";
     char *name = "hostname";
+    char *ipv4 = "192.168.1.100";
 
-    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name);
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
     CU_ASSERT_EQUAL(result,WDMP_SUCCESS);
 }
 
@@ -194,9 +195,10 @@ void test_validate_conn_client_param_name_failure()
     char *mac_id = "12345678901234567";
     char *status = "success";
     char *name = "hostname";
-    
+    char *ipv4 = "192.168.1.100";
+
     //notify_param_name validation fail
-    int result = validate_conn_client_notify_data(notify_param_name, interface, mac_id, status, name);
+    int result = validate_conn_client_notify_data(notify_param_name, interface, mac_id, status, name, ipv4);
     CU_ASSERT_EQUAL(result,WDMP_FAILURE);
 }
 
@@ -208,9 +210,10 @@ void test_validate_conn_client_interface_failure()
     char *mac_id = "12345678901234567";
     char *status = "success";
     char *name = "hostname";
+    char *ipv4 = "192.168.1.100";
     
     //interface validation fail
-    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name);
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
     CU_ASSERT_EQUAL(result,WDMP_FAILURE);
 }
 
@@ -221,9 +224,10 @@ void test_validate_conn_client_mac_failure()
     char *mac_id = "123456789012345";
     char *status = "success";
     char *name = "hostname";
-    
+    char *ipv4 = "192.168.1.100";
+
     //mac validation fail
-    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name);
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
     CU_ASSERT_EQUAL(result,WDMP_FAILURE);
 } 
 
@@ -235,9 +239,10 @@ void test_validate_conn_client_status_failure()
     char status[33];
     memset(status, 'A',33);
     char *name = "hostname";
+    char *ipv4 = "192.168.1.100";
     
     //status validation fail
-    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name);
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
     CU_ASSERT_EQUAL(result,WDMP_FAILURE);
 } 
 
@@ -249,9 +254,10 @@ void test_validate_conn_client_hostname_failure()
     char *status = "success";
     char name[WEBPA_NOTIFY_EVENT_MAX_LENGTH+1];
     memset(name,'A',WEBPA_NOTIFY_EVENT_MAX_LENGTH+1);
+    char *ipv4 = "192.168.1.100";
     
     //hostname validation fail
-    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name);
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
     CU_ASSERT_EQUAL(result,WDMP_FAILURE);
 } 
 
@@ -281,6 +287,132 @@ void test_validate_webpa_notification_write_id_failure()
     CU_ASSERT_EQUAL(result,WDMP_FAILURE);
 }
 
+void test_validate_conn_client_ipv4_success()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "192.168.1.100";
+
+    //IPv4 validation should pass for valid IP
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_SUCCESS);
+}
+
+void test_validate_conn_client_ipv4_null_string_failure()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "NULL";
+
+    //IPv4 validation should fail for "NULL" string (only actual NULL pointer allowed)
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_FAILURE);
+}
+
+void test_validate_conn_client_ipv4_empty_success()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "";
+
+    //IPv4 validation should pass for empty string
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_SUCCESS);
+}
+
+void test_validate_conn_client_ipv4_too_long_failure()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "192.168.1.100.255"; // Too long for valid IPv4
+
+    //IPv4 validation should fail for too long IP
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_FAILURE);
+}
+
+void test_validate_conn_client_ipv4_invalid_format_failure()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "invalidip"; // No dots, invalid format
+
+    //IPv4 validation should fail for invalid format
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_FAILURE);
+}
+
+void test_validate_conn_client_ipv4_null_ptr_success()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = NULL; // Test with actual NULL pointer
+
+    //IPv4 validation should pass for NULL pointer (treated as empty string)
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_SUCCESS);
+}
+
+void test_validate_conn_client_ipv4_invalid_range_failure()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "256.1.1.1"; // Invalid: octet > 255
+
+    //IPv4 validation should fail for octets > 255
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_FAILURE);
+}
+
+void test_validate_conn_client_ipv4_incomplete_failure()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "192.168.1"; // Invalid: incomplete IPv4
+
+    //IPv4 validation should fail for incomplete IPv4
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_FAILURE);
+}
+
+void test_validate_conn_client_ipv4_letters_failure()
+{
+    char *param = "dummy";
+    char *interface = "abcdef";
+    char *mac_id = "12:34:56:78:9A:BC";
+    char *status = "success";
+    char *name = "hostname";
+    char *ipv4 = "192.168.a.1"; // Invalid: contains letter
+
+    //IPv4 validation should fail for non-numeric characters
+    int result = validate_conn_client_notify_data(param, interface, mac_id, status, name, ipv4);
+    CU_ASSERT_EQUAL(result,WDMP_FAILURE);
+}
+
 void add_suites( CU_pSuite *suite )
 {
     *suite = CU_add_suite( "tests", NULL, NULL );
@@ -291,6 +423,15 @@ void add_suites( CU_pSuite *suite )
     CU_add_test( *suite, "test validate_conn_client_mac_failure", test_validate_conn_client_mac_failure);
     CU_add_test( *suite, "test validate_conn_client_status_failure", test_validate_conn_client_status_failure);
     CU_add_test( *suite, "test validate_conn_client_hostname_failure", test_validate_conn_client_hostname_failure);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_success", test_validate_conn_client_ipv4_success);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_null_string_failure", test_validate_conn_client_ipv4_null_string_failure);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_null_ptr_success", test_validate_conn_client_ipv4_null_ptr_success);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_empty_success", test_validate_conn_client_ipv4_empty_success);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_too_long_failure", test_validate_conn_client_ipv4_too_long_failure);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_invalid_format_failure", test_validate_conn_client_ipv4_invalid_format_failure);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_invalid_range_failure", test_validate_conn_client_ipv4_invalid_range_failure);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_incomplete_failure", test_validate_conn_client_ipv4_incomplete_failure);
+    CU_add_test( *suite, "test validate_conn_client_ipv4_letters_failure", test_validate_conn_client_ipv4_letters_failure);
     CU_add_test( *suite, "test validate_webpa_notification_data_success", test_validate_webpa_notification_data_success);
     CU_add_test( *suite, "test validate_webpa_notification_notify_failure", test_validate_webpa_notification_notify_failure);
     CU_add_test( *suite, "test validate_webpa_notification_write_id_failure", test_validate_webpa_notification_write_id_failure);
