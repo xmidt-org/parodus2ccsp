@@ -273,7 +273,6 @@ void initNotifyTask(int status)
 {
 	int err = 0;
 	pthread_t threadId;
-	notifyMsgQ = NULL;
 	int *device_status = (int *) malloc(sizeof(int));
 	*device_status = status;
 
@@ -506,6 +505,9 @@ void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size, void* user_dat
 	WalInfo("set g_syncNotifyInProgress, g_checkSyncNotifyRetry to 1\n");
 	
 	paramNotify= (ParamNotify *) malloc(sizeof(ParamNotify));
+	/* CID-565403 Uninitialized pointer read Fix */
+	memset(paramNotify, 0, sizeof(ParamNotify));
+
 	if(val->parameterName != NULL)
 		paramNotify->paramName = strdup(val->parameterName);
 	if(val->oldValue != NULL)
@@ -519,7 +521,8 @@ void ccspWebPaValueChangedCB(parameterSigStruct_t* val, int size, void* user_dat
 	notifyDataPtr->type = PARAM_NOTIFY;
 	notifyDataPtr->u.notify = paramNotify;
 
-	WalInfo("Notification Event from stack: Parameter Name: %s, Data Type: %d, Change Source: %d\n", paramNotify->paramName, paramNotify->type, paramNotify->changeSource);
+	/* CID-565403 Uninitialized pointer read Fix */	
+	WalInfo("Notification Event from stack: Parameter Name: %s, Data Type: %d, Change Source: %d\n", paramNotify->paramName ? paramNotify->paramName : "NULL", paramNotify->type, paramNotify->changeSource);
 
 	(*notifyCbFn)(notifyDataPtr);
 }
@@ -1566,12 +1569,24 @@ void processNotification(NotifyData *notifyData)
 						if(read_sync_notify_from_file() == 1)
 						{
 							WalError("Error while reading param_notify_retry_string from file\n");
+							/* CID-57566 Resource leak fix */
+							WAL_FREE(cid);
+							/* CID-565401 Resource Leak Fix */
+							WAL_FREE(dest);
+							cJSON_Delete(notifyPayload);
+							freeNotifyMessage(notifyData);
 							return;
 						}
 					}
 					cJSON *parameter = cJSON_Parse(param_notify_string);
 					if (parameter == NULL) {
 						WalError("Error in parsing JSON file '%s' content\n",SYNC_NOTIFY_PARAM_BACKUP_FILE);
+						/* CID-57566 Resource leak fix */
+						WAL_FREE(cid);
+						/* CID-565401 Resource Leak Fix */
+						WAL_FREE(dest);
+						cJSON_Delete(notifyPayload);
+						freeNotifyMessage(notifyData);
 						return;
 					}
 					cJSON_AddItemToObject(notifyPayload, "parameter", parameter);

@@ -22,6 +22,8 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
     if ( ! component_id || ! path )
     {
         CcspTraceError((" !!! ssp_Mbi_MessageBusEngage: component_id or path is NULL !!!\n"));
+        /* CID-53104 Return failure if component_id or path is NULL */
+        return ANSC_STATUS_FAILURE;
     }
 
     /* Connect to message bus */
@@ -42,7 +44,8 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
         return returnStatus;
     }
 
-    CcspTraceInfo(("INFO: bus_handle: 0x%8x \n", bus_handle));
+    /* CID 268716 Invalid printf format specifier fix*/
+    CcspTraceInfo(("INFO: bus_handle: %p \n", bus_handle));
     g_MessageBusHandle_Irep = bus_handle;
     AnscCopyString(g_SubSysPrefix_Irep, g_Subsystem);
 
