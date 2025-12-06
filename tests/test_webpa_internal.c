@@ -18,6 +18,35 @@ int numLoops;
 //To control the checkIfSystemReady() state
 static int cr_ready_state = 0;
 
+// Extern variable from webpa_internal.c to check caching completion
+extern int cachingStatus;
+
+/*----------------------------------------------------------------------------*/
+/*                             Helper Functions                               */
+/*----------------------------------------------------------------------------*/
+/**
+ * @brief Wait for component caching to complete by polling cachingStatus
+ * @param timeout_seconds Maximum time to wait in seconds
+ * @return 0 on success, -1 on timeout
+ */
+static int waitForComponentCachingComplete(int timeout_seconds)
+{
+    int elapsed = 0;
+
+    WalPrint("Waiting for component caching to complete (timeout: %d seconds)\\n", timeout_seconds);
+
+    while (elapsed < timeout_seconds) {
+        if (cachingStatus == 1) {
+            WalPrint("Component caching completed after %d seconds\\n", elapsed);
+            return 0;  // Success
+        }
+        sleep(10);
+        elapsed += 10;
+    }
+
+    return -1;  // Timeout
+}
+
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
 /*----------------------------------------------------------------------------*/
@@ -132,7 +161,8 @@ void test_initComponentCaching_cr_ready_failure()
     ret = 0;
     cr_ready_state = 1;
     initComponentCaching(ret);
-    sleep(70);
+    // Wait for component caching to complete (with retries for all failed components)
+    waitForComponentCachingComplete(200);
 	webpaRbus_Uninit();
 }
 
@@ -151,7 +181,8 @@ void test_initComponentCaching_cr_notready_cache_present_failure()
     ret = 0;
     cr_ready_state = 0;
     initComponentCaching(ret);
-    sleep(70);
+    // Wait for component caching to complete (CR not ready scenario)
+    waitForComponentCachingComplete(200);
     system("rm /var/tmp/cacheready");
 	webpaRbus_Uninit();
 }
@@ -171,7 +202,8 @@ void test_initComponentCaching_cr_notready_failure()
     ret = 0;
     cr_ready_state = 0;
     initComponentCaching(ret);
-    sleep(70);
+    // Wait for component caching to complete (CR not ready, no cache scenario)
+    waitForComponentCachingComplete(200);  // Allow up to 200 seconds
 	webpaRbus_Uninit();
 }
 
