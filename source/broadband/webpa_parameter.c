@@ -533,12 +533,12 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
                         IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterValue);
                         WalPrint("B4 assignment\n");
                         size_t name_len = strlen(parameterval[cnt][0].parameterName);
-                        (*paramArr)[paramIndex][0].name = (char *) malloc(name_len + 1);
-                        snprintf((*paramArr)[paramIndex][0].name, name_len + 1, "%s", parameterval[cnt][0].parameterName);
+                        (*paramArr)[paramIndex][cnt+startIndex].name = (char *) malloc(name_len + 1);
+                        snprintf((*paramArr)[paramIndex][cnt+startIndex].name, name_len + 1, "%s", parameterval[cnt][0].parameterName);
 
                         size_t value_len = strlen(parameterval[cnt][0].parameterValue);
-                        (*paramArr)[paramIndex][0].value = (char *) malloc(value_len + 1);
-                        snprintf((*paramArr)[paramIndex][0].value, value_len + 1, "%s", parameterval[cnt][0].parameterValue);
+                        (*paramArr)[paramIndex][cnt+startIndex].value = (char *) malloc(value_len + 1);
+                        snprintf((*paramArr)[paramIndex][cnt+startIndex].value, value_len + 1, "%s", parameterval[cnt][0].parameterValue);
                         (*paramArr)[paramIndex][cnt+startIndex].type = parameterval[cnt][0].type;
                         WalPrint("success: %s %s %d \n",(*paramArr)[paramIndex][cnt+startIndex].name,(*paramArr)[paramIndex][cnt+startIndex].value, (*paramArr)[paramIndex][cnt+startIndex].type);
                     }
