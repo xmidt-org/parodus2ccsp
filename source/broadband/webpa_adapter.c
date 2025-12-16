@@ -139,7 +139,9 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                         WalPrint("Non-Wildcard retCount : %d ret : %d\n",retCount, ret);
                                         for(i = 0; i < nonWildcardParamCount; i++)
                                         {       
-                                                resObj->u.getRes->paramNames[i] = getParamList[i];
+                                                size_t name_len = strlen(getParamList[i]);
+                                                resObj->u.getRes->paramNames[i] = (char *)malloc(name_len + 1);
+                                                snprintf(resObj->u.getRes->paramNames[i], name_len + 1, "%s", getParamList[i]);
                                                 WalPrint("Response:> paramNames[%d] = %s\n",i,resObj->u.getRes->paramNames[i]);
                                                 resObj->u.getRes->retParamCnt[i] = 1;
                                                 WalPrint("Response:> retParamCnt[%d] = %zu\n",i,resObj->u.getRes->retParamCnt[i]);
