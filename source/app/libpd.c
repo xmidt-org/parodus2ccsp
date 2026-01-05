@@ -133,9 +133,6 @@ static void connect_parodus()
 	            WalPrint("libparodus_shutdown retval %d\n", retval);
 	    	}
 	}
-	/* CID-71358 CID-55326 Resource leak fix */
-		WAL_FREE(parodus_url);
-		WAL_FREE(client_url);
 }
 
 //set global conn status and to awake waiting getter threads
