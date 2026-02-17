@@ -114,6 +114,49 @@ void test_singleGet()
     cJSON_Delete(response);
 }
 
+void test_singleGetWithNullValue()
+{
+    char *reqPayload = "{ \"names\":[\"Device.DeviceInfo.Webpa.Enable\"],\"command\": \"GET\"}";
+    char *transactionId = "aasfsdfgeh";
+    char *resPayload = NULL;
+    cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL;
+    int count = 1;
+    int totalCount = 1;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+    
+    getCompDetails();
+    parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*));
+    valueList[0] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t)*totalCount);
+    valueList[0]->parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+    strncpy(valueList[0]->parameterName, "Device.DeviceInfo.Webpa.Enable",MAX_PARAMETER_LEN);
+    valueList[0]->parameterValue = NULL;
+    valueList[0]->type = ccsp_boolean;
+
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, totalCount);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
+    WalInfo("resPayload : %s\n",resPayload);
+
+    assert_non_null(resPayload);
+    response = cJSON_Parse(resPayload);
+    assert_non_null(response);
+    paramArray = cJSON_GetObjectItem(response, "parameters");
+    assert_int_equal(count, cJSON_GetArraySize(paramArray));
+    resParamObj = cJSON_GetArrayItem(paramArray, 0);
+    assert_int_equal(totalCount,cJSON_GetObjectItem(resParamObj, "parameterCount")->valueint);
+    assert_string_equal("Device.DeviceInfo.Webpa.Enable",cJSON_GetObjectItem(resParamObj, "name")->valuestring);
+    assert_string_equal("null",cJSON_GetObjectItem(resParamObj, "value")->valuestring );
+    assert_int_equal(WDMP_BOOLEAN, cJSON_GetObjectItem(resParamObj, "dataType")->valueint);
+    assert_string_equal("Success",cJSON_GetObjectItem(resParamObj, "message")->valuestring );
+    assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
+    cJSON_Delete(response);
+}
+
 void test_singleWildcardGet()
 {
     char *reqPayload = "{ \"names\":[\"Device.DeviceInfo.Webpa.\"],\"command\": \"GET\"}";
@@ -166,6 +209,89 @@ void test_singleWildcardGet()
         assert_string_equal(names[i],cJSON_GetObjectItem(valueObj, "name")->valuestring );
         assert_string_equal(values[i],cJSON_GetObjectItem(valueObj, "value")->valuestring );
         assert_int_equal(WDMP_STRING, cJSON_GetObjectItem(valueObj, "dataType")->valueint);
+    }
+    assert_int_equal(WDMP_NONE, cJSON_GetObjectItem(resParamObj, "dataType")->valueint);
+    assert_string_equal("Success",cJSON_GetObjectItem(resParamObj, "message")->valuestring );
+    assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
+    cJSON_Delete(response);
+}
+
+void test_singleWildcardGetWithNullValue()
+{
+    char *reqPayload = "{ \"names\":[\"Device.DeviceInfo.Webpa.\"],\"command\": \"GET\"}";
+    char *transactionId = "aasfsdfgeh";
+    char *resPayload = NULL;
+    char *names[MAX_PARAMETER_LEN] = {"Device.DeviceInfo.Webpa.CMC", NULL, "Device.DeviceInfo.Webpa.Version"};
+    char *values[MAX_PARAMETER_LEN] = {"32", NULL, "1"};
+    cJSON *response = NULL, *paramArray = NULL, *resParamObj = NULL, *value = NULL, *valueObj = NULL;
+    int count = 1, i=0;
+    int totalCount = 3;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
+    getCompDetails();
+    parameterValStruct_t **valueList = (parameterValStruct_t **) malloc(sizeof(parameterValStruct_t*)*totalCount);
+    for(i = 0; i<totalCount; i++)
+    {
+        valueList[i] = (parameterValStruct_t *) malloc(sizeof(parameterValStruct_t));
+        if (names[i] != NULL)
+        {
+            valueList[i][0].parameterName = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+            strncpy(valueList[i][0].parameterName, names[i],MAX_PARAMETER_LEN);
+        }
+        else
+        {
+            valueList[i][0].parameterName = NULL;
+        }
+
+        if (values[i] != NULL)
+        {
+            valueList[i][0].parameterValue = (char *) malloc(sizeof(char) * MAX_PARAMETER_LEN);
+            strncpy(valueList[i][0].parameterValue, values[i],MAX_PARAMETER_LEN);
+        }
+        else
+        {
+            valueList[i][0].parameterValue = NULL; 
+        }      
+        valueList[i][0].type = ccsp_string;
+    }
+
+    will_return(get_global_values, valueList);
+    will_return(get_global_parameters_count, totalCount);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
+    WalInfo("resPayload : %s\n",resPayload);
+
+    assert_non_null(resPayload);
+    response = cJSON_Parse(resPayload);
+    assert_non_null(response);
+    paramArray = cJSON_GetObjectItem(response, "parameters");
+    assert_int_equal(count, cJSON_GetArraySize(paramArray));
+    resParamObj = cJSON_GetArrayItem(paramArray, 0);
+    assert_int_equal(totalCount,cJSON_GetObjectItem(resParamObj, "parameterCount")->valueint);
+    assert_string_equal("Device.DeviceInfo.Webpa.",cJSON_GetObjectItem(resParamObj, "name")->valuestring);
+    value = cJSON_GetObjectItem(resParamObj, "value");
+    assert_non_null(value);
+    assert_int_equal(totalCount, cJSON_GetArraySize(value));
+    for(i=0; i<totalCount; i++)
+    {
+        valueObj = cJSON_GetArrayItem(value, i);
+        assert_non_null(valueObj);
+        if (names[i] == NULL)
+        {
+            assert_string_equal("null",cJSON_GetObjectItem(valueObj, "name")->valuestring );
+        }
+        else
+            assert_string_equal(names[i],cJSON_GetObjectItem(valueObj, "name")->valuestring );
+        if (values[i] == NULL)
+        {
+            assert_string_equal("null",cJSON_GetObjectItem(valueObj, "value")->valuestring );
+        }
+        else
+            assert_string_equal(values[i],cJSON_GetObjectItem(valueObj, "value")->valuestring );
     }
     assert_int_equal(WDMP_NONE, cJSON_GetObjectItem(resParamObj, "dataType")->valueint);
     assert_string_equal("Success",cJSON_GetObjectItem(resParamObj, "message")->valuestring );
@@ -748,7 +874,9 @@ int main(void)
 {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_singleGet),
+        cmocka_unit_test(test_singleGetWithNullValue),
         cmocka_unit_test(test_singleWildcardGet),
+        cmocka_unit_test(test_singleWildcardGetWithNullValue),
         cmocka_unit_test(test_wildcardGetWithNoChilds),
         cmocka_unit_test(test_largeWildcardGet),
         cmocka_unit_test(test_multipleParameterGet),
