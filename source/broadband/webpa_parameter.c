@@ -495,17 +495,19 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
                 {
                     for (cnt = 0; cnt < val_size; cnt++)
                     {
-                        (*paramArr)[paramIndex] = (param_t *) malloc(sizeof(param_t));
-                        WalPrint("Stack:> success: %s %s %d \n",parameterval[cnt][0].parameterName,parameterval[cnt][0].parameterValue, parameterval[cnt][0].type);
-                        IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterName);
-
-                        IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterValue);
+                        (*paramArr)[paramIndex] = (param_t *) malloc(sizeof(param_t));                   
+                        WalPrint("Stack:> success: %s %s %d \n", parameterval[cnt][0].parameterName ? parameterval[cnt][0].parameterName : "(null)", parameterval[cnt][0].parameterValue ? parameterval[cnt][0].parameterValue : "(null)", parameterval[cnt][0].type);
+                        if (parameterval[cnt][0].parameterName)
+                            IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterName);
+                        if (parameterval[cnt][0].parameterValue)
+                            IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterValue);
 
                         WalPrint("B4 assignment\n");
-                        (*paramArr)[paramIndex][0].name = parameterval[cnt][0].parameterName;
-                        (*paramArr)[paramIndex][0].value = parameterval[cnt][0].parameterValue;
+                        (*paramArr)[paramIndex][0].name = parameterval[cnt][0].parameterName ? parameterval[cnt][0].parameterName: strdup("null");
+                        (*paramArr)[paramIndex][0].value = (parameterval[cnt][0].parameterValue) ? parameterval[cnt][0].parameterValue: strdup("null");
                         (*paramArr)[paramIndex][0].type = parameterval[cnt][0].type;
-                        WalPrint("success: %s %s %d \n",(*paramArr)[paramIndex][0].name,(*paramArr)[paramIndex][0].value, (*paramArr)[paramIndex][0].type);
+                        WalPrint("success: %s %s %d \n", (*paramArr)[paramIndex][0].name ? (*paramArr)[paramIndex][0].name : "(null)", (*paramArr)[paramIndex][0].value ? (*paramArr)[paramIndex][0].value : "(null)", (*paramArr)[paramIndex][0].type);
+
                         paramIndex++;
                     }
                 }
@@ -522,14 +524,16 @@ static int getParamValues(char *parameterNames[], int paramCount, char *CompName
 
                     for (cnt = 0; cnt < val_size; cnt++)
                     {
-                        WalPrint("Stack:> success: %s %s %d \n",parameterval[cnt][0].parameterName,parameterval[cnt][0].parameterValue, parameterval[cnt][0].type);
-                        IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterName);
-                        IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterValue);
+                        WalPrint("Stack:> success: %s %s %d \n", parameterval[cnt][0].parameterName ? parameterval[cnt][0].parameterName : "(null)", parameterval[cnt][0].parameterValue ? parameterval[cnt][0].parameterValue : "(null)", parameterval[cnt][0].type);
+                        if (parameterval[cnt][0].parameterName)
+                            IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterName);
+                        if (parameterval[cnt][0].parameterValue)
+                            IndexMpa_CPEtoWEBPA(&parameterval[cnt][0].parameterValue);
                         WalPrint("B4 assignment\n");
-                        (*paramArr)[paramIndex][cnt+startIndex].name = parameterval[cnt][0].parameterName;
-                        (*paramArr)[paramIndex][cnt+startIndex].value = parameterval[cnt][0].parameterValue;
+                        (*paramArr)[paramIndex][cnt+startIndex].name = parameterval[cnt][0].parameterName ? (parameterval[cnt][0].parameterName): strdup("null");
+                        (*paramArr)[paramIndex][cnt+startIndex].value = (parameterval[cnt][0].parameterValue) ? (parameterval[cnt][0].parameterValue): strdup("null");
                         (*paramArr)[paramIndex][cnt+startIndex].type = parameterval[cnt][0].type;
-                        WalPrint("success: %s %s %d \n",(*paramArr)[paramIndex][cnt+startIndex].name,(*paramArr)[paramIndex][cnt+startIndex].value, (*paramArr)[paramIndex][cnt+startIndex].type);
+                        WalPrint("success: %s %s %d \n", (*paramArr)[paramIndex][cnt + startIndex].name ? (*paramArr)[paramIndex][cnt + startIndex].name : "(null)", (*paramArr)[paramIndex][cnt + startIndex].value ? (*paramArr)[paramIndex][cnt + startIndex].value : "(null)", (*paramArr)[paramIndex][cnt + startIndex].type);
                     }
                 }
             }
