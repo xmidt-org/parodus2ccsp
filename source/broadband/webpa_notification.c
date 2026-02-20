@@ -1402,9 +1402,9 @@ void processNotification(NotifyData *notifyData)
 				WalInfo("Sleeping for 8 sec before sending SYNC_NOTIFICATION\n");
 				sleep(8);
 			#else
-				//Added delay of 5s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
-				WalInfo("Sleeping for 5 sec before sending SYNC_NOTIFICATION\n");
-				sleep(5);
+				//Added delay of 10s to fix wifi captive portal issue where sync notifications are sent before wifi updates the parameter values in device DB
+				WalInfo("Sleeping for 10 sec before sending SYNC_NOTIFICATION\n");
+				sleep(10);
 			#endif
 				//Signaling sync notification retry to reset the timer whenever any new notifications are received
 				pthread_mutex_lock (&sync_mutex);
