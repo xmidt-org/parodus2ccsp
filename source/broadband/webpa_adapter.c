@@ -9,9 +9,22 @@
 #include "webpa_notification.h"
 #include "webpa_internal.h"
 #include "webpa_rbus.h"
+#include "rdk_otlp_instrumentation.h" // OpenTelemetry wrapper for distributed tracing
 #ifdef FEATURE_SUPPORT_WEBCONFIG
 #include <webcfg_generic.h>
 #endif
+// Helper to parse W3C traceparent header (version-00)
+static int parse_traceparent(const char* traceparent, char* trace_id, char* span_id, char* trace_flags) {
+        // traceparent: "00-<trace-id>-<span-id>-<flags>"
+        if (!traceparent) return 0;
+        if (strlen(traceparent) < 55) return 0;
+        // version (2) + dash (1) + trace-id (32) + dash (1) + span-id (16) + dash (1) + flags (2) = 55
+        if (traceparent[2] != '-' || traceparent[35] != '-' || traceparent[52] != '-') return 0;
+        strncpy(trace_id, traceparent + 3, 32); trace_id[32] = '\0';
+        strncpy(span_id, traceparent + 36, 16); span_id[16] = '\0';
+        strncpy(trace_flags, traceparent + 53, 2); trace_flags[2] = '\0';
+        return 1;
+}
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -267,13 +280,44 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                 }
                                 WalPrint("After setTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");
 
-                                for (i = 0; i < paramCount; i++) 
-                                {
-                                        WalPrint("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
-                                        WalPrint("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
-                                        WalPrint("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
-                                        setRebootReason(reqObj->u.setReq->param[i], WEBPA_SET);
-                                }
+                                                                // Only trace SpeedTest param, log at each step
+                                                                for (i = 0; i < paramCount; i++) 
+                                                                {
+                                                                        WalPrint("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
+                                                                        WalPrint("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
+                                                                        WalPrint("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
+                                                                        setRebootReason(reqObj->u.setReq->param[i], WEBPA_SET);
+
+                                                                        if(strcmp(reqObj->u.setReq->param[i].name, "Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Run") == 0) {
+                                                                                char trace_id[33] = {0}, span_id[17] = {0}, trace_flags[3] = {0};
+                                                                                int have_parent = 0;
+                                                                                // Use RBUS to get parent context
+                                                                                char* traceContext[2] = {0};
+                                                                                WalPrint("[OTEL] Attempting to get parent trace context from RBUS for SpeedTest param\n");
+                                                                                if(getTraceContext(traceContext) == 0 && traceContext[0]) {
+                                                                                        have_parent = parse_traceparent(traceContext[0], trace_id, span_id, trace_flags);
+                                                                                        if(have_parent) {
+                                                                                                WalPrint("[OTEL] Got parent trace context from RBUS: trace_id=%s span_id=%s flags=%s\n", trace_id, span_id, trace_flags);
+                                                                                                rdk_otlp_store_trace_context(trace_id, span_id, trace_flags);
+                                                                                                WalPrint("[OTEL] Stored parent context in shared memory, starting child span\n");
+                                                                                                rdk_otlp_start_child_span(reqObj->u.setReq->param[i].name, "set");
+                                                                                        } else {
+                                                                                                WalPrint("[OTEL] No valid parent span found in RBUS trace context for SpeedTest param\n");
+                                                                                        }
+                                                                                } else {
+                                                                                        WalPrint("[OTEL] getTraceContext failed or returned no context for SpeedTest param\n");
+                                                                                }
+                                                                                if(traceContext[0]) free(traceContext[0]);
+                                                                                if(traceContext[1]) free(traceContext[1]);
+                                                                        }
+                                                                }
+                                                                // After parameter set logic, finish child span if started
+                                                                for (i = 0; i < paramCount; i++) {
+                                                                        if(strcmp(reqObj->u.setReq->param[i].name, "Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Run") == 0) {
+                                                                                WalPrint("[OTEL] Finishing child span for SpeedTest param if started\n");
+                                                                                rdk_otlp_finish_child_span();
+                                                                        }
+                                                                }
                                 
                                 ret = validate_parameter(reqObj->u.setReq->param, paramCount, reqObj->reqType);
                                 WalPrint("ret : %d\n",ret);
