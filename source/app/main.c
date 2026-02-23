@@ -8,6 +8,7 @@
 #include "stdlib.h"
 #include "signal.h"
 #include "webpa_adapter.h"
+#include "rdk_otlp_instrumentation.h" // OTEL tracing wrapper
 #include "libpd.h"
 #include "webpa_rbus.h"
 #ifdef FEATURE_SUPPORT_WEBCONFIG
@@ -32,7 +33,12 @@ static void sig_handler(int sig);
 
 int main()
 {
-        int ret = -1;
+		int ret = -1;
+
+		// Initialize OpenTelemetry tracing (must be done before any tracing APIs are used)
+		WalInfo("[OTEL] Initializing OpenTelemetry tracing for webpa\n");
+		rdk_otlp_init("webpa", "1.0.0");
+		WalInfo("[OTEL] OpenTelemetry tracing initialized\n");
 
 #ifdef INCLUDE_BREAKPAD
     breakpad_ExceptionHandler();
