@@ -299,6 +299,15 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                                                                         if(have_parent) {
                                                                                                 WalPrint("[OTEL] Got parent trace context from RBUS: trace_id=%s span_id=%s flags=%s\n", trace_id, span_id, trace_flags);
                                                                                                 rdk_otlp_store_trace_context(trace_id, span_id, trace_flags);
+																							    // Write parent context to /tmp/parentID for speedtest binary
+                                                                                                FILE *fp = fopen("/tmp/parentID", "w");
+                                                                                                if(fp) {
+                                                                                                    fprintf(fp, "%s,%s,%s\n", trace_id, span_id, trace_flags);
+                                                                                                    fclose(fp);
+                                                                                                    WalPrint("[OTEL] Wrote parent trace context to /tmp/parentID for speedtest\n");
+                                                                                                } else {
+                                                                                                    WalError("[OTEL] Failed to open /tmp/parentID for writing\n");
+                                                                                                }
                                                                                                 WalPrint("[OTEL] Stored parent context in shared memory, starting child span\n");
                                                                                                 rdk_otlp_start_child_span(reqObj->u.setReq->param[i].name, "set");
                                                                                         } else {
