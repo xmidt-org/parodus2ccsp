@@ -288,7 +288,8 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                                                         WalPrint("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
                                                                         setRebootReason(reqObj->u.setReq->param[i], WEBPA_SET);
 
-                                                                        if(strcmp(reqObj->u.setReq->param[i].name, "Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Run") == 0) {
+                                                                        //if(strcmp(reqObj->u.setReq->param[i].name, "Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Run") == 0) {
+																	      if (1) {
                                                                                 char trace_id[33] = {0}, span_id[17] = {0}, trace_flags[3] = {0};
                                                                                 int have_parent = 0;
                                                                                 // Use RBUS to get parent context
