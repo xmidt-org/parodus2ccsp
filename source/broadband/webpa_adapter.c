@@ -86,7 +86,27 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                 
                 resObj->reqType = reqObj->reqType;
                 WalInfo("Response:> type = %d\n", resObj->reqType);
-                
+
+			    char trace_id[33] = {0}, span_id[17] = {0}, trace_flags[3] = {0};
+                int have_parent = parse_traceparent(req_headers->headers[0], char* trace_id, char* span_id, char* trace_flags)
+			    if (have_parent)
+				{
+					WalInfo("[OTEL] Trace ID : %s, Span ID : %s, Trace Flags : %s\n", trace_id, span_id, trace_flags);
+					WalInfo("Request:> param[0].name = %s\n",i,reqObj->u.setReq->param[0].name);
+					FILE *fp = fopen("/tmp/parentID", "w");
+                    if(fp) {
+                       fprintf(fp, "%s,%s,%s\n", trace_id, span_id, trace_flags);
+                       fclose(fp);
+                       WalInfo("[OTEL] Wrote parent trace context to /tmp/parentID for speedtest\n");
+                    }
+					rdk_otlp_store_trace_context(trace_id, span_id, trace_flags);
+					rdk_otlp_start_child_span(reqObj->u.setReq->param[i].name, "set");
+				}
+			    else
+				{
+					WalInfo("[OTEL] No Parent found\n");
+				}
+			
                 switch( reqObj->reqType ) 
                 {
                 
@@ -286,56 +306,6 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                                         setTraceContext(req_headers->headers);
                                 }
                                 WalInfo("After setTraceContext in WEBPA SET or SET_ATTRIBUTES request\n");
-
-                                                                // Only trace SpeedTest param, log at each step
-                                                                for (i = 0; i < paramCount; i++) 
-                                                                {
-                                                                        WalInfo("Request:> param[%d].name = %s\n",i,reqObj->u.setReq->param[i].name);
-                                                                        WalInfo("Request:> param[%d].value = %s\n",i,reqObj->u.setReq->param[i].value);
-                                                                        WalInfo("Request:> param[%d].type = %d\n",i,reqObj->u.setReq->param[i].type);
-                                                                        setRebootReason(reqObj->u.setReq->param[i], WEBPA_SET);
-
-                                                                        //if(strcmp(reqObj->u.setReq->param[i].name, "Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Run") == 0) {
-																	      if (1) {
-                                                                                char trace_id[33] = {0}, span_id[17] = {0}, trace_flags[3] = {0};
-                                                                                int have_parent = 0;
-                                                                                // Use RBUS to get parent context
-                                                                                char* traceContext[2] = {0};
-                                                                                WalInfo("[OTEL] Attempting to get parent trace context from RBUS for SpeedTest param\n");
-                                                                                if(getTraceContext(traceContext) == 0 && traceContext[0]) {
-                                                                                        have_parent = parse_traceparent(traceContext[0], trace_id, span_id, trace_flags);
-                                                                                        if(have_parent) {
-                                                                                                WalInfo("[OTEL] Got parent trace context from RBUS: trace_id=%s span_id=%s flags=%s\n", trace_id, span_id, trace_flags);
-                                                                                                rdk_otlp_store_trace_context(trace_id, span_id, trace_flags);
-																							    // Write parent context to /tmp/parentID for speedtest binary
-                                                                                                FILE *fp = fopen("/tmp/parentID", "w");
-                                                                                                if(fp) {
-                                                                                                    fprintf(fp, "%s,%s,%s\n", trace_id, span_id, trace_flags);
-                                                                                                    fclose(fp);
-                                                                                                    WalInfo("[OTEL] Wrote parent trace context to /tmp/parentID for speedtest\n");
-                                                                                                } else {
-                                                                                                    WalError("[OTEL] Failed to open /tmp/parentID for writing\n");
-                                                                                                }
-                                                                                                WalInfo("[OTEL] Stored parent context in shared memory, starting child span\n");
-                                                                                                rdk_otlp_start_child_span(reqObj->u.setReq->param[i].name, "set");
-                                                                                        } else {
-                                                                                                WalInfo("[OTEL] No valid parent span found in RBUS trace context for SpeedTest param\n");
-                                                                                        }
-                                                                                } else {
-                                                                                        WalInfo("[OTEL] getTraceContext failed or returned no context for SpeedTest param\n");
-                                                                                }
-                                                                                if(traceContext[0]) free(traceContext[0]);
-                                                                                if(traceContext[1]) free(traceContext[1]);
-                                                                        }
-                                                                }
-                                                                // After parameter set logic, finish child span if started
-                                                                for (i = 0; i < paramCount; i++) {
-                                                                        if(strcmp(reqObj->u.setReq->param[i].name, "Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Run") == 0) {
-                                                                                WalInfo("[OTEL] Finishing child span for SpeedTest param if started\n");
-                                                                                rdk_otlp_finish_child_span();
-                                                                        }
-                                                                }
-                                
                                 ret = validate_parameter(reqObj->u.setReq->param, paramCount, reqObj->reqType);
                                 WalInfo("ret : %d\n",ret);
                                 if(ret == WDMP_SUCCESS)
@@ -612,6 +582,7 @@ void processRequest(char *reqPayload,char *transactionId, char **resPayload, hea
                 wdmp_free_res_struct(resObj);
         }
         WalInfo("************** processRequest *****************\n");
+	rdk_otlp_finish_child_span();
 }
 
 /*----------------------------------------------------------------------------*/
