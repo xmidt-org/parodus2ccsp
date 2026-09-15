@@ -49,12 +49,8 @@ pthread_cond_t cloud_con;
 static void connect_parodus()
 {
 	    pthread_condattr_t attr;
-        int backoffRetryTime = 0;
-        int backoff_max_time = 5;
-        int max_retry_sleep;
-        //Retry Backoff count shall start at c=2 & calculate 2^c - 1.
-        int c =2;
-        int retval=-1;
+        unsigned int retry_sleep_seconds = 2;
+	    int retval=-1;
         int fd = 0;
 		/* CID-71358 CID-55326 Resource leak fix */
         static char *parodus_url = NULL;
@@ -65,8 +61,7 @@ static void connect_parodus()
         pthread_cond_init(&cloud_con, &attr);
         pthread_condattr_destroy(&attr);
 
-        max_retry_sleep = (int) pow(2, backoff_max_time) -1;
-        WalInfo("max_retry_sleep is %d\n", max_retry_sleep );
+        WalInfo("parodus retry interval is %u seconds\n", retry_sleep_seconds);
 	   /* CID-71358 CID-55326 Resource leak fix */
 		WAL_FREE(parodus_url);
 		WAL_FREE(client_url);	
@@ -83,58 +78,57 @@ static void connect_parodus()
 	    	WalPrint("libparodus_init with parodus url %s and client url %s\n",cfg1.parodus_url,cfg1.client_url);
 
 	    	while(1)
-	    	{
-	            if(backoffRetryTime < max_retry_sleep)
-	            {
-	                  backoffRetryTime = (int) pow(2, c) -1;
-	            }
-
-	            WalPrint("New backoffRetryTime value calculated as %d seconds\n", backoffRetryTime);
-	            int ret =libparodus_init (&current_instance, &cfg1);
-	            WalPrint("ret is %d\n",ret);
-	            if(ret ==0)
-	            {
-	                    WalInfo("Init for parodus Success..!!\n");
-	                    WalInfo("WebPA is now ready to process requests\n");
-	                    OnboardLog("WebPA is now ready to process requests\n");
+		{
+			int ret =libparodus_init (&current_instance, &cfg1);
+			WalPrint("ret is %d\n",ret);
+			if(ret ==0)
+			{
+				WalInfo("Init for parodus Success..!!\n");
+				WalInfo("WebPA is now ready to process requests\n");
+				OnboardLog("WebPA is now ready to process requests\n");
 #ifdef RDKB_BUILD
-	                    if (access("/tmp/webpa_start", F_OK) == -1 && errno == ENOENT)
-	                    {
-				    struct sysinfo l_sSysInfo;
-				    sysinfo(&l_sSysInfo);
-				    char uptime[16] = {0};
-				    snprintf(uptime, sizeof(uptime), "%ld", l_sSysInfo.uptime);
-	                            print_uptime("boot_to_WEBPA_READY_uptime", NULL, uptime);
+				if (access("/tmp/webpa_start", F_OK) == -1 && errno == ENOENT)
+				{
+					struct sysinfo l_sSysInfo;
+					sysinfo(&l_sSysInfo);
+					char uptime[16] = {0};
+					snprintf(uptime, sizeof(uptime), "%ld", l_sSysInfo.uptime);
+					print_uptime("boot_to_WEBPA_READY_uptime", NULL, uptime);
 
-	                            if((fd = creat("/tmp/webpa_start", S_IRUSR | S_IWUSR)) == -1)
-	                            {
-	                                    fprintf(stderr, "File: /tmp/webpa_start creation failed with error:%d\n", errno);
-	                            }
-	                            else
-	                            {
-	                                    close(fd);
-	                            }
-	                    }
+					if((fd = creat("/tmp/webpa_start", S_IRUSR | S_IWUSR)) == -1)
+					{
+						fprintf(stderr, "File: /tmp/webpa_start creation failed with error:%d\n", errno);
+					}
+					else
+					{
+						close(fd);
+					}
+				}
 #endif
-	                    break;
-	            }
-	            else
-	            {
-	                    WalError("Init for parodus failed: '%s'\n",libparodus_strerror(ret));
-	                    sleep(backoffRetryTime);
-	                    c++;
+				break;
+			}
+			else
+			{
+				WalError("Init for parodus failed: '%s'\n",libparodus_strerror(ret));
+				sleep(retry_sleep_seconds);
+				if(retry_sleep_seconds < 8)
+				{
+					retry_sleep_seconds += 2;
+				}
+				else if(retry_sleep_seconds == 8)
+				{
+					retry_sleep_seconds = 16;
+				}
+				else
+				{
+					retry_sleep_seconds = 2;
+				}
 
-	                    if(backoffRetryTime == max_retry_sleep)
-	                    {
-	                    	c = 2;
-	                    	backoffRetryTime = 0;
-	                    	WalPrint("backoffRetryTime reached max value, reseting to initial value\n");
-	                    	OnboardLog("Init for parodus failed: '%s'\n",libparodus_strerror(ret));
-	                    }
-	            }
-	            retval = libparodus_shutdown(&current_instance);
-	            WalPrint("libparodus_shutdown retval %d\n", retval);
-	    	}
+
+			}
+			retval = libparodus_shutdown(&current_instance);
+			WalPrint("libparodus_shutdown retval %d\n", retval);
+		}
 	}
 }
 
