@@ -293,6 +293,7 @@ static int parseOperatePayload(set_req_t *setReq,
         cJSON *paramsItem = NULL;
         cJSON *rspDestinationItem = NULL;
         const char *rspDestination = NULL;
+        rbusObject_t tmpParams = NULL;
         param_t *p = NULL;
 
         /* A method request carries exactly one RDK.Operate parameter. */
@@ -365,15 +366,16 @@ static int parseOperatePayload(set_req_t *setReq,
         WalPrint("Method invocation target: %s\n", *methodName);
 
         /* Convert the optional params object into an RBUS input object. */
-        rbusObject_Init(inParams, NULL);
+        rbusObject_Init(&tmpParams, NULL);
         paramsItem = cJSON_GetObjectItem(operateJson, "params");
         if(paramsItem != NULL && cJSON_IsObject(paramsItem))
         {
-                if(jsonObjectToRbus(paramsItem, *inParams) != 0)
+                if(jsonObjectToRbus(paramsItem, tmpParams) != 0)
                 {
                         WalError("Failed to convert params to RBUS input object\n");
                         *errorObj = buildErrorObject(METHOD_ERR_INTERNAL,
                                 "Failed to convert params to RBUS input object");
+                        rbusObject_Release(tmpParams);
                         cJSON_Delete(operateJson);
                         return -1;
                 }
@@ -390,6 +392,7 @@ static int parseOperatePayload(set_req_t *setReq,
                         WalError("Operate payload has invalid rspDestination\n");
                         *errorObj = buildErrorObject(METHOD_ERR_INVALID_REQUEST,
                                 "Operate payload has invalid rspDestination");
+                        rbusObject_Release(tmpParams);
                         cJSON_Delete(operateJson);
                         return -1;
                 }
@@ -400,6 +403,7 @@ static int parseOperatePayload(set_req_t *setReq,
                 }
         }
 
+        *inParams = tmpParams;
         cJSON_Delete(operateJson);
         return 0;
 }
@@ -625,36 +629,38 @@ static int mapRbusErrorToMethodError(rbusError_t rc)
  */
 static int jsonScalarToRbusValue(cJSON *val, rbusValue_t *out)
 {
-        rbusValue_Init(out);
+        rbusValue_t tmp = NULL;
+
+        rbusValue_Init(&tmp);
         if(cJSON_IsString(val))
         {
-                rbusValue_SetString(*out, val->valuestring != NULL ? val->valuestring : "");
+                rbusValue_SetString(tmp, val->valuestring != NULL ? val->valuestring : "");
         }
         else if(cJSON_IsBool(val))
         {
-                rbusValue_SetBoolean(*out, cJSON_IsTrue(val) ? true : false);
+                rbusValue_SetBoolean(tmp, cJSON_IsTrue(val) ? true : false);
         }
         else if(cJSON_IsNumber(val))
         {
                 if(val->valuedouble == (double) val->valueint)
                 {
-                        rbusValue_SetInt32(*out, val->valueint);
+                        rbusValue_SetInt32(tmp, val->valueint);
                 }
                 else
                 {
-                        rbusValue_SetDouble(*out, val->valuedouble);
+                        rbusValue_SetDouble(tmp, val->valuedouble);
                 }
         }
         else if(cJSON_IsNull(val))
         {
-                rbusValue_SetString(*out, "");
+                rbusValue_SetString(tmp, "");
         }
         else
         {
-                rbusValue_Release(*out);
-                *out = NULL;
+                rbusValue_Release(tmp);
                 return -1;
         }
+        *out = tmp;
         return 0;
 }
 
@@ -665,6 +671,7 @@ static int jsonScalarToRbusValue(cJSON *val, rbusValue_t *out)
 static int jsonLeafToRbusValue(cJSON *val, int wdmpType, rbusValue_t *out)
 {
         rbusValueType_t rt = wdmpToRbusType(wdmpType);
+        rbusValue_t tmp = NULL;
         const char *str = NULL;
 
         if(cJSON_IsString(val))
@@ -679,15 +686,15 @@ static int jsonLeafToRbusValue(cJSON *val, int wdmpType, rbusValue_t *out)
                 return -1;
         }
 
-        rbusValue_Init(out);
-        if(!rbusValue_SetFromString(*out, rt, str))
+        rbusValue_Init(&tmp);
+        if(!rbusValue_SetFromString(tmp, rt, str))
         {
                 /* rbusValue_SetFromString failed to parse the string into the
                  * requested rbus type; release and return -1 for error. */
-                rbusValue_Release(*out);
-                *out = NULL;
+                rbusValue_Release(tmp);
                 return -1;
         }
+        *out = tmp;
         return 0;
 }
 

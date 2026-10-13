@@ -1115,6 +1115,41 @@ void test_jsonScalarToRbusValue_array_fails()
     cJSON_Delete(val);
 }
 
+void test_handleMethodInvoke_typed_param_conversion_fails()
+{
+    /* Typed leaf with dataType=int but a non-numeric value -> rbusValue_SetFromString fails */
+    char *b64 = testBase64Encode("{\"method\":\"Device.BadInt()\",\"params\":{\"count\":{\"value\":\"notanumber\",\"dataType\":1}}}");
+    set_req_t *req = buildOperateRequest(b64, WDMP_BASE64);
+    free(b64);
+
+    res_struct *resObj = allocResObj();
+    handleMethodInvoke(req, resObj);
+
+    CU_ASSERT_PTR_NOT_NULL(resObj->retStatus);
+    CU_ASSERT_EQUAL(resObj->retStatus[0], WDMP_FAILURE);
+    CU_ASSERT_STRING_EQUAL(resObj->u.paramRes->params[0].name, RDK_OPERATE_PARAM);
+
+    freeResObj(resObj);
+    freeOperateRequest(req);
+}
+
+void test_handleMethodInvoke_typed_param_non_string_value()
+{
+    /* Typed leaf where "value" itself is a JSON number, not a string -> jsonLeafToRbusValue rejects it */
+    char *b64 = testBase64Encode("{\"method\":\"Device.BadValue()\",\"params\":{\"count\":{\"value\":123,\"dataType\":0}}}");
+    set_req_t *req = buildOperateRequest(b64, WDMP_BASE64);
+    free(b64);
+
+    res_struct *resObj = allocResObj();
+    handleMethodInvoke(req, resObj);
+
+    CU_ASSERT_PTR_NOT_NULL(resObj->retStatus);
+    CU_ASSERT_EQUAL(resObj->retStatus[0], WDMP_FAILURE);
+
+    freeResObj(resObj);
+    freeOperateRequest(req);
+}
+
 /*----------------------------------------------------------------------------*/
 /*                              Suite Setup                                    */
 /*----------------------------------------------------------------------------*/
@@ -1185,6 +1220,8 @@ void add_suites(CU_pSuite *suite)
     CU_add_test(*suite, "test_jsonScalarToRbusValue_double", test_jsonScalarToRbusValue_double);
     CU_add_test(*suite, "test_jsonScalarToRbusValue_null", test_jsonScalarToRbusValue_null);
     CU_add_test(*suite, "test_jsonScalarToRbusValue_array_fails", test_jsonScalarToRbusValue_array_fails);
+    CU_add_test(*suite, "test_handleMethodInvoke_typed_param_conversion_fails", test_handleMethodInvoke_typed_param_conversion_fails);
+    CU_add_test(*suite, "test_handleMethodInvoke_typed_param_non_string_value", test_handleMethodInvoke_typed_param_non_string_value);
 }
 
 int main(int argc, char *argv[])
