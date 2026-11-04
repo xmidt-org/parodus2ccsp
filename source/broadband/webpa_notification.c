@@ -89,6 +89,7 @@ const char * notifyparameters[]={
 "Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client",
 "Device.Bridging.Bridge.1.Port.8.Enable",
 "Device.Bridging.Bridge.2.Port.2.Enable",
+#ifndef NO_WIFI_FEATURE_SUPPORT
 "Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable",
 "Device.WiFi.AccessPoint.10001.Security.ModeEnabled",
 "Device.WiFi.AccessPoint.10001.Security.X_COMCAST-COM_KeyPassphrase",
@@ -118,6 +119,7 @@ const char * notifyparameters[]={
 "Device.WiFi.SSID.10002.SSID",
 "Device.WiFi.SSID.10102.Enable",
 "Device.WiFi.SSID.10102.SSID",
+#endif
 "Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode",
 "Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequests",
 "Device.X_CISCO_COM_Security.Firewall.FilterHTTP",
@@ -156,6 +158,7 @@ const char * notifyparameters[]={
 "Device.MoCA.Interface.1.Enable",
 #endif
 "Device.NotifyComponent.X_RDKCENTRAL-COM_PresenceNotification",
+#ifndef NO_WIFI_FEATURE_SUPPORT
 "Device.WiFi.X_CISCO_COM_FactoryResetRadioAndAp",
 "Device.WiFi.SSID.10003.SSID",
 "Device.WiFi.SSID.10103.SSID",
@@ -193,6 +196,7 @@ const char * notifyparameters[]={
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.1.LocalInterfaces",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.VLANID",
 "Device.X_COMCAST-COM_GRE.Tunnel.1.Interface.2.LocalInterfaces",
+#endif
 #if defined(_HUB4_PRODUCT_REQ_) || defined(_SCER11BEL_PRODUCT_REQ_)
 "Device.NAT.X_CISCO_COM_PortTriggers.Enable",
 "Device.UPnP.Device.UPnPIGD",
