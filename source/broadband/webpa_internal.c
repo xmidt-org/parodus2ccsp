@@ -34,7 +34,9 @@ int cachingStatus = 0;
 char *failedCompList[RDKB_TR181_OBJECT_LEVEL1_COUNT] = { '\0' };
 char *failedSubCompList[RDKB_TR181_OBJECT_LEVEL2_COUNT] = { '\0' };
 char *objectList[] ={
+#ifndef NO_WIFI_FEATURE_SUPPORT
 "Device.WiFi.",
+#endif
 "Device.DeviceInfo.",
 "Device.GatewayInfo.",
 "Device.Time.",
@@ -72,8 +74,10 @@ char *objectList[] ={
 "Device.X_Comcast_com_ParentalControl.",
 "Device.X_CISCO_COM_Diagnostics.",
 "Device.X_CISCO_COM_MultiLAN.",
+#ifndef NO_WIFI_FEATURE_SUPPORT
 "Device.X_COMCAST_COM_GRE.",
 "Device.X_CISCO_COM_GRE.",
+#endif
 "Device.Hosts.",
 "Device.ManagementServer.",
 "Device.XHosts.",
@@ -106,14 +110,16 @@ char *subObjectList[] =
 "Device.DeviceInfo.MemoryStatus.",
 "Device.DeviceInfo.ProcessStatus.",
 "Device.DeviceInfo.Webpa.",
-#if !defined(PON_GATEWAY)
+#if !defined(PON_GATEWAY) && !defined(MODEM_ONLY_SUPPORT)
 "Device.DeviceInfo.SupportedDataModel.",
 #endif
 "Device.DeviceInfo.X_RDKCENTRAL-COM.",
 "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.",
+#ifndef NO_WIFI_FEATURE_SUPPORT
 "Device.X_RDKCENTRAL-COM_Report.InterfaceDevicesWifi.",
 "Device.X_RDKCENTRAL-COM_Report.RadioInterfaceStatistics.",
 "Device.X_RDKCENTRAL-COM_Report.NeighboringAP.",
+#endif
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesStatus.",
 "Device.X_RDKCENTRAL-COM_Report.NetworkDevicesTraffic.",
 "Device.X_RDKCENTRAL-COM_Webpa.Server.",
