@@ -270,6 +270,11 @@ void test_replaceRow_empty_table()
     expect_value(CcspBaseIf_getParameterValues, size, 1);
     expect_function_call(free_componentStruct_t);
     expect_function_call(free_parameterValStruct_t);
+    /* Empty replace request clears the 2 existing rows (rows 2 and 3) */
+    expect_function_call(deleteRow);
+    will_return(deleteRow, CCSP_SUCCESS);
+    expect_function_call(deleteRow);
+    will_return(deleteRow, CCSP_SUCCESS);
     processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
     WalInfo("resPayload : %s\n",resPayload);
     assert_non_null(resPayload);
@@ -277,6 +282,43 @@ void test_replaceRow_empty_table()
     assert_string_equal("Success", cJSON_GetObjectItem(response, "message")->valuestring);
     assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
     assert_non_null(response);
+    cJSON_Delete(response);
+}
+
+void test_replaceRow_empty_request_on_empty_table()
+{
+    char *reqPayload = "{\"rows\":{},\"table\" : \"Device.WiFi.AccessPoint.10001.X_CISCO_COM_MacFilterTable.\",\"command\":\"REPLACE_ROWS\"}";
+    char *transactionId = "aasfsdfgeh";
+    char *resPayload = NULL;
+    cJSON *response = NULL;
+    int count = 1;
+    headers_t *res_headers = NULL;
+    headers_t *req_headers = NULL;
+
+    componentStruct_t **list = (componentStruct_t **) malloc(sizeof(componentStruct_t *)*count);
+    list[0] = (componentStruct_t *) malloc(sizeof(componentStruct_t));
+    list[0]->componentName = strdup(RDKB_WIFI_FULL_COMPONENT_NAME);
+    list[0]->dbusPath = strdup(RDKB_WIFI_DBUS_PATH);
+
+    will_return(get_global_components, list);
+    will_return(get_global_component_size, count);
+    expect_function_call(CcspBaseIf_discComponentSupportingNamespace);
+    will_return(CcspBaseIf_discComponentSupportingNamespace, CCSP_SUCCESS);
+    will_return(get_global_values, NULL);
+    will_return(get_global_parameters_count, 0);
+    expect_function_call(CcspBaseIf_getParameterValues);
+    will_return(CcspBaseIf_getParameterValues, CCSP_SUCCESS);
+    expect_value(CcspBaseIf_getParameterValues, size, 1);
+    expect_function_call(free_componentStruct_t);
+    expect_function_call(free_parameterValStruct_t);
+    /* Table is already empty, so no deleteRow call is expected */
+    processRequest(reqPayload, transactionId, &resPayload, req_headers, res_headers);
+    WalInfo("resPayload : %s\n",resPayload);
+    assert_non_null(resPayload);
+    response = cJSON_Parse(resPayload);
+    assert_non_null(response);
+    assert_string_equal("Success", cJSON_GetObjectItem(response, "message")->valuestring);
+    assert_int_equal(200, cJSON_GetObjectItem(response, "statusCode")->valueint);
     cJSON_Delete(response);
 }
 
@@ -949,6 +991,7 @@ int main(void)
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_replaceRow),
         cmocka_unit_test(test_replaceRow_empty_table),
+        cmocka_unit_test(test_replaceRow_empty_request_on_empty_table),
         cmocka_unit_test(test_replaceRow_to_empty_table),
         cmocka_unit_test(test_replaceRow_failure_in_delete_tableData),
         cmocka_unit_test(err_replaceRow_failure_in_addNewRow),
