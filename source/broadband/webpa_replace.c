@@ -67,22 +67,19 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
         WalPrint("paramName after mapping : %s\n",paramName);
         ret = cacheTableData(paramName,paramcount,&deleteList,&rowCount,&numParams,&addList);
         WalPrint("ret : %d rowCount %d numParams: %d\n",ret,rowCount,numParams);
-	if(ret == CCSP_SUCCESS && numParams > 0)
+	if(ret == CCSP_SUCCESS && rowCount > 0)
         {
             WalInfo("Table (%s) has %d rows",paramName,rowCount);
-            if(rowCount > 0)
+            if(paramcount != 0 && numParams > 0)
             {
                 WalPrint("-------- Printing table data ----------\n");
                 for(cnt =0; cnt < rowCount; cnt++)
                 {	
                     WalPrint("deleteList[%d] : %s\n",cnt,deleteList[cnt]);
-                    if(paramcount != 0)
+                    WalPrint("addList[%d].paramCnt : %d\n",cnt,addList[cnt].paramCnt);
+                    for (cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
                     {
-                        WalPrint("addList[%d].paramCnt : %d\n",cnt,addList[cnt].paramCnt);
-                        for (cnt1 = 0; cnt1 < addList[cnt].paramCnt; cnt1++)
-                        {
-                            WalPrint("addList[%d].names[%d] : %s,addList[%d].values[%d] : %s\n ",cnt,cnt1,addList[cnt].names[cnt1],cnt,cnt1,addList[cnt].values[cnt1]);
-                        }
+                        WalPrint("addList[%d].names[%d] : %s,addList[%d].values[%d] : %s\n ",cnt,cnt1,addList[cnt].names[cnt1],cnt,cnt1,addList[cnt].values[cnt1]);
                     }
                 }
                 WalPrint("-------- Printed %d rows----------\n",rowCount);
@@ -93,7 +90,7 @@ void replaceTable(char *objectName,TableData * list,unsigned int paramcount,WDMP
                 addRet = addNewData(objectName,list,paramcount);
                 ret = addRet;
                 isWalStatus = 1;
-                if(addRet != WDMP_SUCCESS && rowCount > 0)
+                if(addRet != WDMP_SUCCESS && rowCount > 0 && numParams > 0)
                 {
                     WalError("Failed to replace table, hence reverting the changes\n");
                     addCachedData(objectName,addList,rowCount);
